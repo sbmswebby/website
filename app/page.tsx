@@ -21,8 +21,6 @@ export default function HomePage() {
       <LoadingScreen />
       <Hero />
 
-        <ImageGallery />
-
 
       <AboutUs />
       <Competitions />
@@ -31,6 +29,7 @@ export default function HomePage() {
       <Events />
       <Awards />
       <Gallery />
+      <ImageGallery />
       <MediaCoverage />
       <Magazine />
       <Contact />
