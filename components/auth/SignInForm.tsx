@@ -1,4 +1,3 @@
-
 // components/auth/SignInForm.tsx
 'use client'
 import { useState } from 'react'
@@ -17,31 +16,37 @@ export function SignInForm() {
   const { signIn, signUp } = useAuth()
   const router = useRouter()
 
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault()
+    setIsLoading(true)
+    setError("")
 
-	const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-	e.preventDefault()
-	setIsLoading(true)
-	setError("")
+    console.log("🔑 Form submitted", { email, password, isSignUp })
 
-	try {
-			if (isSignUp) {
-			await signUp(email, password)
-			router.push("/profile/setup")
-			} else {
-			await signIn(email, password)
-			router.push("/dashboard")
-			}
-	} catch (err: unknown) {
-			if (err instanceof Error) {
-			setError(err.message)
-			} else {
-			setError("Authentication failed")
-			}
-	} finally {
-			setIsLoading(false)
-	}
-	}
-
+    try {
+      if (isSignUp) {
+        console.log("🆕 Attempting SIGN UP with:", email)
+        const result = await signUp(email, password)
+        console.log("✅ SIGN UP success:", result)
+        // router.push("/profile/setup")
+      } else {
+        console.log("➡️ Attempting SIGN IN with:", email)
+        const result = await signIn(email, password)
+        console.log("✅ SIGN IN success:", result)
+        // router.push("/dashboard")
+      }
+    } catch (err: unknown) {
+      console.error("❌ Authentication error:", err)
+      if (err instanceof Error) {
+        setError(err.message)
+      } else {
+        setError("Authentication failed")
+      }
+    } finally {
+      setIsLoading(false)
+      console.log("🔄 Done loading")
+    }
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
@@ -60,6 +65,7 @@ export function SignInForm() {
           )}
           
           <div className="space-y-4">
+            {/* Email */}
             <div>
               <label htmlFor="email" className="block text-sm font-medium text-gray-700">
                 Email address
@@ -75,13 +81,17 @@ export function SignInForm() {
                   autoComplete="email"
                   required
                   value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  onChange={(e) => {
+                    console.log("✍️ Email changed:", e.target.value)
+                    setEmail(e.target.value)
+                  }}
                   className="pl-10 block w-full border border-gray-300 rounded-lg px-3 py-2 placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
                   placeholder="Enter your email"
                 />
               </div>
             </div>
             
+            {/* Password */}
             <div>
               <label htmlFor="password" className="block text-sm font-medium text-gray-700">
                 Password
@@ -97,14 +107,20 @@ export function SignInForm() {
                   autoComplete={isSignUp ? 'new-password' : 'current-password'}
                   required
                   value={password}
-                  onChange={(e) => setPassword(e.target.value)}
+                  onChange={(e) => {
+                    console.log("✍️ Password changed:", e.target.value)
+                    setPassword(e.target.value)
+                  }}
                   className="pl-10 pr-10 block w-full border border-gray-300 rounded-lg px-3 py-2 placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
                   placeholder="Enter your password"
                 />
                 <button
                   type="button"
                   className="absolute inset-y-0 right-0 pr-3 flex items-center"
-                  onClick={() => setShowPassword(!showPassword)}
+                  onClick={() => {
+                    console.log("👁 Toggle password visibility")
+                    setShowPassword(!showPassword)
+                  }}
                 >
                   {showPassword ? (
                     <EyeOff className="h-5 w-5 text-gray-400" />
@@ -116,6 +132,7 @@ export function SignInForm() {
             </div>
           </div>
 
+          {/* Submit */}
           <div>
             <button
               type="submit"
@@ -126,10 +143,14 @@ export function SignInForm() {
             </button>
           </div>
 
+          {/* Toggle Sign Up / Sign In */}
           <div className="text-center">
             <button
               type="button"
-              onClick={() => setIsSignUp(!isSignUp)}
+              onClick={() => {
+                console.log("🔄 Toggle mode:", !isSignUp ? "Sign Up" : "Sign In")
+                setIsSignUp(!isSignUp)
+              }}
               className="text-sm text-indigo-600 hover:text-indigo-500"
             >
               {isSignUp 
@@ -143,4 +164,3 @@ export function SignInForm() {
     </div>
   )
 }
-

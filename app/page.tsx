@@ -14,16 +14,35 @@ import Magazine from "@/components/Magazines";
 import MediaCoverage from "@/components/MediaCoverage";
 import RegistrationForm from "@/components/RegistrationForm";
 import Seminars from "@/components/Seminars";
+import { AuthProvider } from "@/components/auth/AuthProvider"
+import { SignInForm } from "@/components/auth/SignInForm";
+
 
 export default function HomePage() {
   return (
-    <> 
+    <>
+    
+        <div className="grid grid-cols-2">
+          <div>
+            <h1>HI</h1>
+          </div>
+          <div>
+            <SignInForm />
+            
+          </div>
+          
+      </div>
+      
+
+
     <div className="flex  flex-col p-12">
       <FairyCursor/>
       <LoadingScreen />
+
+
+      
       <Hero />
 
-      <Backend />
 
 
       <AboutUs />
