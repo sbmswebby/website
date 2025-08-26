@@ -111,9 +111,6 @@ const loadUserProfile = async (userId: string) => {
     console.error('❌ Exception loading user profile:', err)
   }
 }
-
-
-
   const signUp = async (email: string, password: string): Promise<AuthResponse> => {
     console.log('🆕 Attempting sign up with:', email)
     const result = await supabase.auth.signUp({ email, password })
