@@ -11,6 +11,7 @@ import { ImageGallery } from "@/components/ImageGallery";
 import LoadingScreen from "@/components/LoadingScreen";
 import Magazine from "@/components/Magazines";
 import MediaCoverage from "@/components/MediaCoverage";
+import RegistrationForm from "@/components/RegistrationForm";
 import Seminars from "@/components/Seminars";
 
 export default function HomePage() {
@@ -33,6 +34,7 @@ export default function HomePage() {
       <MediaCoverage />
       <Magazine />
       <Contact />
+      <RegistrationForm />
 
     </div>
     </>
