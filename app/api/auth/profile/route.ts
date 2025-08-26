@@ -1,6 +1,7 @@
 // app/api/auth/profile/route.ts
 import { NextRequest, NextResponse } from 'next/server'
-import { supabase, supabaseAdmin } from '@/lib/supabaseClient'
+import { supabase } from '@/lib/supabaseClient'
+import { supabaseAdmin } from '@/lib/supabaseAdmin'
 import { cookies } from 'next/headers'
 
 export async function POST(request: NextRequest) {

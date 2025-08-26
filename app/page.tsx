@@ -1,6 +1,7 @@
 import AboutUs from "@/components/AboutUs";
 import Academy from "@/components/Academy";
 import Awards from "@/components/Awards";
+import Backend from "@/components/Backend";
 import Competitions from "@/components/CompetitionsSection";
 import Contact from "@/components/Contact";
 import Events from "@/components/Events";
@@ -21,6 +22,8 @@ export default function HomePage() {
       <FairyCursor/>
       <LoadingScreen />
       <Hero />
+
+      <Backend />
 
 
       <AboutUs />

@@ -1,8 +1,9 @@
 
 // app/api/leads/route.ts
 import { NextRequest, NextResponse } from 'next/server'
-import { supabase, supabaseAdmin } from '@/lib/supabaseClient'
-
+import { supabase } from '@/lib/supabaseClient'
+import { supabaseAdmin } from '@/lib/supabaseAdmin'
+ 
 export async function POST(request: NextRequest) {
   try {
     const supabaseClient = supabase

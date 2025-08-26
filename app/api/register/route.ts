@@ -1,6 +1,9 @@
 // app/api/register/route.ts
 import { NextRequest, NextResponse } from 'next/server'
-import { supabase, supabaseAdmin } from '@/lib/supabaseClient'
+
+import { supabase } from '@/lib/supabaseClient'
+import { supabaseAdmin } from '@/lib/supabaseAdmin'
+
 import QRCode from 'qrcode'
 import { v4 as uuidv4 } from 'uuid'
 

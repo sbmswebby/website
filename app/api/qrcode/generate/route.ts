@@ -1,7 +1,8 @@
 
 // app/api/qrcode/generate/route.ts
 import { NextRequest, NextResponse } from 'next/server'
-import { supabase, supabaseAdmin } from '@/lib/supabaseClient'
+import { supabase } from '@/lib/supabaseClient'
+import { supabaseAdmin } from '@/lib/supabaseAdmin'
 import QRCode from 'qrcode'
 
 export async function POST(request: NextRequest) {

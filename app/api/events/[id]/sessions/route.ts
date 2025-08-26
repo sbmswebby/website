@@ -1,7 +1,7 @@
 
 // app/api/events/[id]/sessions/route.ts
 import { NextRequest, NextResponse } from 'next/server'
-import { supabaseAdmin } from '@/lib/supabaseClient'
+import { supabaseAdmin } from '@/lib/supabaseAdmin'
 
 export async function GET(
   request: NextRequest,
