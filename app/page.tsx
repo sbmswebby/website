@@ -21,19 +21,7 @@ import { SignInForm } from "@/components/auth/SignInForm";
 export default function HomePage() {
   return (
     <>
-    
-        <div className="grid grid-cols-2">
-          <div>
-            <h1>HI</h1>
-          </div>
-          <div>
-            <SignInForm />
-            
-          </div>
-          
-      </div>
-      
-
+    <SignInForm />
 
     <div className="flex  flex-col p-12">
       <FairyCursor/>
