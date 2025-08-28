@@ -1,27 +1,27 @@
 // app/api/register/route.ts
-import { NextRequest, NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server';
 
-import { supabase } from '@/lib/supabaseClient'
-import { supabaseAdmin } from '@/lib/supabaseAdmin'
+import { supabase } from '@/lib/supabaseClient';
+import { supabaseAdmin } from '@/lib/supabaseAdmin';
 
-import QRCode from 'qrcode'
-import { v4 as uuidv4 } from 'uuid'
+// Removed: import QRCode from 'qrcode'; // No longer needed
+import { v4 as uuidv4 } from 'uuid';
 
 export async function POST(request: NextRequest) {
   try {
-    const supabaseClient = supabase
-    const { data: { user }, error: authError } = await supabaseClient.auth.getUser()
+    const supabaseClient = supabase;
+    const { data: { user }, error: authError } = await supabaseClient.auth.getUser();
     
     if (authError || !user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const body = await request.json()
-    const { event_id, session_id, reference, marketing_consent } = body
+    const body = await request.json();
+    const { event_id, session_id, reference, marketing_consent } = body;
 
     // Validate required fields
     if (!event_id) {
-      return NextResponse.json({ error: 'event_id is required' }, { status: 400 })
+      return NextResponse.json({ error: 'event_id is required' }, { status: 400 });
     }
 
     // Check if user profile exists
@@ -29,10 +29,10 @@ export async function POST(request: NextRequest) {
       .from('user_profiles')
       .select('*')
       .eq('id', user.id)
-      .single()
+      .single();
 
     if (profileError || !profile) {
-      return NextResponse.json({ error: 'User profile not found. Please complete your profile first.' }, { status: 400 })
+      return NextResponse.json({ error: 'User profile not found. Please complete your profile first.' }, { status: 400 });
     }
 
     // Verify event exists
@@ -40,26 +40,26 @@ export async function POST(request: NextRequest) {
       .from('events')
       .select('*')
       .eq('id', event_id)
-      .single()
+      .single();
 
     if (eventError || !event) {
-      return NextResponse.json({ error: 'Event not found' }, { status: 404 })
+      return NextResponse.json({ error: 'Event not found' }, { status: 404 });
     }
 
     // Verify session if provided
-    let session = null
+    let session = null;
     if (session_id) {
       const { data: sessionData, error: sessionError } = await supabaseAdmin
         .from('sessions')
         .select('*')
         .eq('id', session_id)
         .eq('event_id', event_id)
-        .single()
+        .single();
 
       if (sessionError || !sessionData) {
-        return NextResponse.json({ error: 'Session not found' }, { status: 404 })
+        return NextResponse.json({ error: 'Session not found' }, { status: 404 });
       }
-      session = sessionData
+      session = sessionData;
     }
 
     // Check for duplicate registration
@@ -69,18 +69,20 @@ export async function POST(request: NextRequest) {
       .eq('user_id', user.id)
       .eq('event_id', event_id)
       .eq('session_id', session_id || null)
-      .single()
+      .single();
 
     if (existingReg) {
-      return NextResponse.json({ error: 'Already registered for this event/session' }, { status: 400 })
+      return NextResponse.json({ error: 'Already registered for this event/session' }, { status: 400 });
     }
 
     // Generate registration reference if not provided
-    const registrationRef = reference || `REG-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
+    const registrationRef = reference || `REG-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 
-    // Create registration record
-    const registrationId = uuidv4()
-    const { data: registration, error: regError } = await supabaseAdmin
+    // Generate a UUID for the registration ID
+    const registrationId = uuidv4();
+
+    // Create registration record with a placeholder for qr_code_url
+    const { data: initialRegistration, error: regError } = await supabaseAdmin
       .from('event_registrations')
       .insert({
         id: registrationId,
@@ -93,48 +95,49 @@ export async function POST(request: NextRequest) {
         created_at: new Date().toISOString()
       })
       .select()
-      .single()
+      .single();
 
-    if (regError) {
-      console.error('Registration error:', regError)
-      return NextResponse.json({ error: 'Failed to create registration' }, { status: 500 })
+    if (regError || !initialRegistration) {
+      console.error('Registration error:', regError);
+      return NextResponse.json({ error: 'Failed to create registration' }, { status: 500 });
     }
 
-const qrDetailsUrl = `/registrations?qr_details=${registrationId}:${registrationRef}`;
+    // --- START: Replaced QR code generation and upload logic ---
+    // Construct the URL with the desired parameters
+    const qrDetailsUrl = `/registrations?qr_details=${initialRegistration.id}:${event_id}:${session_id || ''}`;
+    // You might want to ensure 'session_id' is an empty string if null, or omit it if not present,
+    // depending on how you parse it on the /registrations page.
 
-// Update the registration with the new URL
-const { data, error } = await supabaseAdmin
-  .from('event_registrations')
-  .update({ qr_code_url: qrDetailsUrl }) // Consider renaming the column in your schema for clarity
-  .eq('id', registrationId)
-  .select();
+    // Update the registration with the new URL
+    const { data: updatedRegistration, error: updateUrlError } = await supabaseAdmin
+      .from('event_registrations')
+      .update({ qr_code_url: qrDetailsUrl }) // This column will now store the redirection URL
+      .eq('id', initialRegistration.id)
+      .select()
+      .single();
 
-if (error) {
-  console.error('Database update error:', error);
-} else {
-  console.log('Successfully updated registration with QR details URL:', data);
-}
-
-
-
-
+    if (updateUrlError) {
+      console.error('Failed to update registration with QR details URL:', updateUrlError);
+      // Decide if you want to proceed without the URL or return an error
+      // For now, we'll log and continue, similar to the original QR upload error handling.
+    }
+    // --- END: Replaced QR code generation and upload logic ---
 
     // Return registration data with related info
     const responseData = {
       registration: {
-        ...registration,
-        qr_code_url: qrCodeUrl
+        ...initialRegistration, // Use initial registration data
+        qr_code_url: updatedRegistration ? updatedRegistration.qr_code_url : qrDetailsUrl // Use updated URL if successful, otherwise the constructed one
       },
       event,
       session,
       payment_required: session?.cost > 0,
       upi_link: session?.upi_link
-    }
+    };
 
-    return NextResponse.json(responseData)
+    return NextResponse.json(responseData);
   } catch (error) {
-    console.error('Registration API error:', error)
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+    console.error('Registration API error:', error);
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
-
