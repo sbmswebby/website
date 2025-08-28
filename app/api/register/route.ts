@@ -100,40 +100,24 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Failed to create registration' }, { status: 500 })
     }
 
-    // Generate QR code
-    const qrData = `${registrationId}:${Buffer.from(`${registrationId}-${registrationRef}`).toString('base64')}`
-    const qrCodeBuffer = await QRCode.toBuffer(qrData, {
-      width: 256,
-      margin: 2
-    })
+const qrDetailsUrl = `/registrations?qr_details=${registrationId}:${registrationRef}`;
 
-    // Upload QR code to Supabase Storage
-    const qrFileName = `qrcodes/${registrationId}.png`
-    const { error: uploadError } = await supabaseAdmin.storage
-      .from('qrcodes')
-      .upload(qrFileName, qrCodeBuffer, {
-        contentType: 'image/png',
-        upsert: true
-      })
+// Update the registration with the new URL
+const { data, error } = await supabaseAdmin
+  .from('event_registrations')
+  .update({ qr_code_url: qrDetailsUrl }) // Consider renaming the column in your schema for clarity
+  .eq('id', registrationId)
+  .select();
 
-    if (uploadError) {
-      console.error('QR upload error:', uploadError)
-      // Continue without QR code - can be generated later
-    }
+if (error) {
+  console.error('Database update error:', error);
+} else {
+  console.log('Successfully updated registration with QR details URL:', data);
+}
 
-    // Update registration with QR code URL
-    let qrCodeUrl = null
-    if (!uploadError) {
-      const { data: urlData } = supabaseAdmin.storage
-        .from('qrcodes')
-        .getPublicUrl(qrFileName)
-      qrCodeUrl = urlData.publicUrl
 
-      await supabaseAdmin
-        .from('event_registrations')
-        .update({ qr_code_url: qrCodeUrl })
-        .eq('id', registrationId)
-    }
+
+
 
     // Return registration data with related info
     const responseData = {

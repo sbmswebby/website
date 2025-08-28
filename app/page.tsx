@@ -16,12 +16,14 @@ import RegistrationForm from "@/components/RegistrationForm";
 import Seminars from "@/components/Seminars";
 import { AuthProvider } from "@/components/auth/AuthProvider"
 import { SignInForm } from "@/components/auth/SignInForm";
+import  SignUpForm  from "@/components/auth/SignUpForm";
 
 
 export default function HomePage() {
   return (
     <>
     <SignInForm />
+    <SignUpForm />
 
     <div className="flex  flex-col p-12">
       <FairyCursor/>

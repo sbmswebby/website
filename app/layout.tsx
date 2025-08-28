@@ -21,8 +21,9 @@ export default function RootLayout({
       <body className="min-h-screen bg-base-100 p-10 text-base-content">
         <AuthProvider>
 
-        
+          <div className="flex h-20">
           <Navbar />
+          </div>
 
 
           {children}
