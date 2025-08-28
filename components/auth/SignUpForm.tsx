@@ -1,3 +1,5 @@
+// components/auth/SignUpForm
+
 "use client"
 import { useState } from "react"
 import { useAuth } from "./AuthProvider"
@@ -72,7 +74,7 @@ const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
 
     console.log("📤 Sending profile data:", profileData)
 
-    const res = await fetch("/api/profile", {
+    const res = await fetch("/api/auth/profile", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(profileData),

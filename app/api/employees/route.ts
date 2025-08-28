@@ -1,5 +1,8 @@
 
 // app/api/employees/route.ts
+
+// GET → Retrieves a sorted list of employees (id, name, role) from the employees table.
+
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabaseAdmin'
 

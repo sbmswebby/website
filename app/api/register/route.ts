@@ -1,4 +1,8 @@
 // app/api/register/route.ts
+
+// this route handles the submmision of all the registrations of sessions(sub_events)
+
+
 import { NextRequest, NextResponse } from 'next/server';
 
 import { supabase } from '@/lib/supabaseClient';

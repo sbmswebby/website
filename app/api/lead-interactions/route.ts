@@ -1,4 +1,8 @@
 // app/api/lead-interactions/route.ts
+
+// POST → Creates a new interaction for a lead, ensuring the user is an employee
+//    the lead exists, and updates the lead’s last modified timestamp.
+
 import { NextRequest, NextResponse } from 'next/server'
 import { supabase } from '@/lib/supabaseClient'
 import { supabaseAdmin } from '@/lib/supabaseAdmin'

@@ -1,5 +1,7 @@
 
 // app/api/registrations/route.ts
+
+// Fetches event registrations with filters, letting regular users see only theirs while employees can view all.
 import { NextRequest, NextResponse } from 'next/server'
 import { supabase } from '@/lib/supabaseClient'
 import { supabaseAdmin } from '@/lib/supabaseAdmin'

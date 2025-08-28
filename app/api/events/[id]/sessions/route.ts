@@ -1,5 +1,8 @@
 
 // app/api/events/[id]/sessions/route.ts
+
+// GET → Retrieves all sessions for a given event, ordered by start time.
+
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabaseAdmin'
 

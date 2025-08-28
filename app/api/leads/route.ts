@@ -1,5 +1,12 @@
 
 // app/api/leads/route.ts
+
+//POST → Creates a new lead (with optional initial interaction). Prevents duplicates by phone number. Only employees can do this.
+
+//GET → Retrieves leads with all their interactions (and employees who made them),
+//  supporting pagination and filtering by source. Only employees can access this.
+
+
 import { NextRequest, NextResponse } from 'next/server'
 import { supabase } from '@/lib/supabaseClient'
 import { supabaseAdmin } from '@/lib/supabaseAdmin'

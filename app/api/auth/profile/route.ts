@@ -1,5 +1,8 @@
 // app/api/auth/profile/route.ts
 
+//POST ensures users can create a new user and create or update their user_profile anytime.
+//GET allows them to retrieve the user_profile.
+
 import { NextRequest, NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
 import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
