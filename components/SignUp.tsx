@@ -76,7 +76,7 @@ export default function SignUpForm() {
         return;
       }
 
-      setMessage({ type: 'success', text: 'Sign-up successful! Please check your email for confirmation.' });
+      setMessage({ type: 'success', text: 'Sign-up successful!' });
       // Optionally clear form fields or redirect
       setEmail('');
       setPassword('');
