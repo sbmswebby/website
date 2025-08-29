@@ -11,8 +11,8 @@ import { ImageGallery } from "@/components/ImageGallery";
 import LoadingScreen from "@/components/LoadingScreen";
 import Magazine from "@/components/Magazines";
 import MediaCoverage from "@/components/MediaCoverage";
-import RegistrationForm from "@/components/RegistrationForm";
 import Seminars from "@/components/Seminars";
+import SignInForm from "@/components/SignIn";
 
 
 
@@ -23,6 +23,8 @@ export default function HomePage() {
     <div className="flex  flex-col p-12">
       <FairyCursor/>
       <LoadingScreen />
+
+      <SignInForm />
 
 
       
