@@ -13,15 +13,12 @@ import Magazine from "@/components/Magazines";
 import MediaCoverage from "@/components/MediaCoverage";
 import RegistrationForm from "@/components/RegistrationForm";
 import Seminars from "@/components/Seminars";
-import { SignInForm } from "@/components/auth/SignInForm";
-import  SignUpForm  from "@/components/auth/SignUpForm";
+
 
 
 export default function HomePage() {
   return (
     <>
-    <SignInForm />
-    <SignUpForm />
 
     <div className="flex  flex-col p-12">
       <FairyCursor/>
@@ -44,7 +41,6 @@ export default function HomePage() {
       <MediaCoverage />
       <Magazine />
       <Contact />
-      <RegistrationForm />
 
     </div>
     </>

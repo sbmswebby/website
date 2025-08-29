@@ -2,10 +2,6 @@
   command = "npm run build"
   publish = ".next"
 
-[[plugins]]
-  package = "@netlify/plugin-nextjs"
-
 [build.environment]
-  # Add this if you are on Next.js 12 or above. 
-  # Check your package.json for your exact Next.js version.
-  NEXT_PRIVATE_TARGET_VERSION = "15.5.0"
+  # Required for Next.js 12 and above on Netlify
+  NEXT_PRIVATE_TARGET_VERSION = "12.2.0" # Use your Next.js version or the latest supported
