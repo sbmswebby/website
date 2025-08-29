@@ -53,11 +53,11 @@ const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     const result = await signUp(form.email, form.password)
     console.log("🆕 Auth Sign Up result:", result)
 
-    if (!result?.user) {
+    if (!result?.data?.user) {
       throw new Error("Sign up failed: No user returned from Supabase")
     }
 
-    const userId = result.user.id
+    const userId = result.data.user.id
 
     // 2. Insert profile via API route
     const profileData = {
