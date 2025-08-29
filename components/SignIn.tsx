@@ -39,12 +39,6 @@ export default function SignInForm() { // Changed from App to SignInForm
           <h2 className="text-3xl font-extrabold text-gray-900">
             Sign in to your account
           </h2>
-          <p className="mt-2 text-sm text-gray-600">
-            Or{' '}
-            <a href="#" className="font-medium text-indigo-600 hover:text-indigo-500">
-              start your free trial
-            </a>
-          </p>
         </div>
 
         <form className="space-y-6" onSubmit={handleSubmit}>
