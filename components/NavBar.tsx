@@ -1,10 +1,39 @@
 "use client";
-import React, { useState } from "react";
-import { Menu, X } from "lucide-react";
+import React, { useEffect, useState } from "react";
+import { Menu, X , User} from "lucide-react";
 import Image from "next/image";
 
+import { supabase } from "@/lib/supabaseClient";
+import { getUserProfile, UserProfile } from "@/lib/supabaseHelpers"
+
 const Navbar = () => {
+  const [profile, setProfile] = useState<UserProfile | null>(null)
+
+  
+
+const handleProfileClick = async () => {
+  setprofile_Open(!profile_open) // toggle dropdown
+  if (!profile_open) {           // fetch only when opening
+    const data = await getUserProfile()
+    setProfile(data)
+  }
+}
+
   const [isOpen, setIsOpen] = useState(false);
+  const [profile_open, setprofile_Open] = useState(false)
+
+  const handleLogout = async () => {
+  const { error } = await supabase.auth.signOut()
+  if (error) {
+    console.error("Error logging out:", error.message)
+  } else {
+    setProfile(null)
+    console.log('log out sucess')
+    // Optional: redirect to homepage or login
+    //window.location.href = "/"
+  }
+}
+
 
   return (
     <nav
@@ -35,6 +64,37 @@ const Navbar = () => {
             <li><a href="#gallery" className="hover:text-pink-400">Gallery</a></li>
             <li><a href="#magazine" className="hover:text-pink-400">Magazine</a></li>
           </ul>
+
+          {/* Right side - Profile */}
+      <div className="relative">
+        <button
+          onClick={handleProfileClick}
+          className="flex items-center justify-center w-10 h-10 rounded-full bg-gray-200 hover:bg-gray-300 transition"
+        >
+          <User className="w-6 h-6" />
+        </button>
+
+        {/* Dropdown */}
+        {profile_open && (
+          <div className="absolute right-0 mt-2 w-auto bg-white border rounded-xl shadow-lg overflow-hidden">
+            {profile ? (
+              <div>
+                <span>Hello, {profile.full_name} 👋</span>
+                <button className="w-full text-left px-4 py-2 hover:bg-gray-100">
+                  Edit Profile
+                </button>
+                <button onClick={handleLogout} className="w-full text-left px-4 py-2 hover:bg-gray-100">
+                  Logout
+                </button>
+              </div>
+            ) : (
+              <a href="#signIn">sign in</a>
+            )}
+            
+            
+          </div>
+        )}
+      </div>
 
           {/* Hamburger (mobile only) */}
           <button
