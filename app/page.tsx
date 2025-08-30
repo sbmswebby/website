@@ -12,8 +12,7 @@ import LoadingScreen from "@/components/LoadingScreen";
 import Magazine from "@/components/Magazines";
 import MediaCoverage from "@/components/MediaCoverage";
 import Seminars from "@/components/Seminars";
-import SignInForm from "@/components/SignIn";
-import SignUpForm from "@/components/SignUp";
+
 
 
 
@@ -25,16 +24,7 @@ export default function HomePage() {
       <FairyCursor/>
       <LoadingScreen />
 
-      <SignUpForm />
-
-      <SignInForm />
-
-
-      
       <Hero />
-
-
-
       <AboutUs />
       <Competitions />
       <Seminars />
