@@ -76,3 +76,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 }
 
 export const useAuth = () => useContext(AuthContext)
+
+export  const refreshSession = async () => {
+  const { data: { session } } = await supabase.auth.getSession()
+  setUser(session?.user ?? null)
+}
+
+function setUser(arg0: User | null) {
+    throw new Error('Function not implemented.')
+}
