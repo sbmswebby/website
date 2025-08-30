@@ -255,7 +255,8 @@ return (
           </div>
         </div>
 
-        <div>
+        <div className='text-center m-4'>
+          <a href='/login' className='text-center'>already have an account? Sign In</a>
           <button type="submit" disabled={loading}>
             {loading ? 'Signing Up...' : 'Sign Up'}
           </button>

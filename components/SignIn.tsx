@@ -90,6 +90,10 @@ export default function SignInForm() {
           </div>
 
           <div>
+            <a href='/signup' className='text-center'>Dont have an account? Sign Up</a>
+          </div>
+
+          <div>
             <button
               type="submit"
               disabled={loading}
@@ -103,3 +107,4 @@ export default function SignInForm() {
     </div>
   );
 }
+
