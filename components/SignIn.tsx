@@ -1,48 +1,60 @@
-// component/SignIn.tsx
-
 'use client';
 
 import { supabase } from '@/lib/supabaseClient';
 import React, { useState } from 'react';
+import { useRouter } from 'next/navigation';
 
 // Main component for the sign-in form
-export default function SignInForm() { // Changed from App to SignInForm
+export default function SignInForm() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+  const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-  e.preventDefault();
+    e.preventDefault();
+    setLoading(true);
+    setError(null); // Clear any previous errors
 
-  console.log('Attempting sign-in with:', { email, password });
+    console.log('Attempting sign-in with:', { email, password });
 
-  const { data, error } = await supabase.auth.signInWithPassword({
-    email: email,
-    password: password,
-    // Add options for 'remember me' if Supabase's session management supports it
-    // For example, by controlling the session duration.
-  });
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email: email,
+      password: password,
+    });
 
-  if (error) {
-    console.error("Error signing in:", error.message);
-    // You might want to display this error to the user
-  } else {
-    console.log("User signed in successfully:", data.user);
-    // Redirect the user, update UI, etc.
-  }
-};
+    if (error) {
+      console.error("Error signing in:", error.message);
+      setError(error.message); // Set the error message
+    } else {
+      console.log("User signed in successfully:", data.user);
+      router.push('/'); // Redirect the user to the home page
+    }
+    
+    setLoading(false); // Stop loading regardless of the outcome
+  };
 
   return (
     <div id='signIn' >
-      <div className="w-full max-w-md bg-white rounded-xl shadow-lg p-6 sm:p-8 space-y-6">
+      {/* Updated card for dark theme consistency */}
+      <div className="w-full max-w-md bg-[rgba(10,10,10,0.95)] backdrop-blur-xl rounded-xl shadow-2xl p-6 sm:p-8 space-y-6">
         <div className="text-center">
-          <h2 className="text-3xl font-extrabold text-gray-900">
+          <h2 className="text-3xl font-extrabold text-white">
             Sign in to your account
           </h2>
         </div>
 
+        {/* Conditionally rendered error message */}
+        {error && (
+          <div className="bg-red-900 bg-opacity-30 text-red-300 p-4 rounded-xl text-sm border border-red-800">
+            {error}
+          </div>
+        )}
+
         <form className="space-y-6" onSubmit={handleSubmit}>
           <div>
-            <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+            <label htmlFor="email" className="block text-sm font-medium text-gray-300">
               Email address
             </label>
             <div className="mt-1">
@@ -52,7 +64,7 @@ export default function SignInForm() { // Changed from App to SignInForm
                 type="email"
                 autoComplete="email"
                 required
-                className="appearance-none block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                className="appearance-none block w-full px-4 py-2 border border-gray-700 rounded-md shadow-sm placeholder-gray-500 bg-gray-900 text-gray-100 focus:outline-none focus:ring-pink-500 focus:border-pink-500 sm:text-sm"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
               />
@@ -60,7 +72,7 @@ export default function SignInForm() { // Changed from App to SignInForm
           </div>
 
           <div>
-            <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+            <label htmlFor="password" className="block text-sm font-medium text-gray-300">
               Password
             </label>
             <div className="mt-1">
@@ -70,20 +82,20 @@ export default function SignInForm() { // Changed from App to SignInForm
                 type="password"
                 autoComplete="current-password"
                 required
-                className="appearance-none block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                className="appearance-none block w-full px-4 py-2 border border-gray-700 rounded-md shadow-sm placeholder-gray-500 bg-gray-900 text-gray-100 focus:outline-none focus:ring-pink-500 focus:border-pink-500 sm:text-sm"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
               />
             </div>
           </div>
 
-
           <div>
             <button
               type="submit"
-              className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+              disabled={loading}
+              className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-pink-600 hover:bg-pink-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-pink-500 transition disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              Sign in
+              {loading ? 'Signing In...' : 'Sign in'}
             </button>
           </div>
         </form>

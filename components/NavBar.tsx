@@ -66,35 +66,52 @@ const handleProfileClick = async () => {
           </ul>
 
           {/* Right side - Profile */}
-      <div className="relative">
-        <button
-          onClick={handleProfileClick}
-          className="flex items-center justify-center w-10 h-10 rounded-full bg-gray-200 hover:bg-gray-300 transition"
-        >
-          <User className="w-6 h-6" />
-        </button>
+          <div className="relative">
+            <button
+              onClick={handleProfileClick}
+              className="flex items-center justify-center w-10 h-10 rounded-full bg-gray-200 hover:bg-gray-300 transition"
+            >
+              <User className="w-6 h-6" />
+            </button>
 
-        {/* Dropdown */}
-        {profile_open && (
-          <div className="absolute right-0 mt-2 w-auto bg-white border rounded-xl shadow-lg overflow-hidden">
-            {profile ? (
-              <div>
-                <span>Hello, {profile.full_name} 👋</span>
-                <button className="w-full text-left px-4 py-2 hover:bg-gray-100">
-                  Edit Profile
-                </button>
-                <button onClick={handleLogout} className="w-full text-left px-4 py-2 hover:bg-gray-100">
-                  Logout
-                </button>
+            {/* Dropdown */}
+            {profile_open && (
+              <div className="absolute p-10 left-1/2 -translate-x-1/2 mt-2 w-72 bg-gray-900 text-white rounded-xl shadow-2xl overflow-hidden transition-all duration-300 transform">
+                {profile ? (
+                  <div className="p-4">
+                    <div className="flex flex-col mt-5 items-center mb-4">
+                      {/* Placeholder for Profile Picture */}
+                      <div className="w-16 h-16 rounded-full flex items-center justify-center bg-gray-800">
+                        <p className="text-white text-3xl font-bold">{profile.full_name ? profile.full_name[0] : "U"}</p>
+                      </div>
+                      <span className="mt-2 text-lg font-bold text-white">
+                        {profile.full_name}
+                      </span>
+                      <span className="text-sm text-gray-400">
+                        {profile.email}
+                      </span>
+                    </div>
+                    <hr className="my-2 border-gray-700" />
+                    <button className="w-full text-white text-left px-4 py-2 hover:bg-gray-700 rounded-md">
+                      Edit Profile
+                    </button>
+                    <button
+                      onClick={handleLogout}
+                      className="w-full text-left px-4 py-2 text-white hover:bg-gray-700 rounded-md"
+                    >
+                      Logout
+                    </button>
+                  </div>
+                ) : (
+                  <a
+                    href="#signIn"
+                  >
+                    <div className="w-full text-center py-2 px-4 rounded-full text-white hover:bg-gray-700 transition">Sign In</div>
+                  </a>
+                )}
               </div>
-            ) : (
-              <a href="#signIn">sign in</a>
             )}
-            
-            
           </div>
-        )}
-      </div>
 
           {/* Hamburger (mobile only) */}
           <button
