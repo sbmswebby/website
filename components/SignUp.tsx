@@ -94,186 +94,175 @@ export default function SignUpForm() {
     setLoading(false);
   };
 
-  return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-950 p-4 sm:p-6 lg:p-8">
-      <div className="w-full max-w-lg bg-gray-800 rounded-xl shadow-lg p-6 sm:p-8 space-y-6">
-        <div className="text-center">
-          <h2 className="text-3xl font-extrabold text-white">
-            Create Your Account
-          </h2>
-          <p className="mt-2 text-sm text-gray-300">
-            Join us to get started with our services.
-          </p>
+return (
+  <div id="signUp">
+    <div>
+      <div className="text-center">
+        <h2>Create Your Account</h2>
+        <p>Join us to get started with our services.</p>
+      </div>
+
+      {message && (
+        <div className={message.type === 'success' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}>
+          {message.text}
+        </div>
+      )}
+
+      <form onSubmit={handleSubmit}>
+        {/*
+          This container now becomes a single column on mobile by default,
+          and a two-column grid (md:grid-cols-2) on medium screens and up.
+        */}
+        <div className='grid gap-10 md:grid-cols-2'>
+          {/* First Column */}
+          <div className='col-span-1'>
+            <div>
+              <label htmlFor="email">
+                Email address <span className="text-red-500">*</span>
+              </label>
+              <div>
+                <input
+                  id="email"
+                  name="email"
+                  type="email"
+                  autoComplete="email"
+                  required
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                />
+              </div>
+            </div>
+
+            <div>
+              <label htmlFor="password">
+                Password <span className="text-red-500">*</span>
+              </label>
+              <div>
+                <input
+                  id="password"
+                  name="password"
+                  type="password"
+                  autoComplete="new-password"
+                  required
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Second Column */}
+          <div className='col-span-1'>
+            {/* Full Name */}
+            <div>
+              <label htmlFor="fullName">
+                Full Name <span className="text-red-500">*</span>
+              </label>
+              <div>
+                <input
+                  id="fullName"
+                  name="fullName"
+                  type="text"
+                  autoComplete="name"
+                  required
+                  value={fullName}
+                  onChange={(e) => setFullName(e.target.value)}
+                />
+              </div>
+            </div>
+
+            {/* Number */}
+            <div>
+              <label htmlFor="number">
+                Phone Number <span className="text-red-500">*</span>
+              </label>
+              <div>
+                <input
+                  id="number"
+                  name="number"
+                  type="tel"
+                  autoComplete="tel"
+                  required
+                  value={number}
+                  onChange={(e) => setNumber(e.target.value)}
+                />
+              </div>
+            </div>
+
+            {/* Instagram ID (Optional) */}
+            <div>
+              <label htmlFor="instaId">Instagram ID (Optional)</label>
+              <div>
+                <input
+                  id="instaId"
+                  name="instaId"
+                  type="text"
+                  autoComplete="off"
+                  value={instaId}
+                  onChange={(e) => setInstaId(e.target.value)}
+                />
+              </div>
+            </div>
+
+            {/* Organisation (Optional) */}
+            <div>
+              <label htmlFor="organisation">Organisation (Optional)</label>
+              <div>
+                <input
+                  id="organisation"
+                  name="organisation"
+                  type="text"
+                  autoComplete="organization"
+                  value={organisation}
+                  onChange={(e) => setOrganisation(e.target.value)}
+                />
+              </div>
+            </div>
+
+            {/* Age (Optional) */}
+            <div>
+              <label htmlFor="age">Age (Optional)</label>
+              <div>
+                <input
+                  id="age"
+                  name="age"
+                  type="number"
+                  autoComplete="age"
+                  value={age === null ? '' : age}
+                  onChange={(e) => setAge(e.target.value ? parseInt(e.target.value) : null)}
+                />
+              </div>
+            </div>
+
+            {/* Gender (Optional) */}
+            <div>
+              <label htmlFor="gender">Gender (Optional)</label>
+              <div>
+                <select
+                  id="gender"
+                  name="gender"
+                  value={gender}
+                  onChange={(e) => setGender(e.target.value)}
+                >
+                  <option value="">Select Gender</option>
+                  <option value="male">Male</option>
+                  <option value="female">Female</option>
+                  <option value="other">Other</option>
+                </select>
+              </div>
+            </div>
+
+          </div>
         </div>
 
-        {message && (
-          <div className={`p-3 rounded-md text-sm ${message.type === 'success' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
-            {message.text}
-          </div>
-        )}
-
-        <form className="space-y-6" onSubmit={handleSubmit}>
-          {/* Email and Password - for Supabase Auth */}
-          <div>
-            <label htmlFor="email" className="block text-sm font-medium text-gray-200">
-              Email address <span className="text-red-500">*</span>
-            </label>
-            <div className="mt-1">
-              <input
-                id="email"
-                name="email"
-                type="email"
-                autoComplete="email"
-                required
-                className="appearance-none block w-full px-4 py-2 border border-gray-600 rounded-md shadow-sm placeholder-gray-500 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm bg-gray-700 text-white"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-              />
-            </div>
-          </div>
-
-          <div>
-            <label htmlFor="password" className="block text-sm font-medium text-gray-200">
-              Password <span className="text-red-500">*</span>
-            </label>
-            <div className="mt-1">
-              <input
-                id="password"
-                name="password"
-                type="password"
-                autoComplete="new-password"
-                required
-                className="appearance-none block w-full px-4 py-2 border border-gray-600 rounded-md shadow-sm placeholder-gray-500 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm bg-gray-700 text-white"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-              />
-            </div>
-          </div>
-
-          {/* Full Name */}
-          <div>
-            <label htmlFor="fullName" className="block text-sm font-medium text-gray-200">
-              Full Name <span className="text-red-500">*</span>
-            </label>
-            <div className="mt-1">
-              <input
-                id="fullName"
-                name="fullName"
-                type="text"
-                autoComplete="name"
-                required
-                className="appearance-none block w-full px-4 py-2 border border-gray-600 rounded-md shadow-sm placeholder-gray-500 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm bg-gray-700 text-white"
-                value={fullName}
-                onChange={(e) => setFullName(e.target.value)}
-              />
-            </div>
-          </div>
-
-          {/* Number */}
-          <div>
-            <label htmlFor="number" className="block text-sm font-medium text-gray-200">
-              Phone Number <span className="text-red-500">*</span>
-            </label>
-            <div className="mt-1">
-              <input
-                id="number"
-                name="number"
-                type="tel" // Use type="tel" for phone numbers
-                autoComplete="tel"
-                required
-                className="appearance-none block w-full px-4 py-2 border border-gray-600 rounded-md shadow-sm placeholder-gray-500 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm bg-gray-700 text-white"
-                value={number}
-                onChange={(e) => setNumber(e.target.value)}
-              />
-            </div>
-          </div>
-
-          {/* Instagram ID (Optional) */}
-          <div>
-            <label htmlFor="instaId" className="block text-sm font-medium text-gray-200">
-              Instagram ID (Optional)
-            </label>
-            <div className="mt-1">
-              <input
-                id="instaId"
-                name="instaId"
-                type="text"
-                autoComplete="off"
-                className="appearance-none block w-full px-4 py-2 border border-gray-600 rounded-md shadow-sm placeholder-gray-500 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm bg-gray-700 text-white"
-                value={instaId}
-                onChange={(e) => setInstaId(e.target.value)}
-              />
-            </div>
-          </div>
-
-          {/* Organisation (Optional) */}
-          <div>
-            <label htmlFor="organisation" className="block text-sm font-medium text-gray-200">
-              Organisation (Optional)
-            </label>
-            <div className="mt-1">
-              <input
-                id="organisation"
-                name="organisation"
-                type="text"
-                autoComplete="organization"
-                className="appearance-none block w-full px-4 py-2 border border-gray-600 rounded-md shadow-sm placeholder-gray-500 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm bg-gray-700 text-white"
-                value={organisation}
-                onChange={(e) => setOrganisation(e.target.value)}
-              />
-            </div>
-          </div>
-
-          {/* Age (Optional) */}
-          <div>
-            <label htmlFor="age" className="block text-sm font-medium text-gray-200">
-              Age (Optional)
-            </label>
-            <div className="mt-1">
-              <input
-                id="age"
-                name="age"
-                type="number"
-                autoComplete="age"
-                className="appearance-none block w-full px-4 py-2 border border-gray-600 rounded-md shadow-sm placeholder-gray-500 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm bg-gray-700 text-white"
-                value={age === null ? '' : age} // Handle null for number input
-                onChange={(e) => setAge(e.target.value ? parseInt(e.target.value) : null)}
-              />
-            </div>
-          </div>
-
-          {/* Gender (Optional) */}
-          <div>
-            <label htmlFor="gender" className="block text-sm font-medium text-gray-200">
-              Gender (Optional)
-            </label>
-            <div className="mt-1">
-                <select
-                id="gender"
-                name="gender"
-                value={gender}
-                onChange={(e) => setGender(e.target.value)}
-                className="appearance-none block w-full px-4 py-2 border border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm bg-gray-700 text-white"
-                >
-                <option value="">Select Gender</option>
-                <option value="male">Male</option>
-                <option value="female">Female</option>
-                <option value="other">Other</option>
-                </select>
-            </div>
-          </div>
-
-          <div>
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {loading ? 'Signing Up...' : 'Sign Up'}
-            </button>
-          </div>
-        </form>
-      </div>
+        <div>
+          <button type="submit" disabled={loading}>
+            {loading ? 'Signing Up...' : 'Sign Up'}
+          </button>
+        </div>
+      </form>
     </div>
-  );
+  </div>
+);
+
 }

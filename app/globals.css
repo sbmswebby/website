@@ -1,8 +1,4 @@
-
-@import "tailwindcss/preflight";
-
-@tailwind utilities;
-
+@import "tailwindcss";
 
 :root {
   --background: #ffffff;
@@ -265,6 +261,212 @@ nav.scrolled {
 }
 
 
+/* === Google-like Sign In/Sign Up Form Styling === */
+
+/* Container */
+/* === Dark & Gradient Sign In/Sign Up Form Styling === */
+/* Container */
+/* === Dark & Gradient Sign In/Sign Up Form Styling === */
+
+/* Main Container */
+#signIn,
+#signUp {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  background: #0a0a0a;
+  font-family: 'Poppins', sans-serif;
+  margin: 0;
+  padding: 2rem 1rem;
+}
+
+/* Form Card */
+#signIn > div,
+#signUp > div {
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(20px);
+  border-radius: 20px;
+  box-shadow: 0 10px 40px rgba(255, 107, 157, 0.15);
+  padding: 40px 32px;
+  width: 100%;
+  max-width: 400px; /* Default mobile width */
+  border: 1px solid rgba(255, 107, 157, 0.2);
+  transition: transform 0.3s ease;
+}
+
+#signIn > div:hover,
+#signUp > div:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 15px 50px rgba(255, 107, 157, 0.3);
+}
+
+@media (min-width: 768px) {
+  #signIn > div,
+  #signUp > div {
+    max-width: 800px; /* Wider desktop width */
+  }
+}
+
+#signIn > div:hover,
+#signUp > div:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 15px 50px rgba(255, 107, 157, 0.3);
+}
+
+/* Heading */
+#signIn h2,
+#signUp h2 {
+  font-family: 'Playfair Display', serif;
+  font-size: 2.5rem;
+  font-weight: 700;
+  background: linear-gradient(45deg, #ff6b9d, #ffd93d);
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  margin-bottom: 8px;
+  text-align: center;
+}
+
+#signIn p,
+#signUp p {
+  font-size: 1rem;
+  color: rgba(255, 255, 255, 0.7);
+  margin-top: 0;
+  text-align: center;
+}
+
+/* Form Labels */
+#signIn label,
+#signUp label {
+  display: block;
+  font-size: 1rem;
+  color: #ededed;
+  margin-bottom: 8px;
+  font-weight: 500;
+}
+
+/* Form Inputs and Select */
+#signIn input,
+#signUp input,
+#signUp select {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid rgba(255, 107, 157, 0.3);
+  border-radius: 8px;
+  font-size: 1rem;
+  color: #ededed;
+  background: rgba(255, 255, 255, 0.05);
+  outline: none;
+  transition: all 0.3s;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path fill="rgba(255,255,255,0.8)" d="M7 10l5 5 5-5z"/></svg>');
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  background-size: 1em;
+}
+
+#signUp select:focus {
+  border-color: #ff6b9d;
+  box-shadow: 0 0 0 1px #ff6b9d, 0 0 15px rgba(255, 107, 157, 0.3);
+}
+
+/* This targets the options within the dropdown */
+#signUp select option {
+  background: #0a0a0a;
+  color: #ededed;
+}
+
+#signIn input:focus,
+#signUp input:focus,
+#signUp select:focus {
+  border-color: #ff6b9d;
+  box-shadow: 0 0 0 1px #ff6b9d, 0 0 15px rgba(255, 107, 157, 0.3);
+}
+
+/* Input Placeholder */
+#signIn input::placeholder,
+#signUp input::placeholder {
+  color: rgba(255, 255, 255, 0.5);
+}
+
+/* Checkbox and Small Text */
+#signIn .flex label,
+#signUp .flex label {
+  font-size: 0.9rem;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+/* Links */
+#signIn a,
+#signUp a {
+  color: #ff6b9d;
+  font-size: 1rem;
+  text-decoration: none;
+  transition: color 0.3s;
+}
+
+#signIn a:hover,
+#signUp a:hover {
+  color: #ffd93d;
+  text-decoration: underline;
+}
+
+/* Buttons */
+#signIn button,
+#signUp button {
+  width: 100%;
+  background: linear-gradient(45deg, #ff6b9d, #ffd93d);
+  color: #ffffff;
+  border: none;
+  border-radius: 50px;
+  font-size: 1rem;
+  font-weight: 600;
+  padding: 12px 24px;
+  margin-top: 16px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 5px 20px rgba(255, 107, 157, 0.2);
+}
+
+#signIn button:hover,
+#signUp button:hover {
+  background: linear-gradient(45deg, #ffd93d, #ff6b9d);
+  transform: translateY(-3px) scale(1.02);
+  box-shadow: 0 8px 25px rgba(255, 107, 157, 0.4);
+}
+
+#signIn button:disabled,
+#signUp button:disabled {
+  background: #4a4a4a;
+  color: #999;
+  cursor: not-allowed;
+  box-shadow: none;
+  transform: none;
+}
+
+/* Message Boxes */
+#signUp .bg-green-100,
+#signUp .bg-red-100 {
+  font-size: 0.9rem;
+  padding: 12px;
+  border-radius: 8px;
+  margin-bottom: 16px;
+  background: rgba(100, 255, 100, 0.1);
+  color: #4ade80;
+}
+
+#signUp .bg-red-100 {
+  background: rgba(255, 100, 100, 0.1);
+  color: #f87171;
+}
+
+/* Spacing Utility */
+.form-group {
+  margin-bottom: 16px;
+}
 
 /*HeroSection*/
 /* Hero Section Styles */
