@@ -3,6 +3,7 @@
 import { supabase } from '@/lib/supabaseClient';
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import ForgotPassword from './ForgotPassword';
 
 // Main component for the sign-in form
 export default function SignInForm() {
@@ -89,8 +90,10 @@ export default function SignInForm() {
             </div>
           </div>
 
-          <div>
-            <a href='/signup' className='text-center'>Dont have an account? Sign Up</a>
+          <div className='grid grid-cols-2 gap-4'>
+            <ForgotPassword></ForgotPassword>
+            <a href='/signup' className='text-right'>Dont have an account? Sign Up</a>
+            
           </div>
 
           <div>

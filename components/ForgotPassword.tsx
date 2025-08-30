@@ -45,7 +45,7 @@ export default function ResetPasswordLink() {
         onClick={handleReset}
         className="text-blue-600 hover:underline cursor-pointer"
       >
-        {loading ? 'Sending...' : 'Reset password via email link'}
+        {loading ? 'Sending...' : 'Forgot Password?'}
       </a>
       {message && <p className="mt-2 text-sm text-gray-600">{message}</p>}
     </div>
