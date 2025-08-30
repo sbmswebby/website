@@ -9,14 +9,6 @@ const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false)
   const [profileOpen, setProfileOpen] = useState(false)
 
-  if (loading) {
-    return (
-      <nav className="sticky top-0 h-20 w-full z-50 bg-[rgba(10,10,10,0.95)] text-white flex items-center justify-center">
-        <p>Loading...</p>
-      </nav>
-    )
-  }
-
   return (
     <nav className="sticky top-0 h-20 w-full z-50 bg-[rgba(10,10,10,0.95)] backdrop-blur-xl border-b border-[rgba(255,107,157,0.2)] text-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -41,15 +33,21 @@ const Navbar = () => {
 
           {/* Right side - Profile */}
           <div className="relative">
-            <button
-              onClick={() => setProfileOpen(!profileOpen)}
-              className="flex items-center justify-center w-10 h-10 rounded-full bg-gray-200 hover:bg-gray-300 transition"
-            >
-              <User className="w-6 h-6" />
-            </button>
+            {loading ? (
+              <div className="w-10 h-10 flex items-center justify-center rounded-full bg-gray-200 animate-pulse">
+                <span className="text-xs text-gray-500">...</span>
+              </div>
+            ) : (
+              <button
+                onClick={() => setProfileOpen(!profileOpen)}
+                className="flex items-center justify-center w-10 h-10 rounded-full bg-gray-200 hover:bg-gray-300 transition"
+              >
+                <User className="w-6 h-6" />
+              </button>
+            )}
 
             {/* Dropdown */}
-            {profileOpen && (
+            {profileOpen && !loading && (
               <div className="absolute p-6 left-1/2 -translate-x-1/2 mt-2 w-72 bg-gray-900 text-white rounded-xl shadow-2xl overflow-hidden">
                 {user && profile ? (
                   <div>
@@ -66,9 +64,12 @@ const Navbar = () => {
                       <span className="text-sm text-gray-400">{profile.email}</span>
                     </div>
                     <hr className="my-2 border-gray-700" />
-                    <button className="w-full text-white text-left px-4 py-2 hover:bg-gray-700 rounded-md">
+                    <a
+                      href="/profile"
+                      className="w-full text-white text-left px-4 py-2 hover:bg-gray-700 rounded-md"
+                    >
                       Edit Profile
-                    </button>
+                    </a>
                     <button
                       onClick={logout}
                       className="w-full text-left px-4 py-2 text-white hover:bg-gray-700 rounded-md"

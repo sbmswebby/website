@@ -1,4 +1,3 @@
-// AuthProvider.tsx
 'use client'
 
 import { createContext, useContext, useEffect, useState } from 'react'
@@ -6,12 +5,12 @@ import type { User } from '@supabase/supabase-js'
 import { supabase } from '@/lib/supabaseClient'
 import { getUserProfile, UserProfile } from '@/lib/supabaseHelpers'
 
-// Extend the type
 type AuthContextType = {
   user: User | null
   profile: UserProfile | null
   loading: boolean
   logout: () => Promise<void>
+  refreshSession: () => Promise<void>
 }
 
 const AuthContext = createContext<AuthContextType>({
@@ -19,6 +18,7 @@ const AuthContext = createContext<AuthContextType>({
   profile: null,
   loading: true,
   logout: async () => {},
+  refreshSession: async () => {},
 })
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
@@ -27,39 +27,33 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    // Initial session + profile
-    supabase.auth.getSession().then(async ({ data: { session } }) => {
+    const init = async () => {
+      const { data: { session } } = await supabase.auth.getSession()
       const currentUser = session?.user ?? null
       setUser(currentUser)
-
       if (currentUser) {
         const p = await getUserProfile()
         setProfile(p)
       }
-
       setLoading(false)
-    })
+    }
+    init()
 
-    // Listen for changes
     const { data: subscription } = supabase.auth.onAuthStateChange(
       async (_event, session) => {
         const currentUser = session?.user ?? null
         setUser(currentUser)
-
         if (currentUser) {
           const p = await getUserProfile()
           setProfile(p)
         } else {
           setProfile(null)
         }
-
         setLoading(false)
       }
     )
 
-    return () => {
-      subscription.subscription.unsubscribe()
-    }
+    return () => subscription.subscription.unsubscribe()
   }, [])
 
   const logout = async () => {
@@ -68,20 +62,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setProfile(null)
   }
 
+  const refreshSession = async () => {
+    const { data: { session } } = await supabase.auth.getSession()
+    setUser(session?.user ?? null)
+  }
+
   return (
-    <AuthContext.Provider value={{ user, profile, loading, logout }}>
+    <AuthContext.Provider value={{ user, profile, loading, logout, refreshSession }}>
       {children}
     </AuthContext.Provider>
   )
 }
 
 export const useAuth = () => useContext(AuthContext)
-
-export  const refreshSession = async () => {
-  const { data: { session } } = await supabase.auth.getSession()
-  setUser(session?.user ?? null)
-}
-
-function setUser(arg0: User | null) {
-    throw new Error('Function not implemented.')
-}
