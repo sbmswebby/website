@@ -1,71 +1,90 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabaseClient';
 import { Session as SupabaseSession } from '@supabase/supabase-js';
+import jsPDF from 'jspdf';
+import QRCode from 'qrcode';
 
 interface RegisterButtonProps {
   eventId: string;
   sessionId: string;
+  eventName?: string; // optional, for PDF display
 }
 
-export default function RegisterButton({ eventId, sessionId }: RegisterButtonProps) {
+export default function RegisterButton({ eventId, sessionId, eventName }: RegisterButtonProps) {
   const [isRegistering, setIsRegistering] = useState(false);
+  const [isRegistered, setIsRegistered] = useState(false);
+  const [registrationId, setRegistrationId] = useState<string | null>(null);
+
+  // Check if the user is already registered
+  useEffect(() => {
+    const checkRegistration = async () => {
+      try {
+        const { data: sessionData } = await supabase.auth.getSession();
+        const user: SupabaseSession['user'] | null = sessionData.session?.user || null;
+        if (!user) return;
+
+        const { data: existing } = await supabase
+          .from('event_registrations')
+          .select('id')
+          .eq('user_id', user.id)
+          .eq('session_id', sessionId)
+          .maybeSingle();
+
+        if (existing?.id) {
+          setIsRegistered(true);
+          setRegistrationId(existing.id);
+        }
+      } catch (err) {
+        console.error('[RegisterButton] Error checking registration:', err);
+      }
+    };
+
+    checkRegistration();
+  }, [sessionId]);
+
+  const generatePdfTicket = async (regId: string) => {
+    const pdf = new jsPDF();
+    pdf.setFontSize(18);
+    pdf.text(eventName || 'Event Ticket', 20, 30);
+
+    const qrUrl = `https://sbms.com/registration?event_registration_id=${regId}`;
+    const qrDataUrl = await QRCode.toDataURL(qrUrl);
+
+    pdf.addImage(qrDataUrl, 'PNG', 20, 50, 50, 50); // x, y, width, height
+    pdf.setFontSize(12);
+    pdf.text(`Registration ID: ${regId}`, 20, 110);
+
+    pdf.save(`Ticket-${regId}.pdf`);
+  };
 
   const handleRegister = async () => {
-    console.log('[RegisterButton] handleRegister started');
     setIsRegistering(true);
 
     try {
-      console.log('[RegisterButton] Fetching session from Supabase');
-      const response = await supabase.auth.getSession();
-      console.log('[RegisterButton] session response:', response);
-
-      const session: SupabaseSession | null = response.data.session;
-      const sessionError = response.error;
-
-      if (sessionError) {
-        console.error('[RegisterButton] session error:', sessionError);
-        alert('Failed to get session.');
-        return;
-      }
-
-      if (!session) {
-        console.warn('[RegisterButton] No session found');
+      const { data: sessionData } = await supabase.auth.getSession();
+      const session: SupabaseSession | null = sessionData.session;
+      if (!session || !session.user) {
         alert('Please login to register.');
         return;
       }
-
       const user = session.user;
-      if (!user) {
-        console.warn('[RegisterButton] Session exists but no user found');
-        alert('Please login to register.');
-        return;
-      }
 
-      console.log('[RegisterButton] Checking existing registration for user:', user.id, 'session:', sessionId);
-
-      // Use maybeSingle to avoid 406 errors if no row exists
-      const { data: existing, error: fetchError } = await supabase
+      // Check again before inserting
+      const { data: existing } = await supabase
         .from('event_registrations')
         .select('id')
         .eq('user_id', user.id)
         .eq('session_id', sessionId)
         .maybeSingle();
 
-      if (fetchError) {
-        console.error('[RegisterButton] Error checking existing registration:', fetchError);
-        alert('Error checking registration.');
-        return;
-      }
-
-      if (existing) {
-        console.warn('[RegisterButton] User already registered for this session:', existing);
+      if (existing?.id) {
         alert('You have already registered for this session.');
+        setIsRegistered(true);
+        setRegistrationId(existing.id);
         return;
       }
-
-      console.log('[RegisterButton] Proceeding to register user:', user.id, 'for event:', eventId, 'session:', sessionId);
 
       const { data, error } = await supabase
         .from('event_registrations')
@@ -75,33 +94,43 @@ export default function RegisterButton({ eventId, sessionId }: RegisterButtonPro
           session_id: sessionId,
           payment_status: 'pending',
         })
-        .select(); // get inserted row
+        .select();
 
-      console.log('[RegisterButton] Insert result:', { data, error });
-
-      if (error) {
-        console.error('[RegisterButton] Registration failed:', error.message);
-        alert('Registration failed: ' + error.message);
-      } else {
-        console.log('[RegisterButton] Registration successful!');
-        alert('Registered successfully!');
+      if (error || !data || !data[0]?.id) {
+        alert('Registration failed: ' + error?.message);
+        return;
       }
+
+      const regId = data[0].id;
+      alert('Registered successfully! Downloading ticket...');
+      setIsRegistered(true);
+      setRegistrationId(regId);
+      await generatePdfTicket(regId);
+
     } catch (err) {
-      console.error('[RegisterButton] Unexpected error during registration:', err);
+      console.error('[RegisterButton] Unexpected error:', err);
       alert('Registration failed due to an unexpected error.');
     } finally {
-      console.log('[RegisterButton] Registration process finished, resetting state');
       setIsRegistering(false);
     }
   };
 
+  const handleDownloadPass = async () => {
+    if (!registrationId) return;
+    await generatePdfTicket(registrationId);
+  };
+
   return (
     <button
-      className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 disabled:bg-gray-400"
-      onClick={handleRegister}
+      className={`px-4 py-2 rounded text-white ${isRegistered ? 'bg-green-600 hover:bg-green-700' : 'bg-blue-600 hover:bg-blue-700'} disabled:bg-gray-400`}
+      onClick={isRegistered ? handleDownloadPass : handleRegister}
       disabled={isRegistering}
     >
-      {isRegistering ? 'Registering...' : 'Register'}
+      {isRegistering
+        ? 'Processing...'
+        : isRegistered
+        ? 'Download Pass'
+        : 'Register'}
     </button>
   );
 }
