@@ -45,13 +45,13 @@ export default function RegisterButton({ eventId, sessionId }: RegisterButtonPro
 
       console.log('[RegisterButton] Checking existing registration for user:', user.id, 'session:', sessionId);
 
-      // Check if user is already registered for this session
+      // Use maybeSingle to avoid 406 errors if no row exists
       const { data: existing, error: fetchError } = await supabase
         .from('event_registrations')
         .select('id')
         .eq('user_id', user.id)
         .eq('session_id', sessionId)
-        .single();
+        .maybeSingle();
 
       if (fetchError) {
         console.error('[RegisterButton] Error checking existing registration:', fetchError);
@@ -75,7 +75,7 @@ export default function RegisterButton({ eventId, sessionId }: RegisterButtonPro
           session_id: sessionId,
           payment_status: 'pending',
         })
-        .select();
+        .select(); // get inserted row
 
       console.log('[RegisterButton] Insert result:', { data, error });
 
