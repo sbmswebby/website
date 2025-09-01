@@ -14,7 +14,7 @@ import MediaCoverage from "@/components/MediaCoverage";
 import Seminars from "@/components/Seminars";
 
 
-
+ 
 
 export default function HomePage() {
   return (
