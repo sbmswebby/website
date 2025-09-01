@@ -95,7 +95,7 @@ export default function SignUpForm() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-950 p-4 sm:p-6 lg:p-8">
+    <div id='form' className="min-h-screen flex items-center justify-center bg-gray-950 p-4 sm:p-6 lg:p-8">
       <div className="w-full max-w-lg bg-gray-800 rounded-xl shadow-lg p-6 sm:p-8 space-y-6">
         <div className="text-center">
           <h2 className="text-3xl font-extrabold text-white">

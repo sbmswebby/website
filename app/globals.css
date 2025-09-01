@@ -269,8 +269,8 @@ nav.scrolled {
 /* === Dark & Gradient Sign In/Sign Up Form Styling === */
 
 /* Main Container */
-#signIn,
-#signUp {
+#form1,
+#form1 {
   display: flex;
   justify-content: center;
   align-items: center;
@@ -282,8 +282,8 @@ nav.scrolled {
 }
 
 /* Form Card */
-#signIn > div,
-#signUp > div {
+#form1 > div,
+#form1 > div {
   background: rgba(255, 255, 255, 0.05);
   backdrop-filter: blur(20px);
   border-radius: 20px;
@@ -295,28 +295,28 @@ nav.scrolled {
   transition: transform 0.3s ease;
 }
 
-#signIn > div:hover,
-#signUp > div:hover {
+#form1 > div:hover,
+#form1 > div:hover {
   transform: translateY(-5px);
   box-shadow: 0 15px 50px rgba(255, 107, 157, 0.3);
 }
 
 @media (min-width: 768px) {
-  #signIn > div,
-  #signUp > div {
+  #form1 > div,
+  #form1 > div {
     max-width: 800px; /* Wider desktop width */
   }
 }
 
-#signIn > div:hover,
-#signUp > div:hover {
+#form1 > div:hover,
+#form1 > div:hover {
   transform: translateY(-5px);
   box-shadow: 0 15px 50px rgba(255, 107, 157, 0.3);
 }
 
 /* Heading */
-#signIn h2,
-#signUp h2 {
+#form1 h2,
+#form1 h2 {
   font-family: 'Playfair Display', serif;
   font-size: 2.5rem;
   font-weight: 700;
@@ -328,8 +328,8 @@ nav.scrolled {
   text-align: center;
 }
 
-#signIn p,
-#signUp p {
+#form1 p,
+#form1 p {
   font-size: 1rem;
   color: rgba(255, 255, 255, 0.7);
   margin-top: 0;
@@ -337,8 +337,8 @@ nav.scrolled {
 }
 
 /* Form Labels */
-#signIn label,
-#signUp label {
+#form1 label,
+#form1 label {
   display: block;
   font-size: 1rem;
   color: #ededed;
@@ -347,9 +347,9 @@ nav.scrolled {
 }
 
 /* Form Inputs and Select */
-#signIn input,
-#signUp input,
-#signUp select {
+#form1 input,
+#form1 input,
+#form1 select {
   width: 100%;
   padding: 12px;
   border: 1px solid rgba(255, 107, 157, 0.3);
@@ -368,55 +368,55 @@ nav.scrolled {
   background-size: 1em;
 }
 
-#signUp select:focus {
+#form1 select:focus {
   border-color: #ff6b9d;
   box-shadow: 0 0 0 1px #ff6b9d, 0 0 15px rgba(255, 107, 157, 0.3);
 }
 
 /* This targets the options within the dropdown */
-#signUp select option {
+#form1 select option {
   background: #0a0a0a;
   color: #ededed;
 }
 
-#signIn input:focus,
-#signUp input:focus,
-#signUp select:focus {
+#form1 input:focus,
+#form1 input:focus,
+#form1 select:focus {
   border-color: #ff6b9d;
   box-shadow: 0 0 0 1px #ff6b9d, 0 0 15px rgba(255, 107, 157, 0.3);
 }
 
 /* Input Placeholder */
-#signIn input::placeholder,
-#signUp input::placeholder {
+#form1 input::placeholder,
+#form1 input::placeholder {
   color: rgba(255, 255, 255, 0.5);
 }
 
 /* Checkbox and Small Text */
-#signIn .flex label,
-#signUp .flex label {
+#form1 .flex label,
+#form1 .flex label {
   font-size: 0.9rem;
   color: rgba(255, 255, 255, 0.8);
 }
 
 /* Links */
-#signIn a,
-#signUp a {
+#form1 a,
+#form1 a {
   color: #ff6b9d;
   font-size: 1rem;
   text-decoration: none;
   transition: color 0.3s;
 }
 
-#signIn a:hover,
-#signUp a:hover {
+#form1 a:hover,
+#form1 a:hover {
   color: #ffd93d;
   text-decoration: underline;
 }
 
 /* Buttons */
-#signIn button,
-#signUp button {
+#form1 button,
+#form1 button {
   width: 100%;
   background: linear-gradient(45deg, #ff6b9d, #ffd93d);
   color: #ffffff;
@@ -431,15 +431,15 @@ nav.scrolled {
   box-shadow: 0 5px 20px rgba(255, 107, 157, 0.2);
 }
 
-#signIn button:hover,
-#signUp button:hover {
+#form1 button:hover,
+#form1 button:hover {
   background: linear-gradient(45deg, #ffd93d, #ff6b9d);
   transform: translateY(-3px) scale(1.02);
   box-shadow: 0 8px 25px rgba(255, 107, 157, 0.4);
 }
 
-#signIn button:disabled,
-#signUp button:disabled {
+#form1 button:disabled,
+#form1 button:disabled {
   background: #4a4a4a;
   color: #999;
   cursor: not-allowed;
@@ -448,8 +448,8 @@ nav.scrolled {
 }
 
 /* Message Boxes */
-#signUp .bg-green-100,
-#signUp .bg-red-100 {
+#form1 .bg-green-100,
+#form1 .bg-red-100 {
   font-size: 0.9rem;
   padding: 12px;
   border-radius: 8px;
@@ -458,7 +458,7 @@ nav.scrolled {
   color: #4ade80;
 }
 
-#signUp .bg-red-100 {
+#form1 .bg-red-100 {
   background: rgba(255, 100, 100, 0.1);
   color: #f87171;
 }
