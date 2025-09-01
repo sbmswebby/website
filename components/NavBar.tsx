@@ -1,5 +1,5 @@
 "use client"
-import React, { useState } from "react"
+import React, { useState, useEffect } from "react"
 import { Menu, X, User } from "lucide-react"
 import Image from "next/image"
 import { useAuth } from "@/components/AuthProvider"
@@ -8,6 +8,12 @@ const Navbar = () => {
   const { user, profile, loading, logout } = useAuth()
   const [isOpen, setIsOpen] = useState(false)
   const [profileOpen, setProfileOpen] = useState(false)
+  const [mounted, setMounted] = useState(false)
+
+  // Make sure we only render auth-dependent UI after hydration
+  useEffect(() => {
+    setMounted(true)
+  }, [])
 
   return (
     <nav className="sticky top-0 h-20 w-full z-50 bg-[rgba(10,10,10,0.95)] backdrop-blur-xl border-b border-[rgba(255,107,157,0.2)] text-white">
@@ -33,7 +39,10 @@ const Navbar = () => {
 
           {/* Right side - Profile */}
           <div className="relative">
-            {loading ? (
+            {!mounted ? (
+              // Render stable placeholder while waiting for hydration
+              <div className="w-10 h-10 flex items-center justify-center rounded-full bg-gray-200" />
+            ) : loading ? (
               <div className="w-10 h-10 flex items-center justify-center rounded-full bg-gray-200 animate-pulse">
                 <span className="text-xs text-gray-500">...</span>
               </div>
@@ -47,7 +56,7 @@ const Navbar = () => {
             )}
 
             {/* Dropdown */}
-            {profileOpen && !loading && (
+            {mounted && profileOpen && !loading && (
               <div className="absolute p-6 left-1/2 -translate-x-1/2 mt-2 w-72 bg-gray-900 text-white rounded-xl shadow-2xl overflow-hidden">
                 {user && profile ? (
                   <div>

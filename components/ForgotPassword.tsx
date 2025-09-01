@@ -2,37 +2,28 @@
 
 import { useState } from 'react'
 import { supabase } from '@/lib/supabaseClient'
-import { useAuth } from '@/components/AuthProvider'
 
-export default function ResetPasswordLink() {
-  const { user } = useAuth()
+export default function ForgotPassword() {
+  const [showBox, setShowBox] = useState(false)
+  const [email, setEmail] = useState('')
   const [message, setMessage] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
 
-  const handleReset = async (e: React.MouseEvent<HTMLAnchorElement>) => {
-    e.preventDefault()
-    if (!user?.email) {
-      setMessage('No email found for this user.')
-      return
-    }
-
-    setLoading(true)
+  const handleSendResetLink = async () => {
     setMessage(null)
+    setLoading(true)
 
     try {
-      const { error } = await supabase.auth.resetPasswordForEmail(user.email, {
-        redirectTo: `${window.location.origin}/reset-password`, // route where user resets password
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/reset-password`, // where user sets new password
       })
 
       if (error) throw error
-
-      setMessage('Password reset email sent! Please check your inbox.')
+      setMessage('✅ Password reset email sent! Please check your inbox.')
     } catch (err: unknown) {
-      if (err instanceof Error) {
-        setMessage(`Error: ${err.message}`)
-      } else {
-        setMessage('Failed to send reset email.')
-      }
+      setMessage(
+        err instanceof Error ? `❌ ${err.message}` : '❌ Failed to send reset email.'
+      )
     } finally {
       setLoading(false)
     }
@@ -40,14 +31,40 @@ export default function ResetPasswordLink() {
 
   return (
     <div>
-      <a
-        href="#"
-        onClick={handleReset}
-        className="text-blue-600 hover:underline cursor-pointer"
-      >
-        {loading ? 'Sending...' : 'Forgot Password?'}
-      </a>
-      {message && <p className="mt-2 text-sm text-gray-600">{message}</p>}
+      {!showBox ? (
+        <a
+          href="#"
+          onClick={(e) => {
+            e.preventDefault()
+            setShowBox(true)
+          }}
+          className="text-blue-600 hover:underline cursor-pointer"
+        >
+          Forgot Password?
+        </a>
+      ) : (
+        <div className="w-full max-w-md p-4 rounded-xl shadow-md mt-4">
+          <h1 className="text-lg font-semibold mb-2">Reset Password</h1>
+          <div className="space-y-3">
+            <input
+              type="email"
+              placeholder="Enter your email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+              className="w-full px-3 py-2 border rounded-md"
+            />
+            <button
+              onClick={handleSendResetLink}
+              disabled={loading}
+              className="w-full disabled:opacity-50"
+            >
+              {loading ? 'Sending...' : 'Send Reset Link'}
+            </button>
+          </div>
+          {message && <p className="mt-3 text-sm text-center">{message}</p>}
+        </div>
+      )}
     </div>
   )
 }
