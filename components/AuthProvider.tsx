@@ -11,6 +11,17 @@ type AuthContextType = {
   loading: boolean
   logout: () => Promise<void>
   refreshSession: () => Promise<void>
+  signUp: (data: {
+    email: string
+    password: string
+    fullName: string
+    number: string
+    instaId?: string | null
+    organisation?: string | null
+    age?: number | null
+    gender?: string | null
+  }) => Promise<{ error?: string }>
+  updateProfile: (updates: Partial<UserProfile>) => Promise<{ error?: string }>
 }
 
 const AuthContext = createContext<AuthContextType>({
@@ -19,6 +30,8 @@ const AuthContext = createContext<AuthContextType>({
   loading: true,
   logout: async () => {},
   refreshSession: async () => {},
+  signUp: async () => ({ error: 'Not implemented' }),
+  updateProfile: async () => ({ error: 'Not implemented' }),
 })
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
@@ -67,8 +80,70 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setUser(session?.user ?? null)
   }
 
+  const signUp: AuthContextType['signUp'] = async ({
+    email,
+    password,
+    fullName,
+    number,
+    instaId,
+    organisation,
+    age,
+    gender,
+  }) => {
+    const { data: authData, error: authError } = await supabase.auth.signUp({
+      email,
+      password,
+      options: { data: { full_name: fullName } },
+    })
+
+    if (authError) return { error: authError.message }
+
+    const newUser = authData.user ?? authData.session?.user
+    if (!newUser) return { error: 'No user returned from sign up' }
+
+    const { error: profileError } = await supabase.from('user_profiles').insert({
+      id: newUser.id,
+      full_name: fullName,
+      number,
+      insta_id: instaId || null,
+      organisation: organisation || null,
+      age,
+      gender: gender || null,
+    })
+
+    if (profileError) return { error: profileError.message }
+
+    setUser(newUser)
+    setProfile(await getUserProfile())
+    return {}
+  }
+
+  const updateProfile: AuthContextType['updateProfile'] = async (updates) => {
+    if (!user) return { error: 'Not signed in' }
+
+    const { error } = await supabase
+      .from('user_profiles')
+      .update(updates)
+      .eq('id', user.id)
+
+    if (error) return { error: error.message }
+
+    setProfile(await getUserProfile())
+    return {}
+  }
+
   return (
-    <AuthContext.Provider value={{ user, profile, loading, logout, refreshSession }}>
+    <AuthContext.Provider
+      value={{
+        user,
+        profile,
+        loading,
+        logout,
+        refreshSession,
+        signUp,
+        updateProfile,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   )
