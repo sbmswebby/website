@@ -15,34 +15,35 @@ export interface EventSessionCardProps {
 }
 
 export const EventSessionCard: FC<EventSessionCardProps> = ({
-  id,
   title,
   description,
   imageUrl,
-  eventId,
-  sessionId,
   cost,
-  isRegistered,
-  paymentStatus,
   children,
 }) => {
   return (
-    <div className=" event-card">
-      <div className="relative w-full h-48">
+    <div className="event-card w-full max-w-5xl mx-auto">
+      <div className="event-card-image flex justify-center items-center bg-black">
         <Image
           src={imageUrl}
           alt={title}
-          fill
-          className="object-cover transition-transform duration-300 hover:scale-105"
+          width={800}
+          height={400}
+          className="object-contain max-h-96 w-auto"
         />
       </div>
-      <div className="event-card-content p-4 flex flex-col flex-1">
-        <h3 className="event-card-title font-semibold text-lg">{title}</h3>
-        <p className="event-card-description">{description}</p>
-        <p className="event-card-description">
-          {cost > 0 ? `${cost}` : 'Free'}
-        </p>
-        <div className="mt-4">{children}</div> {/* Render optional children like RegisterButton */}
+      <div className="event-card-content flex flex-col md:flex-row items-start md:items-end justify-between">
+        {/* Text Section */}
+        <div className="event-card-text">
+          <h3 className="event-card-title">{title}</h3>
+          <p className="event-card-description">{description}</p>
+          <p className="event-card-meta">
+            {cost > 0 ? `₹${cost}` : 'Free'}
+          </p>
+        </div>
+
+        {/* Button Section */}
+        <div className="mt-4 md:mt-0">{children}</div>
       </div>
     </div>
   );
