@@ -32,7 +32,6 @@ export default function HomePage() {
       <Events />
       <Awards />
       <Gallery />
-      <ImageGallery />
       <MediaCoverage />
       <Magazine />
       <Contact />

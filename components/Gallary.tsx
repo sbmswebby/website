@@ -1,9 +1,10 @@
 "use client";
 import React from "react";
+import { ImageGallery } from "./ImageGallery";
 
 export default function Gallery() {
   return (
-    <section className="section fade-in" id="gallery">
+    <section className="section fade-in w-full" id="gallery">
       <h2 className="section-title">Gallery</h2>
       <p className="section-subtitle">
         Explore our stunning portfolio of bridal transformations, showcasing the
@@ -38,6 +39,8 @@ export default function Gallery() {
           </p>
         </div>
       </div>
+      <div className="h-10"></div>
+      <ImageGallery/>
     </section>
   );
 }
