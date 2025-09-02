@@ -22,7 +22,7 @@ export const EventSessionCard: FC<EventSessionCardProps> = ({
   children,
 }) => {
   return (
-    <div className="event-card w-full max-w-5xl mx-auto">
+    <div className="event-card shimmer-effect w-full max-w-5xl mx-auto">
       <div className="event-card-image flex justify-center items-center bg-black">
         <Image
           src={imageUrl}
