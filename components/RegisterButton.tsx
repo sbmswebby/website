@@ -164,7 +164,7 @@ const generatePdfTicket = async (regId: string) => {
 
   return (
     <button
-      className={`px-4 py-2 rounded text-white ${isRegistered ? 'bg-green-600 hover:bg-green-700' : 'bg-blue-600 hover:bg-blue-700'} disabled:bg-gray-400`}
+      className={` register-btn px-4 py-2 rounded text-white ${isRegistered ? 'bg-green-600 hover:bg-green-700' : 'bg-blue-600 hover:bg-blue-700'} disabled:bg-gray-400`}
       onClick={isRegistered ? handleDownloadPass : handleRegister}
       disabled={isRegistering}
     >

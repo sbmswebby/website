@@ -27,7 +27,7 @@ export const EventSessionCard: FC<EventSessionCardProps> = ({
   children,
 }) => {
   return (
-    <div className="bg-gray-50 rounded-lg shadow overflow-hidden flex flex-col">
+    <div className=" event-card">
       <div className="relative w-full h-48">
         <Image
           src={imageUrl}
@@ -36,10 +36,10 @@ export const EventSessionCard: FC<EventSessionCardProps> = ({
           className="object-cover transition-transform duration-300 hover:scale-105"
         />
       </div>
-      <div className="p-4 flex flex-col flex-1">
-        <h3 className="font-semibold text-lg">{title}</h3>
-        <p className="text-gray-600 flex-1">{description}</p>
-        <p className="text-gray-700 font-medium mt-2">
+      <div className="event-card-content p-4 flex flex-col flex-1">
+        <h3 className="event-card-title font-semibold text-lg">{title}</h3>
+        <p className="event-card-description">{description}</p>
+        <p className="event-card-description">
           {cost > 0 ? `${cost}` : 'Free'}
         </p>
         <div className="mt-4">{children}</div> {/* Render optional children like RegisterButton */}
