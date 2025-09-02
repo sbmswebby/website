@@ -44,20 +44,62 @@ export default function RegisterButton({ eventId, sessionId, eventName }: Regist
     checkRegistration();
   }, [sessionId]);
 
-  const generatePdfTicket = async (regId: string) => {
+const generatePdfTicket = async (regId: string) => {
+  try {
+    const { data: registration } = await supabase
+      .from('event_registrations')
+      .select('*')
+      .eq('id', regId)
+      .maybeSingle();
+    if (!registration) throw new Error('Registration not found');
+
+    // Fetch event
+    const { data: eventData } = await supabase
+      .from('events')
+      .select('name')
+      .eq('id', registration.event_id)
+      .maybeSingle();
+
+    // Fetch session name
+    let sessionName: string | null = null;
+    if (registration.session_id) {
+      const { data: sessionData } = await supabase
+        .from('sessions')
+        .select('name')
+        .eq('id', registration.session_id)
+        .maybeSingle();
+      sessionName = sessionData?.name || null;
+    }
+
+    // Fetch user profile (name + number)
+    const { data: userProfile } = await supabase
+      .from('user_profiles')
+      .select('full_name,number')
+      .eq('id', registration.user_id)
+      .maybeSingle();
+
     const pdf = new jsPDF();
     pdf.setFontSize(18);
-    pdf.text(eventName || 'Event Ticket', 20, 30);
+    pdf.text('Event Ticket', 20, 30);
+    pdf.setFontSize(14);
+    pdf.text(`Name: ${userProfile?.full_name || 'Unknown'}`, 20, 45);
+    pdf.text(`Number: ${userProfile?.number || 'Unknown'}`, 20, 55);
+    pdf.text(`Event: ${eventData?.name || eventName || 'Unknown Event'}`, 20, 70);
+    if (sessionName) pdf.text(`Session: ${sessionName}`, 20, 80);
+    pdf.text(`Registration ID: ${registration.id}`, 20, 90);
+    pdf.text(`Payment Status: ${registration.payment_status || 'Pending'}`, 20, 100);
 
-    const qrUrl = `https://sbms.com/registrations?event_registration_id=${regId}`;
+    const qrUrl = `https://sbms.com/registrations?event_registration_id=${registration.id}`;
     const qrDataUrl = await QRCode.toDataURL(qrUrl);
+    pdf.addImage(qrDataUrl, 'PNG', 20, 110, 50, 50);
 
-    pdf.addImage(qrDataUrl, 'PNG', 20, 50, 50, 50); // x, y, width, height
-    pdf.setFontSize(12);
-    pdf.text(`Registration ID: ${regId}`, 20, 110);
+    pdf.save(`Ticket-${registration.id}.pdf`);
+  } catch (err) {
+    console.error('[RegisterButton] PDF generation failed:', err);
+    alert('Failed to generate ticket.');
+  }
+};
 
-    pdf.save(`Ticket-${regId}.pdf`);
-  };
 
   const handleRegister = async () => {
     setIsRegistering(true);
