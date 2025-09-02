@@ -1,11 +1,13 @@
-// app/award/page.tsx
+// app/awards/page.tsx
 
-import { Award } from "lucide-react";
+import Awards from "@/components/Awards";
+
+
 
 
 
 export default function AboutPage() {
   return (
-    <Award/>
+    <Awards/>
   )
 }
