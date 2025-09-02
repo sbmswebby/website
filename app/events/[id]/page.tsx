@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { use, useEffect, useState } from 'react';
 import Image from 'next/image';
 import { supabase } from '@/lib/supabaseClient';
 import RegisterButton from '@/components/RegisterButton';
@@ -27,10 +27,12 @@ type EventWithSessions = {
   sessions: Session[];
 };
 
-export default function EventDetailPage({ params }: { params: { id: string } }) {
+export default function EventDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  // ✅ unwrap promise
+  const { id } = use(params);
+
   const [event, setEvent] = useState<EventWithSessions | null>(null);
   const [loading, setLoading] = useState(true);
-  const { id } = params;
 
   useEffect(() => {
     const fetchEvent = async () => {
@@ -96,7 +98,7 @@ export default function EventDetailPage({ params }: { params: { id: string } }) 
               sessionId={s.id}
               isRegistered={false}
               cost={s.cost || 0}
-              paymentStatus={''}
+              paymentStatus=""
             >
               <RegisterButton eventId={event.id} sessionId={s.id} />
             </EventSessionCard>
