@@ -1,11 +1,10 @@
-// @/components/ImageComponents.tsx
-
 "use client";
 
 import { useState, useEffect, useRef } from "react";
 import Image from "next/image";
+import { useInView } from "react-intersection-observer";
 
-// Define the type for image data, including an optional link.
+// Define the type for image data
 export interface ImageData {
   src: string;
   alt: string;
@@ -13,140 +12,225 @@ export interface ImageData {
 }
 
 // ---
-// ## Image Carousel Component
-
-interface ImageCarouselProps {
-  images: ImageData[];
-  autoPlay?: boolean;   // ✅ optional autoplay
-  interval?: number;    // ✅ autoplay interval
-  showDots?: boolean;   // ✅ show/hide dots
-}
-
-export const ImageCarousel = ({
-  images,
-  autoPlay = true,
-  interval = 4000,
-  showDots = true,
-}: ImageCarouselProps) => {
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
-
-  const resetTimeout = () => {
-    if (timeoutRef.current) clearTimeout(timeoutRef.current);
-  };
+// Fetch gallery images from a client-side API route
+const useGalleryImages = (): ImageData[] => {
+  const [images, setImages] = useState<ImageData[]>([]);
 
   useEffect(() => {
-    if (autoPlay) {
-      resetTimeout();
-      timeoutRef.current = setTimeout(
-        () =>
-          setCurrentIndex((prevIndex) =>
-            prevIndex === images.length - 1 ? 0 : prevIndex + 1
-          ),
-        interval
-      );
-    }
-    return () => resetTimeout();
-  }, [currentIndex, images.length, autoPlay, interval]);
+    fetch("/api/gallery")
+      .then((res) => res.json())
+      .then(setImages)
+      .catch((err) => console.error("Failed to load gallery images:", err));
+  }, []);
 
-  const handlePrev = () => {
-    setCurrentIndex((prevIndex) =>
-      prevIndex === 0 ? images.length - 1 : prevIndex - 1
-    );
-  };
+  return images;
+};
 
-  const handleNext = () => {
-    setCurrentIndex((prevIndex) =>
-      prevIndex === images.length - 1 ? 0 : prevIndex + 1
-    );
-  };
+// ---
+// Lazy-loaded Image wrapper with optional click handler
+interface LazyImageProps {
+  src: string;
+  alt: string;
+  className?: string;
+  priority?: boolean;
+  onClick?: () => void;
+}
+
+const LazyImage = ({ src, alt, className, priority, onClick }: LazyImageProps) => {
+  const { ref, inView } = useInView({ triggerOnce: true, rootMargin: "200px" });
 
   return (
-    <div className="relative w-full h-full overflow-hidden rounded-lg shadow-xl">
-      {/* Carousel slides */}
-      <div
-        className="flex transition-transform duration-700 ease-in-out"
-        style={{ transform: `translateX(-${currentIndex * 100}%)` }}
-      >
-        {images.map((image, index) => (
-          <div key={index} className="relative w-full flex-shrink-0">
-            <Image
-              src={image.src}
-              alt={image.alt}
-              width={1920}
-              height={1080}
-              className="object-cover w-full h-full"
-              priority={index === 0}
-              loading={index === 0 ? "eager" : "lazy"}
-            />
-          </div>
-        ))}
-      </div>
-
-      {/* Navigation arrows */}
-      <button
-        onClick={handlePrev}
-        aria-label="Previous slide"
-        className="absolute left-4 top-1/2 -translate-y-1/2 rounded-full p-2 text-white transition-colors duration-300 hover:bg-black/30"
-      >
-        &#10094;
-      </button>
-      <button
-        onClick={handleNext}
-        aria-label="Next slide"
-        className="absolute right-4 top-1/2 -translate-y-1/2 rounded-full p-2 text-white transition-colors duration-300 hover:bg-black/30"
-      >
-        &#10095;
-      </button>
-
-      {/* ✅ Dots now toggleable */}
-      {showDots && (
-        <div className="absolute inset-x-0 bottom-4 flex justify-center space-x-2">
-          {images.map((_, index) => (
-            <button
-              key={index}
-              onClick={() => setCurrentIndex(index)}
-              aria-label={`Go to slide ${index + 1}`}
-              className={`h-2 w-2 rounded-full transition-colors duration-300 ${
-                currentIndex === index ? "bg-white" : "bg-gray-400"
-              }`}
-            />
-          ))}
-        </div>
+    <div ref={ref} className={className} onClick={onClick}>
+      {inView && (
+        <Image
+          src={src}
+          alt={alt}
+          fill
+          className="object-contain w-full h-full"
+          priority={priority}
+          loading={priority ? "eager" : "lazy"}
+        />
       )}
     </div>
   );
 };
 
 // ---
-// Image Grid Component
-
-interface ImageGridProps {
-  images: ImageData[];
+// Modal Component (sticky on screen)
+interface ModalProps {
+  src: string;
+  alt: string;
+  onClose: () => void;
 }
 
-export const ImageGrid = ({ images }: ImageGridProps) => {
+const Modal = ({ src, alt, onClose }: ModalProps) => {
+  const modalRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (modalRef.current && !modalRef.current.contains(event.target as Node)) {
+        onClose();
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [onClose]);
+
   return (
-    <div className="container mt-10 mx-auto my-10 gap-10 px-4 sm:px-6 lg:px-8">
-      <div className="h-10"></div>
- 
-          <div className="grid grid-cols-1 gap-10 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
-            {images.map((image, index) => (
-              <div
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4">
+      <div
+        ref={modalRef}
+        className="relative max-h-full max-w-full overflow-auto rounded-lg shadow-lg"
+      >
+        <Image
+          src={src}
+          alt={alt}
+          width={1920}
+          height={1080}
+          className="object-contain w-full h-full"
+        />
+      </div>
+    </div>
+  );
+};
+
+// ---
+// Image Carousel Component
+interface ImageCarouselProps {
+  autoPlay?: boolean;
+  interval?: number;
+  showDots?: boolean;
+}
+
+export const ImageCarousel = ({
+  autoPlay = true,
+  interval = 4000,
+  showDots = true,
+}: ImageCarouselProps) => {
+  const images = useGalleryImages();
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const [modalImage, setModalImage] = useState<ImageData | null>(null);
+
+  const resetTimeout = () => {
+    if (timeoutRef.current) clearTimeout(timeoutRef.current);
+  };
+
+  useEffect(() => {
+    if (autoPlay && images.length > 0) {
+      resetTimeout();
+      timeoutRef.current = setTimeout(() => {
+        setCurrentIndex((prevIndex) =>
+          prevIndex === images.length - 1 ? 0 : prevIndex + 1
+        );
+      }, interval);
+    }
+    return () => resetTimeout();
+  }, [currentIndex, images.length, autoPlay, interval]);
+
+  const handlePrev = () =>
+    setCurrentIndex((prevIndex) =>
+      prevIndex === 0 ? images.length - 1 : prevIndex - 1
+    );
+
+  const handleNext = () =>
+    setCurrentIndex((prevIndex) =>
+      prevIndex === images.length - 1 ? 0 : prevIndex + 1
+    );
+
+  if (images.length === 0) return null;
+
+  return (
+    <>
+      <div className="relative w-full overflow-hidden rounded-lg shadow-xl">
+        <div
+          className="flex transition-transform duration-700 ease-in-out"
+          style={{ transform: `translateX(-${currentIndex * 100}%)` }}
+        >
+          {images.map((image, index) => (
+            <LazyImage
+              key={index}
+              src={image.src}
+              alt={image.alt}
+              className="relative w-full flex-shrink-0 aspect-[16/9] cursor-pointer"
+              priority={index === 0}
+              onClick={() => setModalImage(image)}
+            />
+          ))}
+        </div>
+
+        <button
+          onClick={handlePrev}
+          aria-label="Previous slide"
+          className="absolute left-4 top-1/2 -translate-y-1/2 rounded-full p-2 text-white hover:bg-black/30"
+        >
+          &#10094;
+        </button>
+        <button
+          onClick={handleNext}
+          aria-label="Next slide"
+          className="absolute right-4 top-1/2 -translate-y-1/2 rounded-full p-2 text-white hover:bg-black/30"
+        >
+          &#10095;
+        </button>
+
+        {showDots && (
+          <div className="absolute inset-x-0 bottom-4 flex justify-center space-x-2">
+            {images.map((_, index) => (
+              <button
                 key={index}
-                className="relative overflow-hidden rounded-lg shadow-md transition-transform duration-300 hover:scale-105 cursor-pointer"
-              >
-                <Image
-                  src={image.src}
-                  alt={image.alt}
-                  width={600}
-                  height={400}
-                  className="h-full w-full object-cover transition-all duration-300 hover:brightness-75"
-                  loading="lazy"
-                />
-              </div>
+                onClick={() => setCurrentIndex(index)}
+                className={`h-2 w-2 rounded-full transition-colors duration-300 ${
+                  currentIndex === index ? "bg-white" : "bg-gray-400"
+                }`}
+              />
             ))}
           </div>
-    </div>
+        )}
+      </div>
+
+      {modalImage && (
+        <Modal
+          src={modalImage.src}
+          alt={modalImage.alt}
+          onClose={() => setModalImage(null)}
+        />
+      )}
+    </>
+  );
+};
+
+// ---
+// Image Grid Component
+export const ImageGrid = () => {
+  const images = useGalleryImages();
+  const [modalImage, setModalImage] = useState<ImageData | null>(null);
+
+  if (images.length === 0) return null;
+
+  return (
+    <>
+      <div className="container mt-10 mx-auto my-10 gap-10 px-4 sm:px-6 lg:px-8">
+        <div className="grid grid-cols-1 gap-10 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+          {images.map((image, index) => (
+            <LazyImage
+              key={index}
+              src={image.src}
+              alt={image.alt}
+              className="relative overflow-hidden rounded-lg shadow-md transition-transform duration-300 hover:scale-105 cursor-pointer aspect-[16/9]"
+              onClick={() => setModalImage(image)}
+            />
+          ))}
+        </div>
+      </div>
+
+      {modalImage && (
+        <Modal
+          src={modalImage.src}
+          alt={modalImage.alt}
+          onClose={() => setModalImage(null)}
+        />
+      )}
+    </>
   );
 };
