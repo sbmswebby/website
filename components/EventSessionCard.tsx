@@ -11,15 +11,20 @@ export interface EventSessionCardProps {
   cost: number;
   isRegistered: boolean;
   paymentStatus: string;
-  children?: ReactNode; // <-- Add this
+  children?: ReactNode;
 }
 
 export const EventSessionCard: FC<EventSessionCardProps> = ({
+  id,
   title,
   description,
   imageUrl,
+  eventId,
+  sessionId,
   cost,
-  children, // <-- receive children
+  isRegistered,
+  paymentStatus,
+  children,
 }) => {
   return (
     <div className="bg-gray-50 rounded-lg shadow overflow-hidden flex flex-col">
@@ -35,9 +40,9 @@ export const EventSessionCard: FC<EventSessionCardProps> = ({
         <h3 className="font-semibold text-lg">{title}</h3>
         <p className="text-gray-600 flex-1">{description}</p>
         <p className="text-gray-700 font-medium mt-2">
-          {cost > 0 ? ` ${cost}` : 'Free'}
+          {cost > 0 ? `${cost}` : 'Free'}
         </p>
-        <div className="mt-4">{children}</div> {/* Render the RegisterButton here */}
+        <div className="mt-4">{children}</div> {/* Render optional children like RegisterButton */}
       </div>
     </div>
   );

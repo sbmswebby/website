@@ -6,6 +6,7 @@ import jsPDF from 'jspdf';
 import QRCode from 'qrcode';
 import { useSearchParams } from 'next/navigation';
 import { EventSessionCard } from '@/components/EventSessionCard';
+import RegisterButton from '@/components/RegisterButton';
 
 // Registration state type
 type Registration = {
@@ -176,7 +177,9 @@ export default function RegistrationsPage() {
             eventId={r.event_id}
             sessionId={r.session_id || ''}
             isRegistered={true} // always true since these are registrations
-            paymentStatus={r.payment_status || 'Pending'} cost={0}          />
+            paymentStatus={r.payment_status || 'Pending'} cost={0}          >
+              <RegisterButton eventId={r.event_id} sessionId={r.session_id || ''}/>
+            </EventSessionCard>
         ))}
       </div>
     </div>

@@ -1,8 +1,8 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { supabase } from '@/lib/supabaseClient';
 import { useRouter } from 'next/navigation';
+import { supabase } from '@/lib/supabaseClient';
 import { EventSessionCard } from '@/components/EventSessionCard';
 
 type Event = {
@@ -24,9 +24,13 @@ export default function EventsPage() {
         .select('*')
         .order('date', { ascending: true });
 
-      if (error) console.error(error);
-      else setEvents(data as Event[]);
+      if (error) {
+        console.error('[EventsPage] Error fetching events:', error);
+      } else {
+        setEvents(data as Event[]);
+      }
     };
+
     fetchEvents();
   }, []);
 
@@ -35,16 +39,23 @@ export default function EventsPage() {
       <h1 className="text-3xl font-bold mb-6">Upcoming Events</h1>
       <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
         {events.map((event) => (
-          <div key={event.id} onClick={() => router.push(`/events/${event.id}`)}>
+          <div
+            key={event.id}
+            className="cursor-pointer"
+            onClick={() => router.push(`/events/${event.id}`)}
+          >
             <EventSessionCard
               id={event.id}
               title={event.name}
               description={event.description || 'No description'}
-              imageUrl={event.photo_url || '/images/placeholder.png'}
+              imageUrl={event.photo_url || '/images/placeholder.png'} // fallback placeholder
               eventId={''}
               sessionId={''}
-              cost={0} isRegistered={false} paymentStatus={''}  // cost & currency not needed for events
+              cost={0}
+              isRegistered={false}
+              paymentStatus={''} // cost & currency not needed for events
             />
+            
           </div>
         ))}
       </div>
