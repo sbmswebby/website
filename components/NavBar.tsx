@@ -3,6 +3,7 @@ import React, { useState, useEffect } from "react"
 import { Menu, X, User } from "lucide-react"
 import Image from "next/image"
 import { useAuth } from "@/components/AuthProvider"
+import Link from "next/link"
 
 const Navbar = () => {
   const { user, profile, loading, logout } = useAuth()
@@ -26,15 +27,15 @@ const Navbar = () => {
 
           {/* Desktop Links */}
           <ul className="hidden md:flex items-center space-x-8 nav-links">
-            <li><a href="#about" className="hover:text-pink-400">About Us</a></li>
-            <li><a href="#competitions" className="hover:text-pink-400">Competitions</a></li>
-            <li><a href="#seminars" className="hover:text-pink-400">Seminars</a></li>
-            <li><a href="#academy" className="hover:text-pink-400">Academy</a></li>
-            <li><a href="#events" className="hover:text-pink-400">Events</a></li>
-            <li><a href="#awards" className="hover:text-pink-400">Awards</a></li>
-            <li><a href="#contact" className="hover:text-pink-400">Contact</a></li>
-            <li><a href="#gallery" className="hover:text-pink-400">Gallery</a></li>
-            <li><a href="#magazine" className="hover:text-pink-400">Magazine</a></li>
+            <li><Link href="/about" className="hover:text-pink-400">About Us</Link></li>
+            <li><Link href="/competitions" className="hover:text-pink-400">Competitions</Link></li>
+            <li><Link href="/seminars" className="hover:text-pink-400">Seminars</Link></li>
+            <li><Link href="/academy" className="hover:text-pink-400">Academy</Link></li>
+            <li><Link href="/events" className="hover:text-pink-400">Events</Link></li>
+            <li><Link href="/awards" className="hover:text-pink-400">Awards</Link></li>
+            <li><Link href="/contact" className="hover:text-pink-400">Contact</Link></li>
+            <li><Link href="/gallery" className="hover:text-pink-400">Gallery</Link></li>
+            <li><Link href="/magazine" className="hover:text-pink-400">Magazine</Link></li>
           </ul>
 
           {/* Right side - Profile */}
@@ -112,19 +113,20 @@ const Navbar = () => {
       {isOpen && (
         <div className="md:hidden bg-[rgba(10,10,10,0.95)] backdrop-blur-xl border-t border-[rgba(255,107,157,0.2)] px-6 py-4">
           <ul className="flex flex-col space-y-4">
-            <li><a href="#home" onClick={() => setIsOpen(false)}>Home</a></li>
-            <li><a href="#about" onClick={() => setIsOpen(false)}>About Us</a></li>
-            <li><a href="#competitions" onClick={() => setIsOpen(false)}>Competitions</a></li>
-            <li><a href="#seminars" onClick={() => setIsOpen(false)}>Seminars</a></li>
-            <li><a href="#academy" onClick={() => setIsOpen(false)}>Academy</a></li>
-            <li><a href="#events" onClick={() => setIsOpen(false)}>Events</a></li>
-            <li><a href="#awards" onClick={() => setIsOpen(false)}>Awards</a></li>
-            <li><a href="#contact" onClick={() => setIsOpen(false)}>Contact</a></li>
-            <li><a href="#gallery" onClick={() => setIsOpen(false)}>Gallery</a></li>
-            <li><a href="#magazine" onClick={() => setIsOpen(false)}>Magazine</a></li>
+            <li><Link href="/" onClick={() => setIsOpen(false)}>Home</Link></li>
+            <li><Link href="/about" onClick={() => setIsOpen(false)}>About Us</Link></li>
+            <li><Link href="/competitions" onClick={() => setIsOpen(false)}>Competitions</Link></li>
+            <li><Link href="/seminars" onClick={() => setIsOpen(false)}>Seminars</Link></li>
+            <li><Link href="/academy" onClick={() => setIsOpen(false)}>Academy</Link></li>
+            <li><Link href="/events" onClick={() => setIsOpen(false)}>Events</Link></li>
+            <li><Link href="/awards" onClick={() => setIsOpen(false)}>Awards</Link></li>
+            <li><Link href="/contact" onClick={() => setIsOpen(false)}>Contact</Link></li>
+            <li><Link href="/gallery" onClick={() => setIsOpen(false)}>Gallery</Link></li>
+            <li><Link href="/magazine" onClick={() => setIsOpen(false)}>Magazine</Link></li>
           </ul>
         </div>
       )}
+
     </nav>
   )
 }
