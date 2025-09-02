@@ -5,6 +5,7 @@ import { supabase } from '@/lib/supabaseClient';
 import jsPDF from 'jspdf';
 import QRCode from 'qrcode';
 import { useSearchParams } from 'next/navigation';
+import { EventSessionCard } from '@/components/EventSessionCard';
 
 // Registration state type
 type Registration = {
@@ -16,6 +17,7 @@ type Registration = {
   payment_status: string | null;
   user_name: string;
   user_number: string;
+  event_image?: string; // optional image URL
 };
 
 export default function RegistrationsPage() {
@@ -25,54 +27,43 @@ export default function RegistrationsPage() {
   const registrationId = searchParams.get('event_registration_id');
 
   const fetchRegistrations = async () => {
-    console.log('[RegistrationsPage] fetchRegistrations started');
     setLoading(true);
-
     try {
-      console.log('[RegistrationsPage] Fetching user session');
       const { data: sessionData } = await supabase.auth.getSession();
       const user = sessionData.session?.user;
-      console.log('[RegistrationsPage] Logged-in user:', user);
 
       const fetchedRegistrations: Registration[] = [];
 
       // --- Fetch by registrationId (public) ---
       if (registrationId) {
-        console.log('[RegistrationsPage] Fetching public registration by ID:', registrationId);
-        const { data: regData, error: regError } = await supabase
+        const { data: regData } = await supabase
           .from('event_registrations')
           .select('*')
           .eq('id', registrationId)
           .maybeSingle();
 
-        if (regError) console.error('[RegistrationsPage] Error fetching registration by ID:', regError);
-        console.log('[RegistrationsPage] regData:', regData);
-
         if (regData) {
-          const { data: eventData, error: eventError } = await supabase
+          const { data: eventData } = await supabase
             .from('events')
-            .select('name')
+            .select('name,image_url') // fetch image
             .eq('id', regData.event_id)
             .maybeSingle();
-          if (eventError) console.error('[RegistrationsPage] Event fetch error:', eventError);
 
           let sessionName: string | null = null;
           if (regData.session_id) {
-            const { data: sessionData, error: sessionError } = await supabase
+            const { data: sessionData } = await supabase
               .from('sessions')
               .select('name')
               .eq('id', regData.session_id)
               .maybeSingle();
-            if (sessionError) console.error('[RegistrationsPage] Session fetch error:', sessionError);
             sessionName = sessionData?.name || null;
           }
 
-          const { data: userProfile, error: userProfileError } = await supabase
+          const { data: userProfile } = await supabase
             .from('user_profiles')
             .select('full_name,number')
             .eq('id', regData.user_id)
             .maybeSingle();
-          if (userProfileError) console.error('[RegistrationsPage] User profile fetch error:', userProfileError);
 
           fetchedRegistrations.push({
             id: regData.id,
@@ -83,47 +74,43 @@ export default function RegistrationsPage() {
             payment_status: regData.payment_status,
             user_name: userProfile?.full_name || 'Unknown',
             user_number: userProfile?.number || 'Unknown',
+            event_image: eventData?.image_url || '/images/placeholder.png',
           });
         }
       }
 
       // --- Fetch all registrations of logged-in user ---
       if (user) {
-        const { data: userRegs, error: userRegsError } = await supabase
+        const { data: userRegs } = await supabase
           .from('event_registrations')
           .select('*')
           .eq('user_id', user.id);
-
-        if (userRegsError) console.error('[RegistrationsPage] Error fetching user registrations:', userRegsError);
 
         if (userRegs) {
           for (const r of userRegs) {
             if (r.id === registrationId) continue; // skip duplicate
 
-            const { data: eventData, error: eventError } = await supabase
+            const { data: eventData } = await supabase
               .from('events')
-              .select('name')
+              .select('name,image_url')
               .eq('id', r.event_id)
               .maybeSingle();
-            if (eventError) console.error('[RegistrationsPage] Event fetch error:', eventError);
 
             let sessionName: string | null = null;
             if (r.session_id) {
-              const { data: sessionData, error: sessionError } = await supabase
+              const { data: sessionData } = await supabase
                 .from('sessions')
                 .select('name')
                 .eq('id', r.session_id)
                 .maybeSingle();
-              if (sessionError) console.error('[RegistrationsPage] Session fetch error:', sessionError);
               sessionName = sessionData?.name || null;
             }
 
-            const { data: userProfile, error: userProfileError } = await supabase
+            const { data: userProfile } = await supabase
               .from('user_profiles')
               .select('full_name,number')
               .eq('id', r.user_id)
               .maybeSingle();
-            if (userProfileError) console.error('[RegistrationsPage] User profile fetch error:', userProfileError);
 
             fetchedRegistrations.push({
               id: r.id,
@@ -134,6 +121,7 @@ export default function RegistrationsPage() {
               payment_status: r.payment_status,
               user_name: userProfile?.full_name || 'Unknown',
               user_number: userProfile?.number || 'Unknown',
+              event_image: eventData?.image_url || '/images/placeholder.png',
             });
           }
         }
@@ -177,25 +165,18 @@ export default function RegistrationsPage() {
   return (
     <div className="container mx-auto p-4">
       <h1 className="text-2xl font-bold mb-4">Registrations</h1>
-      <div className="space-y-4">
+      <div className="grid gap-4 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
         {registrations.map((r) => (
-          <div
+          <EventSessionCard
             key={r.id}
-            className="bg-gray-50 rounded-lg p-4 shadow flex justify-between items-center"
-          >
-            <div>
-              <h2 className="font-semibold">{r.event_name}</h2>
-              {r.session_name && <p className="text-gray-600">Session: {r.session_name}</p>}
-              <p className="text-gray-500">Payment: {r.payment_status || 'Pending'}</p>
-              <p className="text-gray-500">Registered to: {r.user_name}</p>
-            </div>
-            <button
-              className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
-              onClick={() => generatePdfTicket(r)}
-            >
-              Download Pass
-            </button>
-          </div>
+            id={r.id}
+            title={r.event_name}
+            description={`Registered to: ${r.user_name}`}
+            imageUrl={r.event_image || '/images/placeholder.png'}
+            eventId={r.event_id}
+            sessionId={r.session_id || ''}
+            isRegistered={true} // always true since these are registrations
+            paymentStatus={r.payment_status || 'Pending'} cost={0}          />
         ))}
       </div>
     </div>
