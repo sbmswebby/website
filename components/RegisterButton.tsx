@@ -49,7 +49,7 @@ export default function RegisterButton({ eventId, sessionId, eventName }: Regist
     pdf.setFontSize(18);
     pdf.text(eventName || 'Event Ticket', 20, 30);
 
-    const qrUrl = `https://sbms.com/registration?event_registration_id=${regId}`;
+    const qrUrl = `https://sbms.com/registrations?event_registration_id=${regId}`;
     const qrDataUrl = await QRCode.toDataURL(qrUrl);
 
     pdf.addImage(qrDataUrl, 'PNG', 20, 50, 50, 50); // x, y, width, height
