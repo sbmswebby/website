@@ -65,16 +65,16 @@ export default function Contact() {
           </div>
           <div className="flex flex-col gap-2 mt-4">
             <a
-              href="mailto:info@company.com"
+              href="mailto:infomultaigroup@gmail.com"
               className="p-2 bg-white/5 rounded hover:bg-white/10 transition"
             >
-              info@company.com
+              infomultaigroup@gmail.com
             </a>
             <a
-              href="mailto:support@company.com"
+              href="mailto:sbmswebby@gmail.com"
               className="p-2 bg-white/5 rounded hover:bg-white/10 transition"
             >
-              support@company.com
+              sbmswebby@gmail.com
             </a>
           </div>
         </div>
@@ -114,33 +114,156 @@ export default function Contact() {
           <div className="flex flex-row items-center gap-2">
             <h4>Connect With Us</h4>
           </div>
-          <div className="flex flex-col gap-2 mt-4">
+          <div className="flex flex-col gap-6 mt-4">
+            <div>
             <a
-              href="https://instagram.com/company"
+              href="https://instagram.com/sbms999"
               target="_blank"
               rel="noopener noreferrer"
               className="flex items-center gap-2 p-2 rounded bg-white/5 hover:bg-white/10 transition"
             >
               <FaInstagram size={24} className="text-pink-500" />
-              <span>@company_insta</span>
+              <span>@sbms999</span>
             </a>
             <a
-              href="https://facebook.com/company"
+              href="https://instagram.com/beyond_beauty_network"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-2 p-2 rounded bg-white/5 hover:bg-white/10 transition"
+            >
+              <FaInstagram size={24} className="text-pink-500" />
+              <span>@beyond_beauty_network</span>
+            </a>
+            <a
+              href="https://instagram.com/sbms_academy"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-2 p-2 rounded bg-white/5 hover:bg-white/10 transition"
+            >
+              <FaInstagram size={24} className="text-pink-500" />
+              <span>@sbms_academy</span>
+            </a>
+                        <a
+              href="https://instagram.com/multaimakeupstudio"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-2 p-2 rounded bg-white/5 hover:bg-white/10 transition"
+            >
+              <FaInstagram size={24} className="text-pink-500" />
+              <span>@multaimakeupstudio</span>
+            </a>
+            <a
+              href="https://instagram.com/siba_awards1"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-2 p-2 rounded bg-white/5 hover:bg-white/10 transition"
+            >
+              <FaInstagram size={24} className="text-pink-500" />
+              <span>@siba_awards1</span>
+            </a>
+            </div>
+
+
+            <div className="gap-6">
+            <a
+              href="https://www.facebook.com/profile.php?id=61579087620200"
               target="_blank"
               rel="noopener noreferrer"
               className="flex items-center gap-2 p-2 rounded bg-white/5 hover:bg-white/10 transition"
             >
               <FaFacebook size={24} className="text-blue-500" />
-              <span>Company Facebook</span>
+              <span>SBMS</span>
             </a>
             <a
-              href="https://company.com"
+              href="https://www.facebook.com/profile.php?id=61579151847271"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-2 p-2 rounded bg-white/5 hover:bg-white/10 transition"
+            >
+              <FaFacebook size={24} className="text-blue-500" />
+              <span>Multai Modeling Studio</span>
+            </a>
+            <a
+              href="https://www.facebook.com/profile.php?id=61579230171169"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-2 p-2 rounded bg-white/5 hover:bg-white/10 transition"
+            >
+              <FaFacebook size={24} className="text-blue-500" />
+              <span>Multai Group</span>
+            </a>
+            <a
+              href="https://www.facebook.com/profile.php?id=61579238237296"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-2 p-2 rounded bg-white/5 hover:bg-white/10 transition"
+            >
+              <FaFacebook size={24} className="text-blue-500" />
+              <span>SIBA</span>
+            </a>
+            <a
+              href="https://www.facebook.com/profile.php?id=61579409438854"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-2 p-2 rounded bg-white/5 hover:bg-white/10 transition"
+            >
+              <FaFacebook size={24} className="text-blue-500" />
+              <span>MSIMA Beauty Expo</span>
+            </a>
+            <a
+              href="https://www.facebook.com/profile.php?id=61579443730637"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-2 p-2 rounded bg-white/5 hover:bg-white/10 transition"
+            >
+              <FaFacebook size={24} className="text-blue-500" />
+              <span>Multai Fashion Arts</span>
+            </a>
+            <a
+              href="https://www.facebook.com/profile.php?id=61579593095704"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-2 p-2 rounded bg-white/5 hover:bg-white/10 transition"
+            >
+              <FaFacebook size={24} className="text-blue-500" />
+              <span>Crazy Events</span>
+            </a>
+            <a
+              href="https://www.facebook.com/profile.php?id=61579738649305"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-2 p-2 rounded bg-white/5 hover:bg-white/10 transition"
+            >
+              <FaFacebook size={24} className="text-blue-500" />
+              <span>SIMA</span>
+            </a>
+            <a
+              href="https://www.facebook.com/profile.php?id=61580073154944"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-2 p-2 rounded bg-white/5 hover:bg-white/10 transition"
+            >
+              <FaFacebook size={24} className="text-blue-500" />
+              <span>Chota King And Choti Queen</span>
+            </a>
+            <a
+              href="https://www.facebook.com/profile.php?id=61579817425362"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-2 p-2 rounded bg-white/5 hover:bg-white/10 transition"
+            >
+              <FaFacebook size={24} className="text-blue-500" />
+              <span>BBN</span>
+            </a>
+            </div>
+            <a
+              href="https://sbms.com"
               target="_blank"
               rel="noopener noreferrer"
               className="flex items-center gap-2 p-2 rounded bg-white/5 hover:bg-white/10 transition"
             >
               <FiGlobe size={24} className="text-sky-400" />
-              <span>www.company.com</span>
+              <span>sbms.com</span>
             </a>
           </div>
         </div>
