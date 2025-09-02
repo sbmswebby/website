@@ -3,7 +3,6 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabaseClient';
 import jsPDF from 'jspdf';
-import QRCode from 'qrcode';
 import { useSearchParams } from 'next/navigation';
 import { EventSessionCard } from '@/components/EventSessionCard';
 import RegisterButton from '@/components/RegisterButton';
@@ -174,24 +173,7 @@ export default function RegistrationsPage() {
     fetchRegistrations();
   }, [registrationId]);
 
-  const generatePdfTicket = async (registration: Registration) => {
-    const pdf = new jsPDF();
-    pdf.setFontSize(18);
-    pdf.text('Event Ticket', 20, 30);
-    pdf.setFontSize(14);
-    pdf.text(`Name: ${registration.user_name}`, 20, 45);
-    pdf.text(`Number: ${registration.user_number}`, 20, 55);
-    pdf.text(`Event: ${registration.event_name}`, 20, 70);
-    if (registration.session_name) pdf.text(`Session: ${registration.session_name}`, 20, 80);
-    pdf.text(`Registration ID: ${registration.id}`, 20, 90);
-    pdf.text(`Payment Status: ${registration.payment_status ?? 'Pending'}`, 20, 100);
 
-    const qrUrl = `https://yourwebsite.com/registration?event_registration_id=${registration.id}`;
-    const qrDataUrl = await QRCode.toDataURL(qrUrl);
-    pdf.addImage(qrDataUrl, 'PNG', 20, 110, 50, 50);
-
-    pdf.save(`Ticket-${registration.id}.pdf`);
-  };
 
   if (loading) return <p className="p-4">Loading registrations...</p>;
   if (registrations.length === 0) return <p className="p-4">No registrations found.</p>;
