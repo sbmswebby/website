@@ -21,9 +21,9 @@ const Navbar = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between py-4">
           {/* Logo */}
-          <a href="#home">
+          <Link href="/">
             <Image src="/images/logo.png" alt="SBMS" width={50} height={50} />
-          </a>
+          </Link>
 
           {/* Desktop Links */}
           <ul className="hidden md:flex items-center space-x-8 nav-links">
