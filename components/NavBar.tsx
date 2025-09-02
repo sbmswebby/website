@@ -113,7 +113,7 @@ const Navbar = () => {
       {isOpen && (
         <div className="md:hidden bg-[rgba(10,10,10,0.95)] backdrop-blur-xl border-t border-[rgba(255,107,157,0.2)] px-6 py-4">
           <ul className="flex flex-col space-y-4">
-            <li><Link href="/" onClick={() => setIsOpen(false)}>Home</Link></li>
+            <li><Link href="/" onClick={() => setIsOpen(false)}><p>Home</p></Link></li>
             <li><Link href="/about" onClick={() => setIsOpen(false)}>About Us</Link></li>
             <li><Link href="/competitions" onClick={() => setIsOpen(false)}>Competitions</Link></li>
             <li><Link href="/seminars" onClick={() => setIsOpen(false)}>Seminars</Link></li>
