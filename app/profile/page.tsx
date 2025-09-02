@@ -4,6 +4,7 @@ import { useAuth } from '@/components/AuthProvider'
 import { supabase } from '@/lib/supabaseClient'
 import { useRouter } from 'next/navigation'
 import ForgotPassword from '@/components/ForgotPassword'
+import EventRegistrations from '@/components/EventRegistrations'
 
 type Profile = {
   full_name: string
@@ -92,14 +93,14 @@ export default function UserProfile() {
 
   if (!user) {
     return (
-      <div className="flex justify-center items-center min-h-screen text-red-400 p-4">
+      <div className="flex  justify-center items-center min-h-screen text-red-400 p-4">
         You are not logged in. Please log in to view this page.
       </div>
     )
   }
 
   return (
-    <div id="signUp" className="flex flex-col items-center justify-center p-4 sm:p-12 min-h-screen bg-transparent">
+    <div id="signUp" className="flex flex-col items-center justify-center p-4 m-12 sm:p-12 min-h-screen bg-transparent">
       <div className="w-full max-w-2xl bg-[rgba(10,10,10,0.95)] backdrop-blur-xl rounded-xl shadow-2xl p-6 sm:p-8 space-y-6">
         <div className="text-center">
           <h2 className="text-3xl font-extrabold text-white">User Profile</h2>
@@ -202,6 +203,8 @@ export default function UserProfile() {
         </form>
         <ForgotPassword ></ForgotPassword>
       </div>
+      
+      <EventRegistrations />
     </div>
   )
 }
