@@ -85,7 +85,7 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
       </div>
 
       <h2 className="text-2xl font-semibold mb-4">Sessions</h2>
-      <div className="grid gap-4 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
+      <div className="grid gap-4 sm:grid-cols-1 md:grid-cols-2">
         {event.sessions.length > 0 ? (
           event.sessions.map((s) => (
             <EventSessionCard

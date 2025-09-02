@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabaseClient';
-import jsPDF from 'jspdf';
 import { useSearchParams } from 'next/navigation';
 import { EventSessionCard } from '@/components/EventSessionCard';
 import RegisterButton from '@/components/RegisterButton';
@@ -218,7 +217,7 @@ ${highlighted.reference ? `, Ref: ${highlighted.reference}` : ''}`
       {others.length > 0 && (
         <>
           <h2 className="text-xl font-semibold mb-2">Your Other Registrations</h2>
-          <div className="grid gap-4 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
+          <div className="grid gap-4 sm:grid-cols-1 md:grid-cols-2 ">
             {others.map((r) => (
               <EventSessionCard
                 key={r.id}
