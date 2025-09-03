@@ -3,7 +3,6 @@ import "./globals.css";
 import Navbar from "@/components/NavBar";
 import { AuthProvider } from '@/components/AuthProvider'
 
-
 export const metadata: Metadata = {
   title: "SBMS",
   description: "South Indian Bridal Makeup Studio",
@@ -23,6 +22,7 @@ export const metadata: Metadata = {
     ],
   },
 };
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -30,16 +30,16 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className="min-h-screen bg-base-100 p-10 text-base-content">
-          <AuthProvider>
-            <div className="flex h-20">
-            <Navbar />
-            </div>
-
-
+      <body className="min-h-screen bg-base-100 text-base-content">
+        <AuthProvider>
+          {/* Navbar - full width, no padding constraints */}
+          <Navbar />
+          
+          {/* Main content with padding */}
+          <main className="pt-16 lg:pt-20 p-4 sm:p-6 lg:p-10">
             {children}
-          </AuthProvider>
-
+          </main>
+        </AuthProvider>
       </body>
     </html>
   );

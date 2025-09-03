@@ -12,6 +12,10 @@
   --font-mono: var(--font-geist-mono);
 }
 
+* {
+  outline: 1px solid red; /* helps find which element is overflowing */
+}
+
 @media (prefers-color-scheme: dark) {
   :root {
     --background: #0a0a0a;
@@ -96,62 +100,60 @@ body {
 
 /* Loading Screen Styles */
 .loading-screen {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(45deg, #ff6b9d, #ffd93d, #ff6b9d);
-    background-size: 400% 400%;
-    animation: gradientShift 2s ease infinite;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    z-index: 10000;
-    transition: all 0.8s ease;
-}
-
-.loading-screen.fade-out {
-    opacity: 0;
-    transform: scale(1.1);
-    pointer-events: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100%;
+  background: linear-gradient(45deg, #ff6b9d, #ffd93d, #ff6b9d);
+  background-size: 400% 400%;
+  animation: gradientShift 2s ease infinite;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  z-index: 10000;
+  transition: all 0.8s ease;
+  overflow-x: hidden; /* ✅ stop horizontal scroll */
 }
 
 .loading-logo {
-    font-family: 'Playfair Display', serif;
-    font-size: 5rem;
-    font-weight: 700;
-    color: #ffffff;
-    margin-bottom: 1rem;
-    text-shadow: 0 0 30px rgba(255, 255, 255, 0.5);
-    animation: glowPulse 2s ease-in-out infinite;
+  font-family: 'Playfair Display', serif;
+  font-size: clamp(2.5rem, 8vw, 5rem); /* ✅ responsive font */
+  font-weight: 700;
+  color: #ffffff;
+  margin-bottom: 1rem;
+  text-shadow: 0 0 30px rgba(255, 255, 255, 0.5);
+  animation: glowPulse 2s ease-in-out infinite;
+  text-align: center;
+  width: 95vw;
 }
 
 .loading-subtitle {
-    font-size: 1.5rem;
-    color: #ffffff;
-    margin-bottom: 2rem;
-    opacity: 0.9;
-    text-align: center;
-    max-width: 600px;
+  font-size: clamp(1rem, 4vw, 1.5rem); /* ✅ shrink on small screens */
+  color: #ffffff;
+  margin-bottom: 2rem;
+  opacity: 0.9;
+  text-align: center;
+  max-width: 90vw; /* ✅ fit inside viewport */
 }
 
 .loading-progress {
-    width: 300px;
-    height: 4px;
-    background: rgba(255, 255, 255, 0.2);
-    border-radius: 2px;
-    overflow: hidden;
-    margin-bottom: 1rem;
+  width: 80%;          /* ✅ flexible width */
+  max-width: 300px;    /* ✅ keeps original look */
+  height: 4px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 2px;
+  overflow: hidden;
+  margin-bottom: 1rem;
 }
 
 .loading-bar {
-    height: 100%;
-    background: linear-gradient(90deg, #ffffff, rgba(255, 255, 255, 0.7));
-    border-radius: 2px;
-    animation: loadProgress 3s ease-in-out;
-    transform: translateX(-100%);
+  height: 100%;
+  background: linear-gradient(90deg, #ffffff, rgba(255, 255, 255, 0.7));
+  border-radius: 2px;
+  animation: loadProgress 3s ease-in-out;
+  transform: translateX(-100%);
 }
 
 /* Loading Animations */
@@ -176,70 +178,74 @@ body {
     100% { transform: translateX(0%); }
 }
 
-
-/* Navigation */
+/* Navigation Base Styles */
+/* Navigation Base Styles */
 nav {
   position: fixed;
   top: 0;
-  width: 100%;
+  left: 0;
+  right: 0;
+  width: 100vw;
   background: rgba(10, 10, 10, 0.95);
   backdrop-filter: blur(20px);
-  padding: 1.5rem 5%;
   z-index: 1000;
   transition: all 0.3s ease;
   border-bottom: 1px solid rgba(255, 107, 157, 0.2);
 }
 
+/* Scrolled state */
 nav.scrolled {
   background: rgba(10, 10, 10, 0.98);
-  padding: 1rem 5%;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
 }
 
-.nav-container {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  max-width: 1400px;
-  margin: 0 auto;
-}
-
+/* Logo styles */
 .logo {
   font-family: 'Playfair Display', serif;
-  font-size: 2.5rem;
   font-weight: 700;
   background: linear-gradient(45deg, #ff6b9d, #ffd93d);
   background-clip: text;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   text-shadow: 0 0 30px rgba(255, 107, 157, 0.3);
+  font-size: 1.5rem;
 }
 
-/* ✅ Let Tailwind handle layout (hidden/flex/col) */
-.nav-links {
-  list-style: none;
-}
-
-/* Desktop fallback (only if Tailwind is missing) */
-@media (min-width: 768px) {
-  .nav-links {
-    display: flex;
-    gap: 3rem;
+/* Desktop logo size */
+@media (min-width: 1024px) {
+  .logo {
+    font-size: 2.5rem;
   }
 }
 
-/* Link styles */
-.nav-links a {
+/* Navigation links container */
+.nav-links {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+/* Desktop navigation link styles */
+.nav-link {
   text-decoration: none;
   color: #ffffff;
   font-weight: 500;
-  font-size: 1rem;
+  font-size: 0.9rem;
   transition: all 0.3s ease;
   position: relative;
   padding: 0.5rem 0;
+  white-space: nowrap;
 }
 
-.nav-links a::before {
+/* Larger screens get bigger font */
+@media (min-width: 1280px) {
+  .nav-link {
+    font-size: 1rem;
+  }
+}
+
+/* Hover effect for desktop links */
+.nav-link::before {
   content: '';
   position: absolute;
   bottom: 0;
@@ -251,16 +257,98 @@ nav.scrolled {
   transform: translateX(-50%);
 }
 
-.nav-links a:hover::before {
+.nav-link:hover::before {
   width: 100%;
 }
 
-.nav-links a:hover {
+.nav-link:hover {
   color: #ff6b9d;
   transform: translateY(-2px);
 }
 
+/* Mobile-specific styles */
+@media (max-width: 1023px) {
+  /* Override desktop hover effects for mobile */
+  .nav-link::before {
+    display: none;
+  }
+  
+  .nav-link:hover {
+    transform: none;
+  }
+  
+  /* Mobile menu animation */
+  .mobile-menu-enter {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  
+  .mobile-menu-enter-active {
+    opacity: 1;
+    transform: translateY(0);
+    transition: opacity 300ms ease-out, transform 300ms ease-out;
+  }
+  
+  .mobile-menu-exit {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  
+  .mobile-menu-exit-active {
+    opacity: 0;
+    transform: translateY(-10px);
+    transition: opacity 300ms ease-out, transform 300ms ease-out;
+  }
+}
 
+/* Ensure profile dropdown is above everything */
+.profile-dropdown {
+  z-index: 9999;
+}
+
+/* Smooth transitions for mobile menu */
+@media (max-width: 1023px) {
+  .mobile-nav-transition {
+    transition: max-height 0.3s ease-in-out, opacity 0.3s ease-in-out;
+  }
+}
+
+/* Fix for very small screens */
+@media (max-width: 375px) {
+  .nav-link {
+    font-size: 0.85rem;
+  }
+  
+  .logo {
+    font-size: 1.25rem;
+  }
+}
+
+/* Accessibility improvements */
+@media (prefers-reduced-motion: reduce) {
+  nav,
+  .nav-link,
+  .nav-link::before {
+    transition: none;
+  }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  nav {
+    background: rgba(0, 0, 0, 1);
+    border-bottom: 2px solid #ffffff;
+  }
+  
+  .nav-link {
+    color: #ffffff;
+  }
+  
+  .nav-link:hover {
+    color: #ffffff;
+    background: rgba(255, 255, 255, 0.1);
+  }
+}
 /* === Google-like Sign In/Sign Up Form Styling === */
 
 /* Container */
@@ -798,18 +886,25 @@ nav.scrolled {
 
 /* Competitions Section */
 .competition-info {
-    background: linear-gradient(145deg, rgba(255, 217, 61, 0.1) 0%, rgba(255, 217, 61, 0.05) 100%);
-    padding: 4rem;
-    border-radius: 25px;
-    margin: 3rem 0;
-    border: 1px solid rgba(255, 217, 61, 0.2);
+  background: linear-gradient(
+    145deg,
+    rgba(255, 217, 61, 0.1) 0%,
+    rgba(255, 217, 61, 0.05) 100%
+  );
+  padding: clamp(1rem, 5vw, 4rem); /* ✅ responsive padding */
+  border-radius: 25px;
+  margin: 3rem 0;
+  border: 1px solid rgba(255, 217, 61, 0.2);
+  max-width: 100%;   /* ✅ prevent overflow */
+  box-sizing: border-box; /* ✅ padding included in width */
 }
 
 .competition-details {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-    gap: 2rem;
-    margin-top: 2rem;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); /* ✅ smaller min */
+  gap: 2rem;
+  margin-top: 2rem;
+  max-width: 100%; /* ✅ keep inside viewport */
 }
 
 .detail-item {
@@ -825,7 +920,9 @@ nav.scrolled {
     margin-bottom: 1rem;
     font-weight: 600;
 }
-
+#competitions {
+  overflow-x: hidden;
+}
 
 
 /* Services Grid */
