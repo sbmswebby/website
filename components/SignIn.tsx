@@ -1,7 +1,7 @@
 'use client';
 
 import { supabase } from '@/lib/supabaseClient';
-import React, { useState } from 'react';
+import React, { Suspense, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import ForgotPassword from './ForgotPassword';
 
@@ -37,6 +37,7 @@ export default function SignInForm() {
   };
 
   return (
+    <Suspense fallback={<div>Loading...</div>}>
     <div id='signIn' >
       {/* Updated card for dark theme consistency */}
       <div className="w-full max-w-md bg-[rgba(10,10,10,0.95)] backdrop-blur-xl rounded-xl shadow-2xl p-6 sm:p-8 space-y-6">
@@ -108,6 +109,7 @@ export default function SignInForm() {
         </form>
       </div>
     </div>
+    </Suspense>
   );
 }
 

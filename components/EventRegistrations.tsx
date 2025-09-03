@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabaseClient';
 import { useSearchParams } from 'next/navigation';
 import { EventSessionCard } from '@/components/EventSessionCard';
@@ -187,6 +187,8 @@ export default function EventRegistrations() {
   };
 
   return (
+    <Suspense fallback={<div>Loading...</div>}>
+    
     <div className="container mx-auto p-4">
       <h1 className="text-2xl font-bold mb-4">Registrations</h1>
 
@@ -244,5 +246,6 @@ ${r.reference ? `Ref: ${r.reference}` : ''}`
         </>
       )}
     </div>
+    </Suspense>
   );
 }
