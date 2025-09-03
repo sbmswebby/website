@@ -10,6 +10,18 @@ export const metadata: Metadata = {
   icons: {
     icon: "/images/sbms_logo.svg",
   },
+  openGraph: {
+    title: "SBMS",
+    description: "South Indian Bridal Makeup Studio",
+    images: [
+      {
+        url: "/images/og_image.jpg",
+        width: 1200,
+        height: 630,
+        alt: "SBMS Bridal Makeup Studio",
+      },
+    ],
+  },
 };
 export default function RootLayout({
   children,
