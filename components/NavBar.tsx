@@ -22,7 +22,7 @@ const Navbar = () => {
         <div className="flex items-center justify-between py-4">
           {/* Logo */}
           <Link href="/">
-            <Image src="/images/logo.png" alt="SBMS" width={50} height={50} />
+            <Image src="/images/sbms_logo.svg" alt="SBMS" width={50} height={50} />
           </Link>
 
           {/* Desktop Links */}

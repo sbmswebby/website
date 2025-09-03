@@ -8,7 +8,7 @@ export const metadata: Metadata = {
   title: "SBMS",
   description: "South Indian Bridal Makeup Studio",
   icons: {
-    icon: "/images/icon.png",
+    icon: "/images/sbms_logo.svg",
   },
 };
 export default function RootLayout({

@@ -1,5 +1,6 @@
 "use client";
 import React from "react";
+import Image from "next/image"
 
 const Hero = () => {
   return (
@@ -16,9 +17,16 @@ const Hero = () => {
       {/* Hero Content */}
       
       <div className="hero-content ">
-        <h1>SBMS</h1>
+        <div className="flex fade-in mb-10 mx-auto justify-center items-center">
+        <Image 
+          src="/images/sbms_logo.svg" 
+          alt="SBMS" 
+          width={300} 
+          height={300}
+          className="block mx-auto" />
+        </div>
         <div className="subtitle  fade-in">
-          South Indian Bridal Makeup Studio & Academy
+          South India Bridal Makeup Studio
         </div>
         <p className="hero-description fade-in">
           At SBMS, we create artistry that narrates your individual journey.
