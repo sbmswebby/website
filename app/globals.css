@@ -12,9 +12,6 @@
   --font-mono: var(--font-geist-mono);
 }
 
-* {
-  outline: 1px solid red; /* helps find which element is overflowing */
-}
 
 @media (prefers-color-scheme: dark) {
   :root {
