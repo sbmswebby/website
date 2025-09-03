@@ -1,5 +1,5 @@
 "use client"
-import React, { useState, useEffect } from "react"
+import React, { useState, useEffect, useRef } from "react"
 import { Menu, X, User } from "lucide-react"
 import Image from "next/image"
 import { useAuth } from "@/components/AuthProvider"
@@ -11,7 +11,24 @@ const Navbar = () => {
   const [profileOpen, setProfileOpen] = useState(false)
   const [mounted, setMounted] = useState(false)
 
-  // Make sure we only render auth-dependent UI after hydration
+  const profileRef = useRef<HTMLDivElement>(null)
+
+  // Close profile popup when clicking outside
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (profileRef.current && !profileRef.current.contains(event.target as Node)) {
+        setProfileOpen(false)
+      }
+    }
+    if (profileOpen) {
+      document.addEventListener("mousedown", handleClickOutside)
+    } else {
+      document.removeEventListener("mousedown", handleClickOutside)
+    }
+    return () => document.removeEventListener("mousedown", handleClickOutside)
+  }, [profileOpen])
+
+  // Ensure hydration safety
   useEffect(() => {
     setMounted(true)
   }, [])
@@ -39,9 +56,8 @@ const Navbar = () => {
           </ul>
 
           {/* Right side - Profile */}
-          <div className="relative">
+          <div className="relative" ref={profileRef}>
             {!mounted ? (
-              // Render stable placeholder while waiting for hydration
               <div className="w-10 h-10 flex items-center justify-center rounded-full bg-gray-200" />
             ) : loading ? (
               <div className="w-10 h-10 flex items-center justify-center rounded-full bg-gray-200 animate-pulse">
@@ -62,7 +78,6 @@ const Navbar = () => {
                 {user && profile ? (
                   <div>
                     <div className="flex flex-col mt-5 items-center mb-4">
-                      {/* Profile initials */}
                       <div className="w-16 h-16 rounded-full flex items-center justify-center bg-gray-800">
                         <p className="text-white text-3xl font-bold">
                           {profile.full_name ? profile.full_name[0] : "U"}
@@ -113,7 +128,7 @@ const Navbar = () => {
       {isOpen && (
         <div className="md:hidden bg-[rgba(10,10,10,0.95)] backdrop-blur-xl border-t border-[rgba(255,107,157,0.2)] px-6 py-4">
           <ul className="flex flex-col space-y-4">
-            <li><Link href="/" onClick={() => setIsOpen(false)}><p>Home</p></Link></li>
+            <li><Link href="/" onClick={() => setIsOpen(false)}>Home</Link></li>
             <li><Link href="/about" onClick={() => setIsOpen(false)}>About Us</Link></li>
             <li><Link href="/competitions" onClick={() => setIsOpen(false)}>Competitions</Link></li>
             <li><Link href="/seminars" onClick={() => setIsOpen(false)}>Seminars</Link></li>
@@ -126,7 +141,6 @@ const Navbar = () => {
           </ul>
         </div>
       )}
-
     </nav>
   )
 }
