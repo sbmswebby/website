@@ -3,5 +3,11 @@
   publish = ".next"
 
 [build.environment]
-  # Required for Next.js 12 and above on Netlify
-  NEXT_PRIVATE_TARGET_VERSION = "12.2.0" # Use your Next.js version or the latest supported
+  # Match your Next.js version (you're on 15.5.0)
+  NEXT_PRIVATE_TARGET_VERSION = "15.5.0"
+  # Make sure Supabase variables are available during build & runtime
+  NEXT_PUBLIC_SUPABASE_URL = "${NEXT_PUBLIC_SUPABASE_URL}"
+  NEXT_PUBLIC_SUPABASE_ANON_KEY = "${NEXT_PUBLIC_SUPABASE_ANON_KEY}"
+
+[[plugins]]
+  package = "@netlify/plugin-nextjs"

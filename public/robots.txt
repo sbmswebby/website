@@ -1,0 +1,9 @@
+# *
+User-agent: *
+Allow: /
+
+# Host
+Host: https://anugrahachristianworld.in
+
+# Sitemaps
+Sitemap: https://anugrahachristianworld.in/sitemap.xml
