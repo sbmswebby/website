@@ -34,6 +34,18 @@ const AuthContext = createContext<AuthContextType>({
   updateProfile: async () => ({ error: 'Not implemented' }),
 })
 
+// 🔁 Helper: retry logic with exponential backoff
+async function retry<T>(fn: () => Promise<T>, retries = 3, delay = 500): Promise<T> {
+  try {
+    return await fn()
+  } catch (err) {
+    console.log(`Retry failed (${retries} left):`, err)
+    if (retries <= 1) throw err
+    await new Promise((res) => setTimeout(res, delay))
+    return retry(fn, retries - 1, delay * 2)
+  }
+}
+
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [profile, setProfile] = useState<UserProfile | null>(null)
@@ -41,28 +53,55 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     const init = async () => {
-      const { data: { session } } = await supabase.auth.getSession()
-      const currentUser = session?.user ?? null
-      setUser(currentUser)
-      if (currentUser) {
-        const p = await getUserProfile()
-        setProfile(p)
+      try {
+        const { data: { session } } = await retry(() => supabase.auth.getSession())
+        const currentUser = session?.user ?? null
+        setUser(currentUser)
+
+        if (currentUser) {
+          try {
+            const p = await retry(() => getUserProfile())
+            setProfile(p)
+          } catch (err) {
+            console.log('Error fetching profile in init:', err)
+            setProfile(null)
+          }
+        }
+      } catch (err) {
+        console.log('Error in init:', err)
+        setUser(null)
+        setProfile(null)
+      } finally {
+        setLoading(false)
       }
-      setLoading(false)
     }
+
     init()
 
     const { data: subscription } = supabase.auth.onAuthStateChange(
       async (_event, session) => {
-        const currentUser = session?.user ?? null
-        setUser(currentUser)
-        if (currentUser) {
-          const p = await getUserProfile()
-          setProfile(p)
-        } else {
+        try {
+          const currentUser = session?.user ?? null
+          setUser(currentUser)
+
+          if (currentUser) {
+            try {
+              const p = await retry(() => getUserProfile())
+              setProfile(p)
+            } catch (err) {
+              console.log('Error fetching profile in onAuthStateChange:', err)
+              setProfile(null)
+            }
+          } else {
+            setProfile(null)
+          }
+        } catch (err) {
+          console.log('Error in onAuthStateChange:', err)
+          setUser(null)
           setProfile(null)
+        } finally {
+          setLoading(false)
         }
-        setLoading(false)
       }
     )
 
@@ -70,14 +109,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [])
 
   const logout = async () => {
-    await supabase.auth.signOut()
+    try {
+      await retry(() => supabase.auth.signOut())
+    } catch (err) {
+      console.log('Error during logout:', err)
+    }
     setUser(null)
     setProfile(null)
   }
 
   const refreshSession = async () => {
-    const { data: { session } } = await supabase.auth.getSession()
-    setUser(session?.user ?? null)
+    try {
+      const { data: { session } } = await retry(() => supabase.auth.getSession())
+      setUser(session?.user ?? null)
+    } catch (err) {
+      console.log('Error refreshing session:', err)
+      setUser(null)
+    }
   }
 
   const signUp: AuthContextType['signUp'] = async ({
@@ -90,46 +138,61 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     age,
     gender,
   }) => {
-    const { data: authData, error: authError } = await supabase.auth.signUp({
-      email,
-      password,
-      options: { data: { full_name: fullName } },
-    })
+    try {
+      const { data: authData, error: authError } = await retry(() =>
+        supabase.auth.signUp({
+          email,
+          password,
+          options: { data: { full_name: fullName } },
+        })
+      )
 
-    if (authError) return { error: authError.message }
+      if (authError) return { error: authError.message }
 
-    const newUser = authData.user ?? authData.session?.user
-    if (!newUser) return { error: 'No user returned from sign up' }
+      const newUser = authData.user ?? authData.session?.user
+      if (!newUser) return { error: 'No user returned from sign up' }
 
-    const { error: profileError } = await supabase.from('user_profiles').insert({
-      id: newUser.id,
-      full_name: fullName,
-      number,
-      insta_id: instaId || null,
-      organisation: organisation || null,
-      age,
-      gender: gender || null,
-    })
+      const { error: profileError } = await retry(async () =>
+        await supabase.from('user_profiles').insert({
+          id: newUser.id,
+          full_name: fullName,
+          number,
+          insta_id: instaId || null,
+          organisation: organisation || null,
+          age,
+          gender: gender || null,
+        })
+      )
 
-    if (profileError) return { error: profileError.message }
+      if (profileError) return { error: profileError.message }
 
-    setUser(newUser)
-    setProfile(await getUserProfile())
-    return {}
+      setUser(newUser)
+      setProfile(await retry(() => getUserProfile()))
+      return {}
+    } catch (err) {
+      console.log('Error during signUp:', err)
+      const message = err instanceof Error ? err.message : 'Sign up failed'
+      return { error: message }
+    }
   }
 
   const updateProfile: AuthContextType['updateProfile'] = async (updates) => {
     if (!user) return { error: 'Not signed in' }
 
-    const { error } = await supabase
-      .from('user_profiles')
-      .update(updates)
-      .eq('id', user.id)
+    try {
+      const { error } = await retry(async () =>
+        await supabase.from('user_profiles').update(updates).eq('id', user.id)
+      )
 
-    if (error) return { error: error.message }
+      if (error) return { error: error.message }
 
-    setProfile(await getUserProfile())
-    return {}
+      setProfile(await retry(() => getUserProfile()))
+      return {}
+    } catch (err) {
+      console.log('Error updating profile:', err)
+      const message = err instanceof Error ? err.message : 'Update failed'
+      return { error: message }
+    }
   }
 
   return (
