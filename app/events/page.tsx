@@ -10,51 +10,39 @@ type Event = {
   name: string;
   description: string | null;
   date: string;
-};
-
-type Session = {
-  id: string;
-  event_id: string;
-  name: string;
-  description: string | null;
-  start_time: string | null;
-  end_time: string | null;
-  cost: number | null;
-  upi_link: string | null;
-  image_url: string | null;
+  photo_url: string | null;
 };
 
 export default function EventsPage() {
-  const [sessions, setSessions] = useState<Session[]>([]);
+  const [events, setEvents] = useState<Event[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
 
   useEffect(() => {
-    const fetchSessions = async () => {
+    const fetchEvents = async () => {
       setIsLoading(true);
       const { data, error } = await supabase
-        .from('sessions')
-        .select('*, events(name, description, date)')
-        .order('start_time', { ascending: true });
+        .from('events')
+        .select('*')
+        .order('date', { ascending: true });
 
       if (error) {
-        console.error('[EventsPage] Error fetching sessions:', error);
-        setError('Failed to load sessions. Please try again.');
-        setIsLoading(false);
+        console.error('[EventsPage] Error fetching events:', error);
+        setError('Failed to load events. Please try again.');
       } else {
-        setSessions(data as Session[]);
-        setIsLoading(false);
+        setEvents(data as Event[]);
       }
+      setIsLoading(false);
     };
 
-    fetchSessions();
+    fetchEvents();
   }, []);
 
   if (isLoading) {
     return (
       <div className="flex justify-center items-center min-h-screen">
-        <p>Loading sessions...</p>
+        <p>Loading events... if this takes too long reload the page</p>
       </div>
     );
   }
@@ -69,32 +57,29 @@ export default function EventsPage() {
 
   return (
     <div className="container mx-auto p-4">
-      <h1 className="text-3xl font-bold mb-6">Upcoming Sessions</h1>
+      <h1 className="text-3xl font-bold mb-6">Upcoming Events</h1>
       <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {sessions.length > 0 ? (
-          sessions.map((session) => {
-            // ✅ Ensure safe image URL
+        {events.length > 0 ? (
+          events.map((event) => {
             const safeImageUrl =
-              session.image_url && session.image_url.trim() !== ''
-                ? session.image_url
+              event.photo_url && event.photo_url.trim() !== ''
+                ? event.photo_url
                 : '/images/placeholder.png';
 
             return (
               <div
-                key={session.id}
+                key={event.id}
                 className="cursor-pointer"
-                onClick={() =>
-                  router.push(`/events/${session.event_id}/sessions/${session.id}`)
-                }
+                onClick={() => router.push(`/events/${event.id}`)}
               >
                 <EventSessionCard
-                  id={session.id}
-                  title={session.name}
-                  description={session.description || 'No description'}
+                  id={event.id}
+                  title={event.name}
+                  description={event.description || 'No description'}
                   imageUrl={safeImageUrl}
-                  eventId={session.event_id}
-                  sessionId={session.id}
-                  cost={session.cost || 0}
+                  eventId={event.id}
+                  sessionId={''} // not needed here
+                  cost={0}
                   isRegistered={false}
                   paymentStatus={''}
                 />
@@ -102,7 +87,7 @@ export default function EventsPage() {
             );
           })
         ) : (
-          <p>No upcoming sessions found.</p>
+          <p>No upcoming events found.</p>
         )}
       </div>
     </div>
