@@ -34,7 +34,7 @@ const AuthContext = createContext<AuthContextType>({
   updateProfile: async () => ({ error: 'Not implemented' }),
 })
 
-// 🔁 Helper: retry logic with exponential backoff
+// 🔁 Retry logic with exponential backoff
 async function retry<T>(fn: () => Promise<T>, retries = 3, delay = 500): Promise<T> {
   try {
     return await fn()
@@ -46,10 +46,28 @@ async function retry<T>(fn: () => Promise<T>, retries = 3, delay = 500): Promise
   }
 }
 
+// 🔄 Reload helper
+function safeReload(reason: string) {
+  if (typeof window !== 'undefined') {
+    console.log('[AuthProvider] Reloading page due to persistent failure:', reason)
+    window.location.reload()
+  }
+}
+
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [profile, setProfile] = useState<UserProfile | null>(null)
   const [loading, setLoading] = useState(true)
+
+  // 👀 Log when user changes
+  useEffect(() => {
+    console.log('🔄 User state changed:', user)
+  }, [user])
+
+  // 👀 Log when profile changes
+  useEffect(() => {
+    console.log('🔄 Profile state changed:', profile)
+  }, [profile])
 
   useEffect(() => {
     const init = async () => {
@@ -63,12 +81,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             const p = await retry(() => getUserProfile())
             setProfile(p)
           } catch (err) {
-            console.log('Error fetching profile in init:', err)
+            console.log('Error fetching profile in init after retries:', err)
             setProfile(null)
+            safeReload('init:getUserProfile failed for logged-in user')
           }
         }
       } catch (err) {
-        console.log('Error in init:', err)
+        console.log('Error in init after retries:', err)
         setUser(null)
         setProfile(null)
       } finally {
@@ -89,14 +108,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
               const p = await retry(() => getUserProfile())
               setProfile(p)
             } catch (err) {
-              console.log('Error fetching profile in onAuthStateChange:', err)
+              console.log('Error fetching profile in onAuthStateChange after retries:', err)
               setProfile(null)
+              safeReload('onAuthStateChange:getUserProfile failed for logged-in user')
             }
           } else {
             setProfile(null)
           }
         } catch (err) {
-          console.log('Error in onAuthStateChange:', err)
+          console.log('Error in onAuthStateChange after retries:', err)
+          if (user) safeReload('onAuthStateChange handler failed for logged-in user')
           setUser(null)
           setProfile(null)
         } finally {
@@ -106,13 +127,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     )
 
     return () => subscription.subscription.unsubscribe()
-  }, [])
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   const logout = async () => {
     try {
       await retry(() => supabase.auth.signOut())
     } catch (err) {
-      console.log('Error during logout:', err)
+      console.log('Error during logout after retries:', err)
+      if (user) safeReload('logout failed for logged-in user')
     }
     setUser(null)
     setProfile(null)
@@ -123,7 +145,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const { data: { session } } = await retry(() => supabase.auth.getSession())
       setUser(session?.user ?? null)
     } catch (err) {
-      console.log('Error refreshing session:', err)
+      console.log('Error refreshing session after retries:', err)
+      if (user) safeReload('refreshSession failed for logged-in user')
       setUser(null)
     }
   }
@@ -152,25 +175,37 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const newUser = authData.user ?? authData.session?.user
       if (!newUser) return { error: 'No user returned from sign up' }
 
-      const { error: profileError } = await retry(async () =>
-        await supabase.from('user_profiles').insert({
-          id: newUser.id,
-          full_name: fullName,
-          number,
-          insta_id: instaId || null,
-          organisation: organisation || null,
-          age,
-          gender: gender || null,
-        })
+      const { error: profileError } = await retry(
+        async () =>
+          await supabase
+            .from('user_profiles')
+            .insert({
+              id: newUser.id,
+              full_name: fullName,
+              number,
+              insta_id: instaId || null,
+              organisation: organisation || null,
+              age,
+              gender: gender || null,
+            })
+            .select()
+            .single()
       )
 
       if (profileError) return { error: profileError.message }
 
       setUser(newUser)
-      setProfile(await retry(() => getUserProfile()))
+      try {
+        setProfile(await retry(() => getUserProfile()))
+      } catch (err) {
+        console.log('Error fetching profile after signUp (after retries):', err)
+        if (authData.session?.user) safeReload('post-signUp getUserProfile failed for logged-in user')
+        return { error: 'Failed to fetch profile after sign up' }
+      }
+
       return {}
     } catch (err) {
-      console.log('Error during signUp:', err)
+      console.log('Error during signUp after retries:', err)
       const message = err instanceof Error ? err.message : 'Sign up failed'
       return { error: message }
     }
@@ -180,8 +215,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (!user) return { error: 'Not signed in' }
 
     try {
-      const { error } = await retry(async () =>
-        await supabase.from('user_profiles').update(updates).eq('id', user.id)
+      const { error } = await retry(
+        async () =>
+          await supabase
+            .from('user_profiles')
+            .update(updates)
+            .eq('id', user.id)
+            .select()
+            .single()
       )
 
       if (error) return { error: error.message }
@@ -189,7 +230,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setProfile(await retry(() => getUserProfile()))
       return {}
     } catch (err) {
-      console.log('Error updating profile:', err)
+      console.log('Error updating profile after retries:', err)
+      safeReload('updateProfile failed for logged-in user')
       const message = err instanceof Error ? err.message : 'Update failed'
       return { error: message }
     }

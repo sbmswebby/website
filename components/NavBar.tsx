@@ -41,7 +41,7 @@ const Navbar = () => {
   return (
     <nav className="fixed top-0 w-full z-50 bg-[rgba(10,10,10,0.95)] backdrop-blur-xl border-b border-[rgba(255,107,157,0.2)] text-white">
       <div className="w-full px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center gap-12 ml-12 justify-between h-16 lg:h-20">
+        <div className="flex items-center justify-between h-16 lg:h-20 px-4 sm:px-6 lg:px-8">
           {/* Logo */}
           <div className="flex-shrink-0">
             <Link href="/" className="block">
@@ -116,6 +116,12 @@ const Navbar = () => {
                         >
                           Edit Profile
                         </a>
+                        <a
+                          href="/registrations"
+                          className="block w-full text-white text-left px-4 py-2 hover:bg-gray-700 rounded-md transition-colors duration-200"
+                        >
+                          Your Registrations
+                        </a>
                         <button
                           onClick={logout}
                           className="block w-full text-left px-4 py-2 text-white hover:bg-gray-700 rounded-md transition-colors duration-200"
@@ -146,7 +152,6 @@ const Navbar = () => {
           </div>
         </div>
       </div>
-
       {/* Mobile Menu */}
       <div className={`lg:hidden transition-all duration-300 ease-in-out ${
         isOpen 
