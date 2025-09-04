@@ -29,7 +29,7 @@ export const EventSessionCard: FC<EventSessionCardProps> = ({
           alt={title}
           width={800}
           height={400}
-          className="object-contain max-h-96 w-auto"
+          className="object-contain max-h-full"
         />
       </div>
       <div className="event-card-content flex flex-col md:flex-row items-start md:items-end justify-between">
