@@ -44,62 +44,73 @@ export default function RegisterButton({ eventId, sessionId, eventName }: Regist
     checkRegistration();
   }, [sessionId]);
 
-const generatePdfTicket = async (regId: string) => {
-  try {
-    const { data: registration } = await supabase
-      .from('event_registrations')
-      .select('*')
-      .eq('id', regId)
-      .maybeSingle();
-    if (!registration) throw new Error('Registration not found');
-
-    // Fetch event
-    const { data: eventData } = await supabase
-      .from('events')
-      .select('name')
-      .eq('id', registration.event_id)
-      .maybeSingle();
-
-    // Fetch session name
-    let sessionName: string | null = null;
-    if (registration.session_id) {
-      const { data: sessionData } = await supabase
-        .from('sessions')
-        .select('name')
-        .eq('id', registration.session_id)
+  const generatePdfTicket = async (regId: string) => {
+    try {
+      const { data: registration } = await supabase
+        .from('event_registrations')
+        .select('*')
+        .eq('id', regId)
         .maybeSingle();
-      sessionName = sessionData?.name || null;
+      if (!registration) throw new Error('Registration not found');
+
+      // Fetch event
+      const { data: eventData } = await supabase
+        .from('events')
+        .select('name')
+        .eq('id', registration.event_id)
+        .maybeSingle();
+
+      // Fetch session name
+      let sessionName: string | null = null;
+      if (registration.session_id) {
+        const { data: sessionData } = await supabase
+          .from('sessions')
+          .select('name')
+          .eq('id', registration.session_id)
+          .maybeSingle();
+        sessionName = sessionData?.name || null;
+      }
+
+      // Fetch user profile (name + number)
+      const { data: userProfile } = await supabase
+        .from('user_profiles')
+        .select('full_name,number')
+        .eq('id', registration.user_id)
+        .maybeSingle();
+
+      // --- Generate PDF ---
+      const pdf = new jsPDF();
+      pdf.setFontSize(18);
+      pdf.text('Event Ticket', 20, 30);
+      pdf.setFontSize(14);
+      pdf.text(`Name: ${userProfile?.full_name || 'Unknown'}`, 20, 45);
+      pdf.text(`Number: ${userProfile?.number || 'Unknown'}`, 20, 55);
+      pdf.text(`Event: ${eventData?.name || eventName || 'Unknown Event'}`, 20, 70);
+      if (sessionName) pdf.text(`Session: ${sessionName}`, 20, 80);
+      pdf.text(`Registration ID: ${registration.id}`, 20, 90);
+      pdf.text(`Payment Status: ${registration.payment_status || 'Pending'}`, 20, 100);
+
+      const qrUrl = `https://sbms.com/registrations?event_registration_id=${registration.id}`;
+      const qrDataUrl = await QRCode.toDataURL(qrUrl);
+      pdf.addImage(qrDataUrl, 'PNG', 20, 110, 50, 50);
+
+      // --- FIX: Cross-platform safe download ---
+      const blob = pdf.output('blob');
+      const url = URL.createObjectURL(blob);
+
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `Ticket-${registration.id}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error('[RegisterButton] PDF generation failed:', err);
+      alert('Failed to generate ticket.');
     }
-
-    // Fetch user profile (name + number)
-    const { data: userProfile } = await supabase
-      .from('user_profiles')
-      .select('full_name,number')
-      .eq('id', registration.user_id)
-      .maybeSingle();
-
-    const pdf = new jsPDF();
-    pdf.setFontSize(18);
-    pdf.text('Event Ticket', 20, 30);
-    pdf.setFontSize(14);
-    pdf.text(`Name: ${userProfile?.full_name || 'Unknown'}`, 20, 45);
-    pdf.text(`Number: ${userProfile?.number || 'Unknown'}`, 20, 55);
-    pdf.text(`Event: ${eventData?.name || eventName || 'Unknown Event'}`, 20, 70);
-    if (sessionName) pdf.text(`Session: ${sessionName}`, 20, 80);
-    pdf.text(`Registration ID: ${registration.id}`, 20, 90);
-    pdf.text(`Payment Status: ${registration.payment_status || 'Pending'}`, 20, 100);
-
-    const qrUrl = `https://sbms.com/registrations?event_registration_id=${registration.id}`;
-    const qrDataUrl = await QRCode.toDataURL(qrUrl);
-    pdf.addImage(qrDataUrl, 'PNG', 20, 110, 50, 50);
-
-    pdf.save(`Ticket-${registration.id}.pdf`);
-  } catch (err) {
-    console.error('[RegisterButton] PDF generation failed:', err);
-    alert('Failed to generate ticket.');
-  }
-};
-
+  };
 
   const handleRegister = async () => {
     setIsRegistering(true);
@@ -148,7 +159,6 @@ const generatePdfTicket = async (regId: string) => {
       setIsRegistered(true);
       setRegistrationId(regId);
       await generatePdfTicket(regId);
-
     } catch (err) {
       console.error('[RegisterButton] Unexpected error:', err);
       alert('Registration failed due to an unexpected error.');
@@ -164,7 +174,11 @@ const generatePdfTicket = async (regId: string) => {
 
   return (
     <button
-      className={` register-btn px-4 py-2 rounded text-white ${isRegistered ? 'bg-green-600 hover:bg-green-700' : 'bg-blue-600 hover:bg-blue-700'} disabled:bg-gray-400`}
+      className={` register-btn px-4 py-2 rounded text-white ${
+        isRegistered
+          ? 'bg-green-600 hover:bg-green-700'
+          : 'bg-blue-600 hover:bg-blue-700'
+      } disabled:bg-gray-400`}
       onClick={isRegistered ? handleDownloadPass : handleRegister}
       disabled={isRegistering}
     >
