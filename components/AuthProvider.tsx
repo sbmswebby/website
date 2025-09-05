@@ -37,16 +37,20 @@ const AuthContext = createContext<AuthContextType>({
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [profile, setProfile] = useState<UserProfile | null>(null)
-  const [loading, setLoading] = useState(true)
+  const [loadingUser, setLoadingUser] = useState(true)
+  const [loadingProfile, setLoadingProfile] = useState(true)
+  const loading = loadingUser || loadingProfile
 
-  // 🔑 Helper to clear state
   const clearAuth = () => {
     setUser(null)
     setProfile(null)
   }
 
-  // 🔄 Load session + profile
+  // Load user session
   const loadSession = async () => {
+    setLoadingUser(true)
+    setLoadingProfile(true)
+
     try {
       const { data: { session } } = await supabase.auth.getSession()
 
@@ -65,16 +69,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       } catch (err) {
         console.error('[AuthProvider] ❌ Failed to fetch profile:', err)
         setProfile(null)
+      } finally {
+        setLoadingProfile(false)
       }
     } catch (err) {
       console.error('[AuthProvider] ❌ getSession error:', err)
       clearAuth()
     } finally {
-      setLoading(false)
+      setLoadingUser(false)
     }
   }
 
-  // 🟢 Init + auth state change
+  // Listen to auth state changes
   useEffect(() => {
     loadSession()
 
@@ -83,7 +89,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         if (!session || !session.user) {
           console.log('[AuthProvider:onAuthStateChange] ❌ Invalid session → clear')
           clearAuth()
-          setLoading(false)
+          setLoadingUser(false)
+          setLoadingProfile(false)
           return
         }
 
@@ -97,7 +104,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           console.error('[AuthProvider:onAuthStateChange] ❌ Failed profile fetch:', err)
           setProfile(null)
         } finally {
-          setLoading(false)
+          setLoadingProfile(false)
         }
       }
     )
@@ -106,8 +113,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [])
 
   const logout = async () => {
+    console.log("user before sign out: ", user)
     await supabase.auth.signOut()
+    console.log("user after sign out: ", user)
     clearAuth()
+    console.log("user auth removed: ", user)
+    console.log("user auth profile: ", profile)
   }
 
   const refreshSession = async () => {
