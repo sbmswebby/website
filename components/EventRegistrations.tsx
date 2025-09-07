@@ -32,6 +32,7 @@ type UserProfileRow = {
   id: string;
   full_name: string | null;
   number: string | null;
+  role?: string | null; // 👈 add role
 };
 
 type Registration = {
@@ -60,6 +61,19 @@ export default function EventRegistrations() {
       const { data: sessionData } = await supabase.auth.getSession();
       const user = sessionData?.session?.user ?? null;
       const fetched: Registration[] = [];
+
+      // --- Check user profile & role ---
+      let isAdmin = false;
+      if (user) {
+        const { data: profile } = await supabase
+          .from('user_profiles')
+          .select('id, role')
+          .eq('id', user.id)
+          .maybeSingle<UserProfileRow>();
+        if (profile?.role === 'admin') {
+          isAdmin = true;
+        }
+      }
 
       // --- Fetch single by param ---
       let highlighted: Registration | null = null;
@@ -109,15 +123,16 @@ export default function EventRegistrations() {
         }
       }
 
-      // --- Fetch all user registrations ---
+      // --- Fetch registrations ---
       if (user) {
-        const { data: userRegs } = await supabase
-          .from('event_registrations')
-          .select('*')
-          .eq('user_id', user.id);
+        const query = supabase.from('event_registrations').select('*');
+        if (!isAdmin) {
+          query.eq('user_id', user.id); // only this user’s
+        }
+        const { data: regs } = await query;
 
-        if (userRegs) {
-          for (const r of userRegs as EventRegistrationRow[]) {
+        if (regs) {
+          for (const r of regs as EventRegistrationRow[]) {
             if (r.id === registrationId) continue; // skip duplicate
             const { data: eventData } = await supabase
               .from('events')
@@ -158,7 +173,6 @@ export default function EventRegistrations() {
         }
       }
 
-      // ✅ First highlighted one, then the rest
       setRegistrations(highlighted ? [highlighted, ...fetched] : fetched);
     } catch (err) {
       console.error('Unexpected error fetching registrations:', err);
@@ -172,80 +186,71 @@ export default function EventRegistrations() {
     fetchRegistrations();
   }, [registrationId]);
 
-
-
   if (loading) return <p className="p-4">Loading registrations...</p>;
   if (registrations.length === 0) return <p className="p-4">No registrations found.</p>;
 
-  // --- Split highlighted & others ---
   const highlighted = registrations[0]?.id === registrationId ? registrations[0] : null;
   const others = highlighted ? registrations.slice(1) : registrations;
 
   const formatDate = (dateString: string) => {
     const d = new Date(dateString);
-    return d.toLocaleDateString(); // ✅ Just date, no time
+    return d.toLocaleDateString();
   };
 
   return (
     <Suspense fallback={<div>Loading...</div>}>
-    
-    <div className="container mx-auto p-4">
-      <h1 className="text-2xl font-bold mb-4">Registrations</h1>
+      <div className="container mx-auto p-4">
+        <h1 className="text-2xl font-bold mb-4">Registrations</h1>
 
-      {highlighted && (
-        <div className="mb-6">
-          <h2 className="text-xl font-semibold mb-2">Highlighted Registration</h2>
-          <EventSessionCard
-            id={highlighted.id}
-            title={highlighted.event_name}
-            description={
-              `👤Name: ${highlighted.user_name}, Phone: (${highlighted.user_number}),
+        {highlighted && (
+          <div className="mb-6">
+            <h2 className="text-xl font-semibold mb-2">Highlighted Registration</h2>
+            <EventSessionCard
+              id={highlighted.id}
+              title={highlighted.event_name}
+              description={`👤Name: ${highlighted.user_name}, Phone: (${highlighted.user_number}),
 🕒 Registered At: ${formatDate(highlighted.created_at)},
 ${highlighted.session_name ? `🎟️ Session: ${highlighted.session_name}` : ''},
 💰 Payment: ${highlighted.payment_status ?? 'Pending'}
-${highlighted.reference ? `, Ref: ${highlighted.reference}` : ''}`
-            }
-            imageUrl={highlighted.event_image}
-            eventId={highlighted.event_id}
-            sessionId={highlighted.session_id ?? ''}
-            isRegistered={true}
-            paymentStatus={highlighted.payment_status ?? 'Pending'}
-            cost={0}
-          >
-          </EventSessionCard>
-        </div>
-      )}
+${highlighted.reference ? `, Ref: ${highlighted.reference}` : ''}`}
+              imageUrl={highlighted.event_image}
+              eventId={highlighted.event_id}
+              sessionId={highlighted.session_id ?? ''}
+              isRegistered={true}
+              paymentStatus={highlighted.payment_status ?? 'Pending'}
+              cost={0}
+            />
+          </div>
+        )}
 
-      {others.length > 0 && (
-        <>
-          <h2 className="text-xl font-semibold mb-2">Your Other Registrations</h2>
-          <div className="grid gap-4 sm:grid-cols-1 md:grid-cols-2 ">
-            {others.map((r) => (
-              <EventSessionCard
-                key={r.id}
-                id={r.id}
-                title={r.event_name}
-                description={
-                  `👤 ${r.user_name} (${r.user_number})
+        {others.length > 0 && (
+          <>
+            <h2 className="text-xl font-semibold mb-2">Other Registrations</h2>
+            <div className="grid gap-4 sm:grid-cols-1 md:grid-cols-2">
+              {others.map((r) => (
+                <EventSessionCard
+                  key={r.id}
+                  id={r.id}
+                  title={r.event_name}
+                  description={`👤 ${r.user_name} (${r.user_number})
 🕒 Registered: ${formatDate(r.created_at)}
 ${r.session_name ? `🎟️ Session: ${r.session_name}` : ''}
 💰 Payment: ${r.payment_status ?? 'Pending'}
-${r.reference ? `Ref: ${r.reference}` : ''}`
-                }
-                imageUrl={r.event_image}
-                eventId={r.event_id}
-                sessionId={r.session_id ?? ''}
-                isRegistered={true}
-                paymentStatus={r.payment_status ?? 'Pending'}
-                cost={0}
-              >
-                <RegisterButton eventId={r.event_id} sessionId={r.session_id ?? ''} />
-              </EventSessionCard>
-            ))}
-          </div>
-        </>
-      )}
-    </div>
+${r.reference ? `Ref: ${r.reference}` : ''}`}
+                  imageUrl={r.event_image}
+                  eventId={r.event_id}
+                  sessionId={r.session_id ?? ''}
+                  isRegistered={true}
+                  paymentStatus={r.payment_status ?? 'Pending'}
+                  cost={0}
+                >
+                  <RegisterButton eventId={r.event_id} sessionId={r.session_id ?? ''} />
+                </EventSessionCard>
+              ))}
+            </div>
+          </>
+        )}
+      </div>
     </Suspense>
   );
 }
