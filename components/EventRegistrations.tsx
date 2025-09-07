@@ -32,7 +32,7 @@ type UserProfileRow = {
   id: string;
   full_name: string | null;
   number: string | null;
-  role?: string | null; // 👈 add role
+  is_admin?: boolean | null; // ✅ new
 };
 
 type Registration = {
@@ -52,6 +52,7 @@ type Registration = {
 export default function EventRegistrations() {
   const [registrations, setRegistrations] = useState<Registration[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isAdmin, setIsAdmin] = useState(false); 
   const searchParams = useSearchParams();
   const registrationId = searchParams.get('event_registration_id');
 
@@ -62,16 +63,17 @@ export default function EventRegistrations() {
       const user = sessionData?.session?.user ?? null;
       const fetched: Registration[] = [];
 
-      // --- Check user profile & role ---
+      // --- Check user profile & is_admin ---
       let isAdmin = false;
       if (user) {
         const { data: profile } = await supabase
           .from('user_profiles')
-          .select('id, role')
+          .select('id, is_admin')
           .eq('id', user.id)
           .maybeSingle<UserProfileRow>();
-        if (profile?.role === 'admin') {
+        if (profile?.is_admin) {
           isAdmin = true;
+          setIsAdmin(isAdmin);
         }
       }
 
@@ -225,7 +227,9 @@ ${highlighted.reference ? `, Ref: ${highlighted.reference}` : ''}`}
 
         {others.length > 0 && (
           <>
-            <h2 className="text-xl font-semibold mb-2">Other Registrations</h2>
+            <h2 className="text-xl font-semibold mb-2">
+              {isAdmin ? 'All Registrations' : 'Your Other Registrations'}
+            </h2>
             <div className="grid gap-4 sm:grid-cols-1 md:grid-cols-2">
               {others.map((r) => (
                 <EventSessionCard
