@@ -15,8 +15,9 @@ export const ImageGallery = () => {
     <div className="container mx-auto p-8 space-y-12">
       {/* Carousel with autoplay, dots, and swipe */}
       <PortraitScroller />
+      <div className="h-10"></div>
       <ImageCarousel  />
-      
+      <div className="h-10"></div>
 
       {/* Masonry Grid with zoom + staggered animation */}
       <ImageGrid  />
