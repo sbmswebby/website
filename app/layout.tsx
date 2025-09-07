@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 import Navbar from "@/components/NavBar";
 import { AuthProvider } from '@/components/AuthProvider'
+import Footer from "@/components/Footer";
 
 export const metadata: Metadata = {
   title: "SBMS",
@@ -39,6 +40,8 @@ export default function RootLayout({
           <main className="pt-16 lg:pt-20 p-4 sm:p-6 lg:p-10">
             {children}
           </main>
+
+          <Footer />
         </AuthProvider>
       </body>
     </html>
