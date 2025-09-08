@@ -18,7 +18,7 @@ import Seminars from "@/components/Seminars";
 
 export default function HomePage() {
   return ( 
-    <>
+    <> 
 
     <div className="flex  flex-col p-12">
       <FairyCursor/>
@@ -30,7 +30,7 @@ export default function HomePage() {
       <Competitions />
       <Seminars />
       <Academy />
-      <Events />
+      <Events />  
       <Awards />
       <Gallery />
       <MediaCoverage />
