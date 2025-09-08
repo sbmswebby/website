@@ -63,6 +63,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       console.log('[AuthProvider] ✅ Valid session, user:', session.user)
       setUser(session.user)
 
+       setLoadingUser(false) 
+
       try {
         const p = await getUserProfile()
         setProfile(p)
