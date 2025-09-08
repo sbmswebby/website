@@ -6,6 +6,9 @@ import { Session as SupabaseSession } from '@supabase/supabase-js';
 import jsPDF from 'jspdf';
 import QRCode from 'qrcode';
 
+import { useRouter } from 'next/navigation';
+
+
 interface RegisterButtonProps {
   eventId: string;
   sessionId: string;
@@ -17,6 +20,9 @@ export default function RegisterButton({ eventId, sessionId, eventName }: Regist
   const [isRegistered, setIsRegistered] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false); // 👈 track admin role
   const [registrationId, setRegistrationId] = useState<string | null>(null);
+
+    const router = useRouter();
+
 
   // Check if the user is already registered OR is admin
   useEffect(() => {
@@ -160,6 +166,7 @@ const generatePdfTicket = async (regId: string) => {
       const session: SupabaseSession | null = sessionData.session;
       if (!session || !session.user) {
         alert('Please login to register.');
+        router.push('/login'); // redirect to login page
         return;
       }
       const user = session.user;
