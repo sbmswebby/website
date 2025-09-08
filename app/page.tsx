@@ -17,7 +17,7 @@ import Seminars from "@/components/Seminars";
  
 
 export default function HomePage() {
-  return (
+  return ( 
     <>
 
     <div className="flex  flex-col p-12">
