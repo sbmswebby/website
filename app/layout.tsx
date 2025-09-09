@@ -5,14 +5,15 @@ import { AuthProvider } from '@/components/AuthProvider'
 import Footer from "@/components/Footer";
 
 export const metadata: Metadata = {
-  title: "SBMS",
-  description: "South Indian Bridal Makeup Studio",
+  title: "SBMS Academy",
+  description: "South Indian Bridal Makeover Studio",
   icons: {
     icon: "/images/sbms_logo.svg",
   },
   openGraph: {
-    title: "SBMS",
-    description: "South Indian Bridal Makeup Studio",
+    title: "SBMS Academy",
+    description: "South Indian Bridal Makeover Studio",
+    url: "https://sbmsacademy.in", // important for OG
     images: [
       {
         url: "/images/og_image.jpg",
@@ -21,8 +22,16 @@ export const metadata: Metadata = {
         alt: "SBMS Bridal Makeup Studio",
       },
     ],
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "SBMS Academy",
+    description: "South Indian Bridal Makeup Studio",
+    images: ["/images/og_image.jpg"],
   },
 };
+
 
 export default function RootLayout({
   children,
