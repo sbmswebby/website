@@ -3,6 +3,8 @@ import "./globals.css";
 import Navbar from "@/components/NavBar";
 import { AuthProvider } from '@/components/AuthProvider'
 import Footer from "@/components/Footer";
+import { EventPopup } from "@/components/EventPopup";
+import RegisterButton from "@/components/RegisterButton";
 
 export const metadata: Metadata = {
   title: "SBMS Academy",
@@ -38,6 +40,7 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+
   return (
     <html lang="en">
       <body className="min-h-screen bg-base-100 text-base-content">
@@ -47,6 +50,9 @@ export default function RootLayout({
           
           {/* Main content with padding */}
           <main className="pt-16 lg:pt-20 p-4 sm:p-6 lg:p-10">
+
+            <EventPopup/>
+
             {children}
           </main>
 
