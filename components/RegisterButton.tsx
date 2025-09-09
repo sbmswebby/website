@@ -145,7 +145,7 @@ const generatePdfTicket = async (regId: string) => {
     pdf.text(`Payment Status: ${registration.payment_status || 'Pending'}`, 20, startY + lineHeight * 5);
 
     // QR Code
-    const qrUrl = `https://sbms.com/registrations?event_registration_id=${registration.id}`;
+    const qrUrl = `https://sbmsacademy.in/registrations?event_registration_id=${registration.id}`;
     const qrDataUrl = await QRCode.toDataURL(qrUrl);
     pdf.addImage(qrDataUrl, 'PNG', 150, startY, 40, 40);
 
