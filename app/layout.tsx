@@ -11,8 +11,7 @@ export const metadata: Metadata = {
   icons: {
     icon: "/images/sbms_logo.svg",
   },
-  // Add metadataBase for absolute URLs
-  metadataBase: new URL('https://sbmsacademy.in'),
+  metadataBase: new URL("https://sbmsacademy.in"),
   openGraph: {
     title: "SBMS Academy",
     description: "South Indian Bridal Makeover Studio",
@@ -20,7 +19,7 @@ export const metadata: Metadata = {
     siteName: "SBMS Academy",
     images: [
       {
-        url: "https://sbmsacademy.in/images/og_image.jpg", // This will resolve to https://sbmsacademy.in/images/og_image.jpg
+        url: "https://sbmsacademy.in/images/og_image.jpg",
         width: 1200,
         height: 630,
         alt: "SBMS Bridal Makeup Studio",
@@ -34,25 +33,21 @@ export const metadata: Metadata = {
     title: "SBMS Academy",
     description: "South Indian Bridal Makeover Studio",
     images: ["https://sbmsacademy.in/images/og_image.jpg"],
-    creator: "@sbmsacademy", // Add if you have a Twitter handle
+    creator: "@sbmsacademy",
   },
-  // Add robots meta
   robots: {
     index: true,
     follow: true,
     googleBot: {
       index: true,
       follow: true,
-      'max-video-preview': -1,
-      'max-image-preview': 'large',
-      'max-snippet': -1,
+      "max-video-preview": -1,
+      "max-image-preview": "large",
+      "max-snippet": -1,
     },
   },
-  // Add verification if needed
-  // verification: {
-  //   google: 'your-google-verification-code',
-  // },
 };
+
 
 export default function RootLayout({
   children,

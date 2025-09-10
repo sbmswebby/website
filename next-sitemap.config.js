@@ -1,13 +1,14 @@
 /** @type {import('next-sitemap').IConfig} */
 module.exports = {
-  siteUrl: 'https://anugrahachristianworld.in', // your site URL
-  generateRobotsTxt: true, // this enables robots.txt
+  siteUrl: 'https://sbmsacademy.in',
+  generateRobotsTxt: true,
   robotsTxtOptions: {
     policies: [
-      { userAgent: '*', allow: '/' } // allow all search engines to crawl everything
+      { userAgent: '*', allow: '/' }, // allow main site
+      { userAgent: '*', disallow: ['/api/*', '/admin', '/login', '/signup', '/reset-password', '/profile'] }, // block sensitive pages
     ],
     additionalSitemaps: [
-      'https://anugrahachristianworld.in/sitemap.xml' // reference your sitemap
+      'https://sbmsacademy.in/sitemap.xml',
     ],
   },
 };
