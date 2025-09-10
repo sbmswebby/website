@@ -22,7 +22,7 @@ export const metadata: Metadata = {
       {
         url: "https://sbmsacademy.in/images/og_image.jpg", // This will resolve to https://sbmsacademy.in/images/og_image.jpg
         width: 1200,
-        height: 1200,
+        height: 630,
         alt: "SBMS Bridal Makeup Studio",
       },
     ],
@@ -61,12 +61,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      
       <head>
-        <meta property="og:image" content="https://sbmsacademy.in/images/og_image.jpg" />
-        <meta name="twitter:image" content="https://sbmsacademy.in/images/og_image.jpg" />
+        {/* These will be automatically added by Next.js from metadata, but you can add custom ones here if needed */}
       </head>
-      
       <body className="min-h-screen bg-base-100 text-base-content">
         <AuthProvider>
           {/* Navbar - full width, no padding constraints */}
