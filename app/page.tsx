@@ -24,7 +24,7 @@ export default function HomePage() {
       <FairyCursor/>
       <LoadingScreen />
 
-      <div className="h-11"></div>
+      <div className="h-11"></div> 
       <Hero />
       <AboutUs />
       <Competitions />
