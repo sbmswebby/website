@@ -20,7 +20,7 @@ export const metadata: Metadata = {
     siteName: "SBMS Academy",
     images: [
       {
-        url: "/images/og_image.jpg", // This will resolve to https://sbmsacademy.in/images/og_image.jpg
+        url: "https://sbmsacademy.in/images/og_image.jpg", // This will resolve to https://sbmsacademy.in/images/og_image.jpg
         width: 1200,
         height: 630,
         alt: "SBMS Bridal Makeup Studio",
@@ -33,7 +33,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "SBMS Academy",
     description: "South Indian Bridal Makeover Studio",
-    images: ["/images/og_image.jpg"],
+    images: ["https://sbmsacademy.in/images/og_image.jpg"],
     creator: "@sbmsacademy", // Add if you have a Twitter handle
   },
   // Add robots meta
