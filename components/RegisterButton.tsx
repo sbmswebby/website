@@ -105,7 +105,7 @@ export default function RegisterButton({ eventId, sessionId }: RegisterButtonPro
         const user = sessionData.session?.user || null;
 
         if (user) {
-          // Check if user has already registered for this session
+          // Check if user has already registered for this specific session
           const { data: existing } = await supabase
             .from('event_registrations')
             .select('id')
@@ -113,19 +113,27 @@ export default function RegisterButton({ eventId, sessionId }: RegisterButtonPro
             .eq('session_id', sessionId)
             .maybeSingle();
 
+          console.log(`[RegisterButton] Checking registration for session ${sessionId}:`, existing);
+
           if (existing?.id) {
             setIsRegistered(true);
             setRegistrationId(existing.id);
+          } else {
+            // IMPORTANT: Reset state if not registered for this specific session
+            setIsRegistered(false);
+            setRegistrationId(null);
           }
 
-          // Check if user is admin
-          const { data: profile } = await supabase
-            .from('user_profiles')
-            .select('role')
-            .eq('id', user.id)
-            .maybeSingle();
+          // Check if user is admin (only set once)
+          if (!isAdmin) {
+            const { data: profile } = await supabase
+              .from('user_profiles')
+              .select('role')
+              .eq('id', user.id)
+              .maybeSingle();
 
-          if (profile?.role === 'admin') setIsAdmin(true);
+            if (profile?.role === 'admin') setIsAdmin(true);
+          }
         }
       } catch (err) {
         console.error('[RegisterButton] Error checking user status:', err);
@@ -133,7 +141,7 @@ export default function RegisterButton({ eventId, sessionId }: RegisterButtonPro
     };
 
     checkUserStatus();
-  }, [sessionId]);
+  }, [sessionId, isAdmin]); // Added isAdmin to dependencies
 
   // --- Cache and load event logo for ticket PDF ---
   let cachedLogoBase64: string | null = null;
@@ -227,7 +235,7 @@ export default function RegisterButton({ eventId, sessionId }: RegisterButtonPro
       console.log(">>> [handleRegister] existing registration:", existing, "error:", existingError);
 
       if (existing?.id) {
-        alert("Already registered.");
+        alert("Already registered for this session.");
         setIsRegistered(true);
         setRegistrationId(existing.id);
         return;
@@ -351,7 +359,7 @@ export default function RegisterButton({ eventId, sessionId }: RegisterButtonPro
           beautyparlor_name: formData.beautyparlor_name,
           event_name: eventName || 'Event',
         })
-        .select("id, user_name, whatsapp_number, beautyparlor_name, event_name, session_name, registration_number")
+        .select()
         .returns<AllEventRegistration[]>();
 
       if (!data || error) {
@@ -419,13 +427,26 @@ export default function RegisterButton({ eventId, sessionId }: RegisterButtonPro
       .maybeSingle()
       .returns<SessionData | null>();
 
+    // FIXED: Fetch the registration_number from all_event_registrations
+    const { data: allEventReg, error: allEventError } = await supabase
+      .from("all_event_registrations")
+      .select("registration_number")
+      .eq("user_name", profile?.full_name || "")
+      .eq("event_name", eventName)
+      .eq("session_name", sessionRow?.name || "")
+      .maybeSingle();
+
+    console.log(">>> [Download Pass] all_event_registrations data:", allEventReg, "error:", allEventError);
+
+    const registrationNumber = allEventReg?.registration_number || registrationId;
+
     await generatePdfTicket({
       name: profile?.full_name || "Unknown",
       whatsapp: profile?.number || "Unknown",
       beautyParlor: profile?.organisation || "Unknown",
       eventName: eventName || "Event",
       sessionName: sessionRow?.name || "Unknown",
-      registrationNumber: registrationId,
+      registrationNumber: registrationNumber,
     });
   };
 
