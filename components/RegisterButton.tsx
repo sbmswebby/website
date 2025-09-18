@@ -483,10 +483,10 @@ export default function RegisterButton({ eventId, sessionId }: RegisterButtonPro
               ✕
             </button>
 
-            <h3 className="mb-4 text-lg font-bold">Register Manually</h3>
+            <h3 className="mb-4 text-lg bg-[#0a0a0a] font-bold">Register</h3>
 
             {/* Manual registration form */}
-            <form onSubmit={handleManualSubmit}>
+            <form id='form' onSubmit={handleManualSubmit}>
               <input
                 type="text"
                 placeholder="Full Name"
