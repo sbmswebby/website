@@ -12,16 +12,60 @@ interface RegisterButtonProps {
   sessionId: string;
 }
 
+interface FormData {
+  user_name: string;
+  whatsapp_number: string;
+  beautyparlor_name: string;
+}
+
+interface UserProfile {
+  full_name: string;
+  number: string;
+  organisation: string | null;
+  role?: string;
+}
+
+interface EventRegistration {
+  id: string;
+}
+
+interface AllEventRegistration {
+  id: string;
+  user_name: string;
+  whatsapp_number: string;
+  beautyparlor_name: string | null;
+  event_name: string;
+  session_name: string | null;
+  registration_number: number;
+}
+
+interface SessionData {
+  name: string;
+}
+
+interface EventData {
+  name: string;
+}
+
+interface TicketData {
+  name: string;
+  whatsapp: string;
+  beautyParlor: string;
+  eventName: string;
+  sessionName?: string;
+  registrationNumber: string | number;
+}
+
 export default function RegisterButton({ eventId, sessionId }: RegisterButtonProps) {
   // --- Local state management ---
-  const [isRegistering, setIsRegistering] = useState(false); // tracks if registration is in progress
-  const [isRegistered, setIsRegistered] = useState(false);   // tracks if user already registered
-  const [isAdmin, setIsAdmin] = useState(false);             // tracks if user is admin
-  const [registrationId, setRegistrationId] = useState<string | null>(null); // holds registration id
-  const [eventName, setEventName] = useState<string>('');    // holds current event name
+  const [isRegistering, setIsRegistering] = useState<boolean>(false);
+  const [isRegistered, setIsRegistered] = useState<boolean>(false);
+  const [isAdmin, setIsAdmin] = useState<boolean>(false);
+  const [registrationId, setRegistrationId] = useState<string | null>(null);
+  const [eventName, setEventName] = useState<string>('');
 
-  const [showModal, setShowModal] = useState(false); // toggles manual registration modal
-  const [formData, setFormData] = useState({
+  const [showModal, setShowModal] = useState<boolean>(false);
+  const [formData, setFormData] = useState<FormData>({
     user_name: '',
     whatsapp_number: '',
     beautyparlor_name: ''
@@ -31,7 +75,7 @@ export default function RegisterButton({ eventId, sessionId }: RegisterButtonPro
 
   // --- Fetch event name from DB when component mounts ---
   useEffect(() => {
-    const fetchEventName = async () => {
+    const fetchEventName = async (): Promise<void> => {
       try {
         const { data, error } = await supabase
           .from('events')
@@ -54,11 +98,11 @@ export default function RegisterButton({ eventId, sessionId }: RegisterButtonPro
 
   // --- Check if user is already registered / is admin ---
   useEffect(() => {
-    const checkUserStatus = async () => {
+    const checkUserStatus = async (): Promise<void> => {
       try {
         // Get active user session
         const { data: sessionData } = await supabase.auth.getSession();
-        const user: SupabaseSession['user'] | null = sessionData.session?.user || null;
+        const user = sessionData.session?.user || null;
 
         if (user) {
           // Check if user has already registered for this session
@@ -93,27 +137,24 @@ export default function RegisterButton({ eventId, sessionId }: RegisterButtonPro
 
   // --- Cache and load event logo for ticket PDF ---
   let cachedLogoBase64: string | null = null;
-  const loadLogo = async () => {
+  
+  const loadLogo = async (): Promise<string> => {
     if (cachedLogoBase64) return cachedLogoBase64;
+    
     const response = await fetch('/images/sbms_logo.png');
     const blob = await response.blob();
     const reader = new FileReader();
+    
     cachedLogoBase64 = await new Promise<string>((resolve) => {
       reader.onloadend = () => resolve(reader.result as string);
       reader.readAsDataURL(blob);
     });
+    
     return cachedLogoBase64;
   };
 
   // --- Generate ticket PDF with QR code ---
-  const generatePdfTicket = async (data: {
-    name: string;
-    whatsapp: string;
-    beautyParlor: string;
-    eventName: string;
-    sessionName?: string;
-    registrationNumber: string | number;
-  }) => {
+  const generatePdfTicket = async (data: TicketData): Promise<void> => {
     try {
       const pdf = new jsPDF();
 
@@ -158,81 +199,138 @@ export default function RegisterButton({ eventId, sessionId }: RegisterButtonPro
   };
 
   // --- Handle automatic registration for logged-in users ---
-  const handleRegister = async () => {
-    console.log("handleregister for logged in user was called")
+  const handleRegister = async (): Promise<void> => {
+    console.log(">>> [handleRegister] called");
     setIsRegistering(true);
-    try {
-      const { data: sessionData } = await supabase.auth.getSession();
-      const user = sessionData.session?.user;
 
-      // If user is not logged in, open manual registration modal
+    try {
+      // --- Get current session ---
+      const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+      console.log(">>> [handleRegister] sessionData:", sessionData, "error:", sessionError);
+
+      const user = sessionData.session?.user;
+      console.log(">>> [handleRegister] current user:", user);
+
       if (!user) {
+        console.warn(">>> [handleRegister] No logged in user, opening manual modal");
         setShowModal(true);
         return;
       }
 
-      // Check if already registered
-      const { data: existing } = await supabase
-        .from('event_registrations')
-        .select('id')
-        .eq('user_id', user.id)
-        .eq('session_id', sessionId)
+      // --- Check if already registered ---
+      const { data: existing, error: existingError } = await supabase
+        .from("event_registrations")
+        .select("id")
+        .eq("user_id", user.id)
+        .eq("session_id", sessionId)
         .maybeSingle();
+      console.log(">>> [handleRegister] existing registration:", existing, "error:", existingError);
 
       if (existing?.id) {
-        alert('Already registered.');
+        alert("Already registered.");
         setIsRegistered(true);
         setRegistrationId(existing.id);
         return;
       }
 
-      // Insert new registration into event_registrations table
-      const { data, error } = await supabase
-        .from('event_registrations')
+      // --- Insert into event_registrations ---
+      const { data: eventReg, error: eventError } = await supabase
+        .from("event_registrations")
         .insert({
           user_id: user.id,
           event_id: eventId,
           session_id: sessionId,
-          payment_status: 'pending',
+          payment_status: "pending",
         })
-        .select();
+        .select("id")
+        .returns<EventRegistration[]>();
 
-      if (!data || error) {
-        alert('Registration failed: ' + error?.message);
+      console.log(">>> [handleRegister] inserted into event_registrations:", eventReg, "error:", eventError);
+
+      if (!eventReg || eventError) {
+        alert("Registration failed: " + (eventError?.message || "Unknown error"));
         return;
       }
 
-      const regId = data[0].id;
+      const regId = eventReg[0].id;
       setIsRegistered(true);
       setRegistrationId(regId);
-      alert('Registered! Downloading ticket...');
-      
-      // Fetch user profile details to include in ticket
-      const { data: profile } = await supabase
-        .from('user_profiles')
-        .select('full_name, number')
-        .eq('id', user.id)
-        .maybeSingle();
-      console.log("profile: ",profile)
-      // Generate ticket PDF
+      console.log(">>> [handleRegister] new registrationId:", regId);
+
+      // --- Fetch user profile ---
+      const { data: profile, error: profileError } = await supabase
+        .from("user_profiles")
+        .select("full_name, number, organisation")
+        .eq("id", user.id)
+        .maybeSingle()
+        .returns<UserProfile | null>();
+
+      console.log(">>> [handleRegister] user profile:", profile, "error:", profileError);
+
+      if (!profile) {
+        alert("Profile not found for user.");
+        return;
+      }
+
+      // --- Fetch session details ---
+      const { data: sessionRow, error: sessionRowError } = await supabase
+        .from("sessions")
+        .select("name")
+        .eq("id", sessionId)
+        .maybeSingle()
+        .returns<SessionData | null>();
+
+      console.log(">>> [handleRegister] session row:", sessionRow, "error:", sessionRowError);
+
+      const sessionName = sessionRow?.name || "Unknown";
+
+      // --- Insert into all_event_registrations ---
+      const { data: allReg, error: allError } = await supabase
+        .from("all_event_registrations")
+        .insert({
+          user_name: profile.full_name,
+          whatsapp_number: profile.number,
+          beautyparlor_name: profile.organisation || null,
+          event_name: eventName,
+          session_name: sessionName,
+          payment_status: "pending",
+        })
+        .select("id, user_name, whatsapp_number, beautyparlor_name, event_name, session_name, registration_number")
+        .returns<AllEventRegistration[]>();
+
+      console.log(">>> [handleRegister] inserted into all_event_registrations:", allReg, "error:", allError);
+
+      if (!allReg || allError) {
+        alert("Failed adding to all_event_registrations: " + (allError?.message || "Unknown error"));
+        return;
+      }
+
+      const allRegRow = allReg[0];
+      console.log(">>> [handleRegister] all_event_registrations row:", allRegRow);
+
+      alert("Registered! Downloading ticket...");
+
+      // --- Generate ticket PDF ---
       await generatePdfTicket({
-        name: profile?.full_name || 'Unknown',
-        whatsapp: profile?.number || 'Unknown',
-        beautyParlor: profile?.full_name || 'Unknown',
-        eventName: eventName || 'Event',
-        registrationNumber: regId,
+        name: allRegRow.user_name,
+        whatsapp: allRegRow.whatsapp_number,
+        beautyParlor: allRegRow.beautyparlor_name || "Unknown",
+        eventName: allRegRow.event_name,
+        sessionName: allRegRow.session_name || undefined,
+        registrationNumber: allRegRow.registration_number,
       });
+      console.log(">>> [handleRegister] PDF generation completed");
     } catch (err) {
-      console.error('[RegisterButton] Registration failed:', err);
-      alert('Registration failed. Check console.');
+      console.error("[handleRegister] Registration failed:", err);
+      alert("Registration failed. Check console.");
     } finally {
       setIsRegistering(false);
     }
   };
 
   // --- Handle manual registration (guest users) ---
-  const handleManualSubmit = async (e: FormEvent) => {
-        console.log("handleManualSubmit for not logged in user was called")
+  const handleManualSubmit = async (e: FormEvent<HTMLFormElement>): Promise<void> => {
+    console.log("handleManualSubmit for not logged in user was called");
 
     e.preventDefault();
 
@@ -253,10 +351,11 @@ export default function RegisterButton({ eventId, sessionId }: RegisterButtonPro
           beautyparlor_name: formData.beautyparlor_name,
           event_name: eventName || 'Event',
         })
-        .select();
+        .select("id, user_name, whatsapp_number, beautyparlor_name, event_name, session_name, registration_number")
+        .returns<AllEventRegistration[]>();
 
       if (!data || error) {
-        alert('Manual registration failed: ' + error?.message);
+        alert('Manual registration failed: ' + (error?.message || "Unknown error"));
         return;
       }
 
@@ -282,6 +381,54 @@ export default function RegisterButton({ eventId, sessionId }: RegisterButtonPro
     }
   };
 
+  const handleDownloadPass = async (): Promise<void> => {
+    if (!registrationId) {
+      alert('No registration found.');
+      return;
+    }
+
+    const { data: sessionData } = await supabase.auth.getSession();
+    const user = sessionData.session?.user;
+
+    if (!user) {
+      alert("No logged-in user found.");
+      return;
+    }
+
+    // Fetch profile
+    const { data: profile, error: profileError } = await supabase
+      .from("user_profiles")
+      .select("full_name, number, organisation")
+      .eq("id", user.id)
+      .maybeSingle()
+      .returns<UserProfile | null>();
+
+    console.log(">>> [Download Pass] profile data:", profile, "error:", profileError);
+
+    if (profileError) {
+      console.error("Profile fetch error:", profileError);
+      alert("Failed to fetch user profile.");
+      return;
+    }
+
+    // Fetch session name
+    const { data: sessionRow } = await supabase
+      .from("sessions")
+      .select("name")
+      .eq("id", sessionId)
+      .maybeSingle()
+      .returns<SessionData | null>();
+
+    await generatePdfTicket({
+      name: profile?.full_name || "Unknown",
+      whatsapp: profile?.number || "Unknown",
+      beautyParlor: profile?.organisation || "Unknown",
+      eventName: eventName || "Event",
+      sessionName: sessionRow?.name || "Unknown",
+      registrationNumber: registrationId,
+    });
+  };
+
   return (
     <div>
       {/* Main button: Handles registration OR downloads ticket if already registered/admin */}
@@ -291,21 +438,11 @@ export default function RegisterButton({ eventId, sessionId }: RegisterButtonPro
             ? 'bg-green-600 hover:bg-green-700'
             : 'bg-blue-600 hover:bg-blue-700'
         } disabled:bg-gray-400`}
-        onClick={() => {
+        onClick={async () => {
           if (isRegistered || isAdmin) {
-            if (!registrationId) return alert('No registration found.');
-
-            // Download pass if already registered/admin
-            generatePdfTicket({
-              name: 'Registered User',
-              whatsapp: 'Unknown',
-              beautyParlor: 'Unknown',
-              eventName: eventName || 'Event',
-              registrationNumber: registrationId,
-            });
+            await handleDownloadPass();
           } else {
-            // Trigger normal registration flow
-            handleRegister();
+            await handleRegister();
           }
         }}
         disabled={isRegistering}
