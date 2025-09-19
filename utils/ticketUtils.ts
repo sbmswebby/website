@@ -1,19 +1,16 @@
-import jsPDF from "jspdf";
+import { jsPDF } from "jspdf";
+import "svg2pdf.js"; // augments jsPDF with pdf.svg()
 import QRCode from "qrcode";
 
-let cachedLogoBase64: string | null = null;
+let cachedLogoSvg: string | null = null;
 
 export const loadLogo = async (): Promise<string> => {
-  if (cachedLogoBase64) return cachedLogoBase64;
+  if (cachedLogoSvg) return cachedLogoSvg;
   try {
-    const response = await fetch("/images/sbms_logo.png");
-    const blob = await response.blob();
-    const reader = new FileReader();
-    cachedLogoBase64 = await new Promise<string>((resolve) => {
-      reader.onloadend = () => resolve(reader.result as string);
-      reader.readAsDataURL(blob);
-    });
-    return cachedLogoBase64;
+    const response = await fetch("/images/sbms_logo.svg");
+    const svgText = await response.text();
+    cachedLogoSvg = svgText;
+    return cachedLogoSvg;
   } catch (err) {
     console.error("[loadLogo] Failed to load logo:", err);
     return "";
@@ -30,30 +27,45 @@ export interface TicketData {
   registrationNumber: string | number;
 }
 
+const svgStringToElement = (svgText: string): SVGSVGElement => {
+  const div = document.createElement("div");
+  div.innerHTML = svgText.trim();
+  const svgEl = div.querySelector("svg");
+  if (!svgEl) throw new Error("Invalid SVG");
+  return svgEl as SVGSVGElement;
+};
+
 export const generatePdfTicket = async (data: TicketData): Promise<void> => {
   try {
     const pdf = new jsPDF();
 
-    // --- Add logo ---
-    const logo = await loadLogo();
-    if (logo) {
-      pdf.addImage(logo, "PNG", 150, 10, 40, 40);
+    // --- Add logo (vector SVG) ---
+    const logoSvgText = await loadLogo();
+    if (logoSvgText) {
+      const logoSvgEl = svgStringToElement(logoSvgText);
+      await pdf.svg(logoSvgEl, {
+        x: 110,
+        y: 10,
+        width: 85,
+        height: 85,
+      });
     }
 
-    // --- Event Name (main heading) ---
-    pdf.setFontSize(22);
+    // --- Event Name ---
     pdf.setFont("helvetica", "bold");
-    pdf.text(data.eventName, 20, 25);
+    pdf.setFontSize(32);
+    pdf.text(data.eventName, 20, 115);
 
-    // --- Subtitle: Event Ticket ---
-    pdf.setFontSize(10);
+    // --- Subtitle ---
     pdf.setFont("helvetica", "normal");
-    pdf.text("Event Ticket", 20, 35);
+    pdf.setFontSize(10);
+    pdf.text("Event Ticket", 20, 120);
 
-    pdf.setFontSize(12);
-    let y = 50;
-    const lineGap = 8;
-
+    // --- User details ---
+    pdf.setFontSize(30);
+    let y = 140;
+    const lineGap = 16;
+		
     pdf.text(`Name: ${data.name}`, 20, y);
     y += lineGap;
     pdf.text(`WhatsApp: ${data.whatsapp}`, 20, y);
@@ -66,12 +78,20 @@ export const generatePdfTicket = async (data: TicketData): Promise<void> => {
     }
     pdf.text(`Reg No: ${data.registrationNumber}`, 20, y);
 
-    // --- QR Code with link ---
-    const qrPayload = `https://sbmsacademy.in/registrations?registration_id=${data.id}`;
-    const qrData = await QRCode.toDataURL(qrPayload);
-    pdf.addImage(qrData, "PNG", 150, 50, 40, 40);
+    // --- QR Code (vector SVG) ---
+    const qrSvgText = await QRCode.toString(
+      `https://sbmsacademy.in/registrations?registration_id=${data.id}`,
+      { type: "svg" }
+    );
+    const qrSvgEl = svgStringToElement(qrSvgText);
+    await pdf.svg(qrSvgEl, {
+      x: 10,
+      y: 10,
+      width: 90,
+      height: 90,
+    });
 
-    // --- Force fresh download ---
+    // --- Save PDF ---
     const pdfBlob = pdf.output("blob");
     const url = URL.createObjectURL(pdfBlob);
     const a = document.createElement("a");
@@ -81,6 +101,7 @@ export const generatePdfTicket = async (data: TicketData): Promise<void> => {
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
+
   } catch (err) {
     console.error("[generatePdfTicket] Failed:", err);
     alert("Ticket generation failed. Please try again.");
