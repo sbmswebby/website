@@ -4,7 +4,6 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import { generatePdfTicket } from "@/utils/ticketUtils";
 
-
 export interface AllEventRegistration {
   id: string;
   user_name: string;
@@ -35,7 +34,7 @@ export interface EventData {
 }
 
 export interface TicketData {
-	id: string;
+  id: string;
   name: string;
   whatsapp: string;
   beautyParlor: string;
@@ -44,6 +43,10 @@ export interface TicketData {
   registrationNumber: string | number;
 }
 
+// --- Utility to check if string is valid UUID ---
+const isValidUuid = (id: string) =>
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
+
 export default function useEventRegistration(eventId: string, sessionId: string) {
   const [isRegistering, setIsRegistering] = useState(false);
   const [isRegistered, setIsRegistered] = useState(false);
@@ -51,8 +54,10 @@ export default function useEventRegistration(eventId: string, sessionId: string)
   const [registrationId, setRegistrationId] = useState<string | null>(null);
   const [eventName, setEventName] = useState<string>("");
 
-  // --- Fetch event name ---
+  // --- Fetch event name safely ---
   useEffect(() => {
+    if (!eventId || !isValidUuid(eventId)) return;
+
     const fetchEventName = async () => {
       const { data, error } = await supabase
         .from("events")
@@ -61,14 +66,17 @@ export default function useEventRegistration(eventId: string, sessionId: string)
         .maybeSingle();
 
       if (data?.name) setEventName(data.name);
-      if (error) console.error("[useEventRegistration] Failed to load event name:", error);
+      if (error && error.code !== "22P02")
+        console.error("[useEventRegistration] Failed to load event name:", error);
     };
 
     fetchEventName();
   }, [eventId]);
 
-  // --- Check user status (registration + admin role) ---
+  // --- Check user status (registration + admin role) safely ---
   useEffect(() => {
+    if (!sessionId || !isValidUuid(sessionId)) return;
+
     const checkUserStatus = async () => {
       const { data: sessionData } = await supabase.auth.getSession();
       const user = sessionData.session?.user;
@@ -109,10 +117,7 @@ export default function useEventRegistration(eventId: string, sessionId: string)
       const { data: sessionData } = await supabase.auth.getSession();
       const user = sessionData.session?.user;
 
-      if (!user) {
-        // No login → open manual modal
-        return true;
-      }
+      if (!user) return true; // No login → open manual modal
 
       // Already registered?
       const { data: existing } = await supabase
@@ -179,7 +184,7 @@ export default function useEventRegistration(eventId: string, sessionId: string)
 
       if (allReg?.[0]) {
         const ticket: TicketData = {
-					id: allReg[0].id,
+          id: allReg[0].id,
           name: allReg[0].user_name,
           whatsapp: allReg[0].whatsapp_number,
           beautyParlor: allReg[0].beautyparlor_name || "Unknown",
@@ -225,7 +230,7 @@ export default function useEventRegistration(eventId: string, sessionId: string)
 
       const reg = data[0];
       const ticket: TicketData = {
-				id: reg.id,
+        id: reg.id,
         name: reg.user_name,
         whatsapp: reg.whatsapp_number,
         beautyParlor: reg.beautyparlor_name || "Unknown",
@@ -243,7 +248,7 @@ export default function useEventRegistration(eventId: string, sessionId: string)
     }
   };
 
-  // --- Download pass (logged in) ---
+  // --- Download pass (logged in) safely ---
   const handleDownloadPass = async () => {
     if (!registrationId) {
       alert("No registration found.");
@@ -269,31 +274,30 @@ export default function useEventRegistration(eventId: string, sessionId: string)
       .returns<SessionData | null>();
 
     const { data: allReg } = await supabase
-			.from("all_event_registrations")
-			.select("id, registration_number") // ✅ also fetch UUID
-			.eq("user_name", profile?.full_name || "")
-			.eq("event_name", eventName)
-			.eq("session_name", sessionRow?.name || "")
-			.maybeSingle();
+      .from("all_event_registrations")
+      .select("id, registration_number")
+      .eq("user_name", profile?.full_name || "")
+      .eq("event_name", eventName)
+      .eq("session_name", sessionRow?.name || "")
+      .maybeSingle();
 
-		const registrationNumber = allReg?.registration_number || registrationId;
+    const registrationNumber = allReg?.registration_number || registrationId;
 
-		const ticket: TicketData = {
-			id: allReg?.id || "", // ✅ add UUID for QR
-			name: profile?.full_name || "Unknown",
-			whatsapp: profile?.number || "Unknown",
-			beautyParlor: profile?.organisation || "Unknown",
-			eventName,
-			sessionName: sessionRow?.name || undefined,
-			registrationNumber,
-		};
-
+    const ticket: TicketData = {
+      id: allReg?.id || "",
+      name: profile?.full_name || "Unknown",
+      whatsapp: profile?.number || "Unknown",
+      beautyParlor: profile?.organisation || "Unknown",
+      eventName,
+      sessionName: sessionRow?.name || undefined,
+      registrationNumber,
+    };
 
     await generatePdfTicket(ticket);
   };
 
   return {
-    isProcessing: isRegistering, // 👈 alias for nicer API
+    isProcessing: isRegistering,
     isRegistered,
     isAdmin,
     handleRegister,

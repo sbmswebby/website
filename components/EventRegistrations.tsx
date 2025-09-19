@@ -2,43 +2,25 @@
 
 import { Suspense, useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabaseClient';
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams, useRouter } from 'next/navigation';
 import { EventSessionCard } from '@/components/EventSessionCard';
 import RegisterButton from '@/components/RegisterButton';
 
 // --- Types ---
-type EventRegistrationRow = {
+type AllEventRegistrationRow = {
   id: string;
-  event_id: string;
-  session_id: string | null;
-  user_id: string;
+  user_name: string;
+  whatsapp_number: string | null;
+  beautyparlor_name: string | null;
+  event_name: string;
+  session_name: string | null;
   payment_status: string | null;
   created_at: string;
-  reference: string | null;
-};
-
-type EventRow = {
-  id: string;
-  name: string;
-  photo_url: string | null;
-};
-
-type SessionRow = {
-  id: string;
-  name: string;
-};
-
-type UserProfileRow = {
-  id: string;
-  full_name: string | null;
-  number: string | null;
-  is_admin?: boolean | null; // ✅ new
+  registration_number: number;
 };
 
 type Registration = {
   id: string;
-  event_id: string;
-  session_id: string | null;
   event_name: string;
   session_name: string | null;
   payment_status: string | null;
@@ -52,130 +34,103 @@ type Registration = {
 export default function EventRegistrations() {
   const [registrations, setRegistrations] = useState<Registration[]>([]);
   const [loading, setLoading] = useState(true);
-  const [isAdmin, setIsAdmin] = useState(false); 
   const searchParams = useSearchParams();
-  const registrationId = searchParams.get('event_registration_id');
+  const router = useRouter();
+  const registrationId = searchParams.get('registration_id');
 
   const fetchRegistrations = async () => {
     setLoading(true);
     try {
+      // --- Get current user session ---
       const { data: sessionData } = await supabase.auth.getSession();
-      const user = sessionData?.session?.user ?? null;
-      const fetched: Registration[] = [];
+      const user = sessionData.session?.user;
 
-      // --- Check user profile & is_admin ---
-      let isAdmin = false;
-      if (user) {
-        const { data: profile } = await supabase
-          .from('user_profiles')
-          .select('id, is_admin')
-          .eq('id', user.id)
-          .maybeSingle<UserProfileRow>();
-        if (profile?.is_admin) {
-          isAdmin = true;
-          setIsAdmin(isAdmin);
-        }
+      // --- Case 1: Guest with no registrationId → redirect ---
+      if (!user && !registrationId) {
+        router.push('/events');
+        return;
       }
 
-      // --- Fetch single by param ---
-      let highlighted: Registration | null = null;
+      // --- Fetch single registration if registrationId is present ---
       if (registrationId) {
-        const { data: regData } = await supabase
-          .from('event_registrations')
+        const { data, error } = await supabase
+          .from('all_event_registrations')
           .select('*')
           .eq('id', registrationId)
-          .maybeSingle<EventRegistrationRow>();
+          .maybeSingle();
 
-        if (regData) {
-          const { data: eventData } = await supabase
-            .from('events')
-            .select('id,name,photo_url')
-            .eq('id', regData.event_id)
-            .maybeSingle<EventRow>();
+        if (error) throw error;
 
-          let sessionName: string | null = null;
-          if (regData.session_id) {
-            const { data: sData } = await supabase
-              .from('sessions')
-              .select('id,name')
-              .eq('id', regData.session_id)
-              .maybeSingle<SessionRow>();
-            sessionName = sData?.name ?? null;
-          }
-
-          const { data: profile } = await supabase
-            .from('user_profiles')
-            .select('id,full_name,number')
-            .eq('id', regData.user_id)
-            .maybeSingle<UserProfileRow>();
-
-          highlighted = {
-            id: regData.id,
-            event_id: regData.event_id,
-            session_id: regData.session_id,
-            event_name: eventData?.name ?? 'Unknown Event',
-            session_name: sessionName,
-            payment_status: regData.payment_status,
-            user_name: profile?.full_name ?? 'Unknown',
-            user_number: profile?.number ?? 'Unknown',
-            event_image: eventData?.photo_url ?? '/images/placeholder.png',
-            created_at: regData.created_at,
-            reference: regData.reference,
+        if (data) {
+          const single: Registration = {
+            id: String(data.id),
+            event_name: data.event_name,
+            session_name: data.session_name,
+            payment_status: data.payment_status ?? 'pending',
+            user_name: data.user_name,
+            user_number: data.whatsapp_number ?? 'Unknown',
+            event_image: '/images/placeholder.png',
+            created_at: data.created_at,
+            reference: data.registration_number?.toString() ?? null,
           };
+          setRegistrations([single]);
+        } else {
+          setRegistrations([]);
         }
+        return;
       }
 
-      // --- Fetch registrations ---
-      if (user) {
-        const query = supabase.from('event_registrations').select('*');
-        if (!isAdmin) {
-          query.eq('user_id', user.id); // only this user’s
-        }
-        const { data: regs } = await query;
-
-        if (regs) {
-          for (const r of regs as EventRegistrationRow[]) {
-            if (r.id === registrationId) continue; // skip duplicate
-            const { data: eventData } = await supabase
-              .from('events')
-              .select('id,name,photo_url')
-              .eq('id', r.event_id)
-              .maybeSingle<EventRow>();
-
-            let sessionName: string | null = null;
-            if (r.session_id) {
-              const { data: sData } = await supabase
-                .from('sessions')
-                .select('id,name')
-                .eq('id', r.session_id)
-                .maybeSingle<SessionRow>();
-              sessionName = sData?.name ?? null;
-            }
-
-            const { data: profile } = await supabase
-              .from('user_profiles')
-              .select('id,full_name,number')
-              .eq('id', r.user_id)
-              .maybeSingle<UserProfileRow>();
-
-            fetched.push({
-              id: r.id,
-              event_id: r.event_id,
-              session_id: r.session_id,
-              event_name: eventData?.name ?? 'Unknown Event',
-              session_name: sessionName,
-              payment_status: r.payment_status,
-              user_name: profile?.full_name ?? 'Unknown',
-              user_number: profile?.number ?? 'Unknown',
-              event_image: eventData?.photo_url ?? '/images/placeholder.png',
-              created_at: r.created_at,
-              reference: r.reference,
-            });
-          }
-        }
+      // --- Case 2: Authenticated user → check role ---
+      if (!user) {
+        setRegistrations([]); // Should not happen, safe guard
+        return;
       }
 
-      setRegistrations(highlighted ? [highlighted, ...fetched] : fetched);
+      const { data: profile } = await supabase
+        .from('user_profiles')
+        .select('role, number')
+        .eq('id', user.id)
+        .maybeSingle();
+
+      if (!profile?.role) {
+        setRegistrations([]);
+        return;
+      }
+
+      let data, error;
+
+      if (profile.role === 'admin') {
+        // Admin → fetch all registrations
+        ({ data, error } = await supabase
+          .from('all_event_registrations')
+          .select('*')
+          .order('created_at', { ascending: false }));
+      } else {
+        // Non-admin → fetch only their own registrations
+        ({ data, error } = await supabase
+          .from('all_event_registrations')
+          .select('*')
+          .eq('whatsapp_number', profile.number)
+          .order('created_at', { ascending: false }));
+      }
+
+      if (error) throw error;
+
+      if (data) {
+        const mapped: Registration[] = data.map((r: AllEventRegistrationRow) => ({
+          id: String(r.id),
+          event_name: r.event_name,
+          session_name: r.session_name,
+          payment_status: r.payment_status ?? 'pending',
+          user_name: r.user_name,
+          user_number: r.whatsapp_number ?? 'Unknown',
+          event_image: '/images/placeholder.png',
+          created_at: r.created_at,
+          reference: r.registration_number?.toString() ?? null,
+        }));
+
+        setRegistrations(mapped);
+      }
     } catch (err) {
       console.error('Unexpected error fetching registrations:', err);
       setRegistrations([]);
@@ -210,16 +165,15 @@ export default function EventRegistrations() {
             <EventSessionCard
               id={highlighted.id}
               title={highlighted.event_name}
-              description={`👤Name: ${highlighted.user_name}, Phone: (${highlighted.user_number}),
-🕒 Registered At: ${formatDate(highlighted.created_at)},
-${highlighted.session_name ? `🎟️ Session: ${highlighted.session_name}` : ''},
-💰 Payment: ${highlighted.payment_status ?? 'Pending'}
-${highlighted.reference ? `, Ref: ${highlighted.reference}` : ''}`}
+              description={`👤 Name: ${highlighted.user_name}, Phone: ${highlighted.user_number}
+🕒 Registered: ${formatDate(highlighted.created_at)}
+${highlighted.session_name ? `🎟️ Session: ${highlighted.session_name}` : ''}
+${highlighted.reference ? `Ref: ${highlighted.reference}` : ''}`}
               imageUrl={highlighted.event_image}
-              eventId={highlighted.event_id}
-              sessionId={highlighted.session_id ?? ''}
+              eventId={''}
+              sessionId={highlighted.session_name ?? ''}
               isRegistered={true}
-              paymentStatus={highlighted.payment_status ?? 'Pending'}
+              paymentStatus={''}
               cost={0}
             />
           </div>
@@ -227,9 +181,7 @@ ${highlighted.reference ? `, Ref: ${highlighted.reference}` : ''}`}
 
         {others.length > 0 && (
           <>
-            <h2 className="text-xl font-semibold mb-2">
-              {isAdmin ? 'All Registrations' : 'Your Other Registrations'}
-            </h2>
+            <h2 className="text-xl font-semibold mb-2">All Registrations</h2>
             <div className="grid gap-4 sm:grid-cols-1 md:grid-cols-2">
               {others.map((r) => (
                 <EventSessionCard
@@ -239,16 +191,14 @@ ${highlighted.reference ? `, Ref: ${highlighted.reference}` : ''}`}
                   description={`👤 ${r.user_name} (${r.user_number})
 🕒 Registered: ${formatDate(r.created_at)}
 ${r.session_name ? `🎟️ Session: ${r.session_name}` : ''}
-💰 Payment: ${r.payment_status ?? 'Pending'}
 ${r.reference ? `Ref: ${r.reference}` : ''}`}
                   imageUrl={r.event_image}
-                  eventId={r.event_id}
-                  sessionId={r.session_id ?? ''}
+                  eventId={''}
+                  sessionId={r.session_name ?? ''}
                   isRegistered={true}
-                  paymentStatus={r.payment_status ?? 'Pending'}
+                  paymentStatus={''}
                   cost={0}
                 >
-                  <RegisterButton eventId={r.event_id} sessionId={r.session_id ?? ''} />
                 </EventSessionCard>
               ))}
             </div>
