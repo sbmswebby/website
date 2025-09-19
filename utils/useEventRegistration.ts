@@ -35,6 +35,7 @@ export interface EventData {
 }
 
 export interface TicketData {
+	id: string;
   name: string;
   whatsapp: string;
   beautyParlor: string;
@@ -178,6 +179,7 @@ export default function useEventRegistration(eventId: string, sessionId: string)
 
       if (allReg?.[0]) {
         const ticket: TicketData = {
+					id: allReg[0].id,
           name: allReg[0].user_name,
           whatsapp: allReg[0].whatsapp_number,
           beautyParlor: allReg[0].beautyparlor_name || "Unknown",
@@ -214,13 +216,16 @@ export default function useEventRegistration(eventId: string, sessionId: string)
           beautyparlor_name: form.beautyparlor_name,
           event_name: eventName,
         })
-        .select()
+        .select(
+          "id, user_name, whatsapp_number, beautyparlor_name, event_name, session_name, registration_number"
+        )
         .returns<AllEventRegistration[]>();
 
       if (error || !data) throw error;
 
       const reg = data[0];
       const ticket: TicketData = {
+				id: reg.id,
         name: reg.user_name,
         whatsapp: reg.whatsapp_number,
         beautyParlor: reg.beautyparlor_name || "Unknown",
@@ -264,23 +269,25 @@ export default function useEventRegistration(eventId: string, sessionId: string)
       .returns<SessionData | null>();
 
     const { data: allReg } = await supabase
-      .from("all_event_registrations")
-      .select("registration_number")
-      .eq("user_name", profile?.full_name || "")
-      .eq("event_name", eventName)
-      .eq("session_name", sessionRow?.name || "")
-      .maybeSingle();
+			.from("all_event_registrations")
+			.select("id, registration_number") // ✅ also fetch UUID
+			.eq("user_name", profile?.full_name || "")
+			.eq("event_name", eventName)
+			.eq("session_name", sessionRow?.name || "")
+			.maybeSingle();
 
-    const registrationNumber = allReg?.registration_number || registrationId;
+		const registrationNumber = allReg?.registration_number || registrationId;
 
-    const ticket: TicketData = {
-      name: profile?.full_name || "Unknown",
-      whatsapp: profile?.number || "Unknown",
-      beautyParlor: profile?.organisation || "Unknown",
-      eventName,
-      sessionName: sessionRow?.name || undefined,
-      registrationNumber,
-    };
+		const ticket: TicketData = {
+			id: allReg?.id || "", // ✅ add UUID for QR
+			name: profile?.full_name || "Unknown",
+			whatsapp: profile?.number || "Unknown",
+			beautyParlor: profile?.organisation || "Unknown",
+			eventName,
+			sessionName: sessionRow?.name || undefined,
+			registrationNumber,
+		};
+
 
     await generatePdfTicket(ticket);
   };

@@ -21,6 +21,7 @@ export const loadLogo = async (): Promise<string> => {
 };
 
 export interface TicketData {
+  id: string;
   name: string;
   whatsapp: string;
   beautyParlor: string;
@@ -66,7 +67,7 @@ export const generatePdfTicket = async (data: TicketData): Promise<void> => {
     pdf.text(`Reg No: ${data.registrationNumber}`, 20, y);
 
     // --- QR Code with link ---
-    const qrPayload = `https://sbmsacademy.in/registrations?reg_number=${data.registrationNumber}`;
+    const qrPayload = `https://sbmsacademy.in/registrations?registration_id=${data.id}`;
     const qrData = await QRCode.toDataURL(qrPayload);
     pdf.addImage(qrData, "PNG", 150, 50, 40, 40);
 
