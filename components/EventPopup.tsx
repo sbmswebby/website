@@ -13,7 +13,9 @@ export const EventPopup: FC = () => {
   // Event data states
   const [id] = useState("85ea0c3d-7715-4c90-9113-8cacc93777f9");
   const [title] = useState("Mini Beauty Expo");
-  const [description] = useState("Learn professional bridal makeup techniques. Witness the Chota King Choti Queen beauty pagent.");
+  const [description] = useState(
+    "Learn professional bridal makeup techniques. Witness the Chota King Choti Queen beauty pagent."
+  );
   const [imageUrl] = useState("/images/og_image.jpg");
   const [eventId] = useState("85ea0c3d-7715-4c90-9113-8cacc93777f9");
   const [sessionId] = useState("af316369-a0fd-473f-bec5-a0b4a38e0786");
@@ -26,22 +28,12 @@ export const EventPopup: FC = () => {
     setMounted(true);
   }, []);
 
-  // Close modal when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (modalRef.current && !modalRef.current.contains(event.target as Node)) {
-        setIsOpen(false);
-      }
-    };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
-
   if (!mounted || !isOpen) return null;
 
   // Portal root
   const modalRoot =
-    document.getElementById('modal-root') || (() => {
+    document.getElementById('modal-root') ||
+    (() => {
       const root = document.createElement('div');
       root.id = 'modal-root';
       document.body.appendChild(root);
@@ -49,7 +41,15 @@ export const EventPopup: FC = () => {
     })();
 
   return createPortal(
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4"
+      onMouseDown={(e) => {
+        // Close only if the user clicks directly on the backdrop
+        if (e.target === e.currentTarget) {
+          setIsOpen(false);
+        }
+      }}
+    >
       <div
         ref={modalRef}
         className="relative w-fit max-w-sm bg-white rounded-2xl shadow-xl overflow-hidden"
@@ -76,23 +76,25 @@ export const EventPopup: FC = () => {
           </div>
 
           {/* Content Section */}
-          <div className=" bg-black	">
-						<div className='grid grid-cols-12'>
-							<div className='grid col-span-1'></div>
-							<div className='flex flex-col col-span-10'>
-								<div className='h-4'></div>
-								<h3 className="text-xl font-bold text-gray-100 mb-2">{title}</h3>
-								<p className="text-gray-400 text-sm mb-3 line-clamp-3">{description}</p>
-								<div className="flex justify-between items-center">
-									<p className="text-lg font-semibold text-green-600">
-										{cost > 0 ? `₹${cost}` : 'Free'}
-									</p>
-									<RegisterButton eventId={eventId} sessionId={sessionId} />
-								</div>
-							</div>
-							<div className='grid col-span-1'></div>
-						</div>
-						<div className='h-4'></div>
+          <div className="bg-black">
+            <div className="grid grid-cols-12">
+              <div className="grid col-span-1"></div>
+              <div className="flex flex-col col-span-10">
+                <div className="h-4"></div>
+                <h3 className="text-xl font-bold text-gray-100 mb-2">{title}</h3>
+                <p className="text-gray-400 text-sm mb-3 line-clamp-3">
+                  {description}
+                </p>
+                <div className="flex justify-between items-center">
+                  <p className="text-lg font-semibold text-green-600">
+                    {cost > 0 ? `₹${cost}` : 'Free'}
+                  </p>
+                  <RegisterButton eventId={eventId} sessionId={sessionId} />
+                </div>
+              </div>
+              <div className="grid col-span-1"></div>
+            </div>
+            <div className="h-4"></div>
           </div>
         </div>
       </div>
