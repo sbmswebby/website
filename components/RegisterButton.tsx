@@ -480,9 +480,8 @@ export default function RegisterButton({ eventId, sessionId }: RegisterButtonPro
               className="absolute top-2 right-2 text-gray-500 hover:text-gray-700"
               onClick={() => setShowModal(false)}
             >
-              ✕
+              <h3>✕</h3>
             </button>
-
             <h3 className="mb-4 text-lg bg-[#0a0a0a] font-bold">Register</h3>
 
             {/* Manual registration form */}
