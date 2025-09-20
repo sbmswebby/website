@@ -19,7 +19,7 @@ export const metadata: Metadata = {
     siteName: "SBMS Academy",
     images: [
       {
-        url: "https://sbmsacademy.in/images/og_image.jpg",
+        url: "https://sbmsacademy.in//images/events/sep_2025/press_meet.jpg",
         width: 1200,
         height: 630,
         alt: "SBMS Bridal Makeup Studio",

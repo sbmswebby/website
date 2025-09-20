@@ -165,9 +165,9 @@ export default function EventRegistrations() {
             <EventSessionCard
               id={highlighted.id}
               title={highlighted.event_name}
-              description={`👤 Name: ${highlighted.user_name}, Phone: ${highlighted.user_number}
-🕒 Registered: ${formatDate(highlighted.created_at)}
-${highlighted.session_name ? `🎟️ Session: ${highlighted.session_name}` : ''}
+              description={`👤 Name: ${highlighted.user_name},  Phone: ${highlighted.user_number} ,
+🕒 Registered: ${formatDate(highlighted.created_at)}, 
+${highlighted.session_name ? `🎟️ Session: ${highlighted.session_name} ,` : ''}
 ${highlighted.reference ? `Ref: ${highlighted.reference}` : ''}`}
               imageUrl={highlighted.event_image}
               eventId={''}
@@ -188,10 +188,10 @@ ${highlighted.reference ? `Ref: ${highlighted.reference}` : ''}`}
                   key={r.id}
                   id={r.id}
                   title={r.event_name}
-                  description={`👤 ${r.user_name} (${r.user_number})
+                  description={`👤 ${r.user_name},   (${r.user_number})
 🕒 Registered: ${formatDate(r.created_at)}
-${r.session_name ? `🎟️ Session: ${r.session_name}` : ''}
-${r.reference ? `Ref: ${r.reference}` : ''}`}
+${r.session_name ? `🎟️ Session: ${r.session_name}, ` : ''}
+${r.reference ? `Ref: ${r.reference}, ` : ''}`}
                   imageUrl={r.event_image}
                   eventId={''}
                   sessionId={r.session_name ?? ''}

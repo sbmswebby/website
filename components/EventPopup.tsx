@@ -11,17 +11,17 @@ export const EventPopup: FC = () => {
   const [mounted, setMounted] = useState(false);
 
   // Event data states
-  const [id] = useState("85ea0c3d-7715-4c90-9113-8cacc93777f9");
-  const [title] = useState("Mini Beauty Expo");
+  const [id] = useState("4abe0d58-5a7e-4def-8cf3-5beef1c7bedf");
+  const [title] = useState("Press Meet");
   const [description] = useState(
-    "Learn professional bridal makeup techniques. Witness the Chota King Choti Queen beauty pagent."
+    "Poster unveiling for the mini beauty expo"
   );
-  const [imageUrl] = useState("/images/og_image.jpg");
-  const [eventId] = useState("85ea0c3d-7715-4c90-9113-8cacc93777f9");
-  const [sessionId] = useState("af316369-a0fd-473f-bec5-a0b4a38e0786");
+  const [imageUrl] = useState("/images/events/sep_2025/press_meet.jpg");
+  const [eventId] = useState("e6f43520-aa0a-4a79-8434-554d925ab6dc");
+  const [sessionId] = useState("4abe0d58-5a7e-4def-8cf3-5beef1c7bedf");
   const [cost] = useState(0);
   const [isRegistered] = useState(false);
-  const [paymentStatus] = useState("pending");
+  const [paymentStatus] = useState("");
 
   // Ensure client-side rendering
   useEffect(() => {
