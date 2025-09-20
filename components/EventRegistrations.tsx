@@ -8,6 +8,7 @@ import RegisterButton from '@/components/RegisterButton';
 
 // --- Types ---
 type AllEventRegistrationRow = {
+  image_url: string;
   id: string;
   user_name: string;
   whatsapp_number: string | null;
@@ -69,7 +70,7 @@ export default function EventRegistrations() {
             payment_status: data.payment_status ?? 'pending',
             user_name: data.user_name,
             user_number: data.whatsapp_number ?? 'Unknown',
-            event_image: '/images/placeholder.png',
+            event_image: data.image_url,
             created_at: data.created_at,
             reference: data.registration_number?.toString() ?? null,
           };
@@ -124,7 +125,7 @@ export default function EventRegistrations() {
           payment_status: r.payment_status ?? 'pending',
           user_name: r.user_name,
           user_number: r.whatsapp_number ?? 'Unknown',
-          event_image: '/images/placeholder.png',
+          event_image: r.image_url,
           created_at: r.created_at,
           reference: r.registration_number?.toString() ?? null,
         }));
