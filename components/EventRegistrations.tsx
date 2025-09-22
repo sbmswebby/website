@@ -27,7 +27,7 @@ type Registration = {
   payment_status: string | null;
   user_name: string;
   user_number: string;
-  event_image: string;
+  image_url: string;
   created_at: string;
   reference: string | null;
 };
@@ -70,7 +70,7 @@ export default function EventRegistrations() {
             payment_status: data.payment_status ?? 'pending',
             user_name: data.user_name,
             user_number: data.whatsapp_number ?? 'Unknown',
-            event_image: data.image_url,
+            image_url: data.image_url,
             created_at: data.created_at,
             reference: data.registration_number?.toString() ?? null,
           };
@@ -125,7 +125,7 @@ export default function EventRegistrations() {
           payment_status: r.payment_status ?? 'pending',
           user_name: r.user_name,
           user_number: r.whatsapp_number ?? 'Unknown',
-          event_image: r.image_url,
+          image_url: r.image_url,
           created_at: r.created_at,
           reference: r.registration_number?.toString() ?? null,
         }));
@@ -170,7 +170,7 @@ export default function EventRegistrations() {
 🕒 Registered: ${formatDate(highlighted.created_at)}, 
 ${highlighted.session_name ? `🎟️ Session: ${highlighted.session_name} ,` : ''}
 ${highlighted.reference ? `Ref: ${highlighted.reference}` : ''}`}
-              imageUrl={highlighted.event_image}
+              imageUrl={highlighted.image_url}
               eventId={''}
               sessionId={highlighted.session_name ?? ''}
               isRegistered={true}
@@ -193,7 +193,7 @@ ${highlighted.reference ? `Ref: ${highlighted.reference}` : ''}`}
 🕒 Registered: ${formatDate(r.created_at)}
 ${r.session_name ? `🎟️ Session: ${r.session_name}, ` : ''}
 ${r.reference ? `Ref: ${r.reference}, ` : ''}`}
-                  imageUrl={r.event_image}
+                  imageUrl={r.image_url}
                   eventId={''}
                   sessionId={r.session_name ?? ''}
                   isRegistered={true}
