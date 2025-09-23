@@ -2,8 +2,17 @@
 User-agent: *
 Allow: /
 
+# *
+User-agent: *
+Disallow: /api/*
+Disallow: /admin
+Disallow: /login
+Disallow: /signup
+Disallow: /reset-password
+Disallow: /profile
+
 # Host
-Host: https://anugrahachristianworld.in
+Host: https://sbmsacademy.in
 
 # Sitemaps
-Sitemap: https://anugrahachristianworld.in/sitemap.xml
+Sitemap: https://sbmsacademy.in/sitemap.xml

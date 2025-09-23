@@ -1,6 +1,6 @@
 'use client';
 
-import { Suspense, useEffect, useState } from 'react';
+import { useCallback, useEffect, useState, Suspense } from 'react';
 import { supabase } from '@/lib/supabaseClient';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { EventSessionCard } from '@/components/EventSessionCard';
@@ -16,8 +16,8 @@ type AllEventRegistrationRow = {
   payment_status: string | null;
   created_at: string;
   registration_number: number;
-  session_id?: string; // FK to sessions table
-  sessions?: { id: string; image_url: string | null }; // relationship
+  session_id?: string;
+  sessions?: { id: string; image_url: string | null };
 };
 
 type Registration = {
@@ -32,21 +32,21 @@ type Registration = {
   reference: string | null;
 };
 
-export default function EventRegistrations() {
+function EventRegistrationsContent() {
   const [registrations, setRegistrations] = useState<Registration[]>([]);
   const [loading, setLoading] = useState(true);
   const searchParams = useSearchParams();
   const router = useRouter();
   const registrationId = searchParams.get('registration_id');
 
-  const fetchRegistrations = async () => {
+  const fetchRegistrations = useCallback(async () => {
     console.log('🔄 fetchRegistrations() called');
     setLoading(true);
 
     try {
-      // Get Supabase user session
       const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
       if (sessionError) console.error('❌ Error fetching session:', sessionError);
+
       const user = sessionData.session?.user;
 
       if (!user && !registrationId) {
@@ -55,7 +55,7 @@ export default function EventRegistrations() {
         return;
       }
 
-      // --- Fetch single registration by ID ---
+      // --- Fetch single registration ---
       if (registrationId) {
         const { data, error } = await supabase
           .from('all_event_registrations')
@@ -63,10 +63,7 @@ export default function EventRegistrations() {
           .eq('id', registrationId)
           .maybeSingle();
 
-        if (error) {
-          console.error('❌ Error fetching single registration:', error);
-          throw error;
-        }
+        if (error) throw error;
 
         if (data) {
           const single: Registration = {
@@ -92,7 +89,7 @@ export default function EventRegistrations() {
         return;
       }
 
-      // --- Fetch user profile ---
+      // --- Fetch profile ---
       const { data: profile, error: profileError } = await supabase
         .from('user_profiles')
         .select('role, number')
@@ -105,7 +102,7 @@ export default function EventRegistrations() {
         return;
       }
 
-      // --- Fetch registrations ---
+      // --- Fetch all registrations ---
       let query = supabase
         .from('all_event_registrations')
         .select('*, sessions(id, image_url)')
@@ -116,14 +113,10 @@ export default function EventRegistrations() {
       }
 
       const { data, error } = await query;
-
-      if (error) {
-        console.error('❌ Error fetching registrations:', error);
-        throw error;
-      }
+      if (error) throw error;
 
       if (data && data.length > 0) {
-        const mapped: Registration[] = data.map((r) => ({
+        const mapped: Registration[] = data.map((r: AllEventRegistrationRow) => ({
           id: r.id,
           event_name: r.event_name,
           session_name: r.session_name,
@@ -144,11 +137,11 @@ export default function EventRegistrations() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [registrationId, router]);
 
   useEffect(() => {
     fetchRegistrations();
-  }, [registrationId]);
+  }, [fetchRegistrations]);
 
   if (loading) return <p className="p-4">Loading registrations...</p>;
   if (registrations.length === 0) return <p className="p-4">No registrations found.</p>;
@@ -159,55 +152,62 @@ export default function EventRegistrations() {
   const formatDate = (dateString: string) => new Date(dateString).toLocaleDateString();
 
   return (
-    <Suspense fallback={<div>Loading...</div>}>
-      <div className="container mx-auto p-4">
-        <h1 className="text-2xl font-bold mb-4">Registrations</h1>
+    <div className="container mx-auto p-4">
+      <h1 className="text-2xl font-bold mb-4">Registrations</h1>
 
-        {highlighted && (
-          <div className="mb-6">
-            <h2 className="text-xl font-semibold mb-2">Highlighted Registration</h2>
-            <EventSessionCard
-              id={highlighted.id}
-              title={highlighted.event_name}
-              description={`👤 Name: ${highlighted.user_name},  Phone: ${highlighted.user_number} ,
-🕒 Registered: ${formatDate(highlighted.created_at)}, 
-${highlighted.session_name ? `🎟️ Session: ${highlighted.session_name} ,` : ''} 
+      {highlighted && (
+        <div className="mb-6">
+          <h2 className="text-xl font-semibold mb-2">Highlighted Registration</h2>
+          <EventSessionCard
+            id={highlighted.id}
+            title={highlighted.event_name}
+            description={`👤 Name: ${highlighted.user_name},  Phone: ${highlighted.user_number}
+🕒 Registered: ${formatDate(highlighted.created_at)}
+${highlighted.session_name ? `🎟️ Session: ${highlighted.session_name}, ` : ''} 
 ${highlighted.reference ? `Ref: ${highlighted.reference}` : ''}`}
-              imageUrl={highlighted.image_url}
-              eventId={''}
-              sessionId={highlighted.session_name ?? ''}
-              isRegistered={true}
-              paymentStatus={''}
-              cost={0}
-            />
-          </div>
-        )}
+            imageUrl={highlighted.image_url}
+            eventId=""
+            sessionId={highlighted.session_name ?? ''}
+            isRegistered={true}
+            paymentStatus=""
+            cost={0}
+          />
+        </div>
+      )}
 
-        {others.length > 0 && (
-          <>
-            <h2 className="text-xl font-semibold mb-2">All Registrations</h2>
-            <div className="grid gap-4 sm:grid-cols-1 md:grid-cols-2">
-              {others.map((r) => (
-                <EventSessionCard
-                  key={r.id}
-                  id={r.id}
-                  title={r.event_name}
-                  description={`👤 ${r.user_name},   (${r.user_number})
+      {others.length > 0 && (
+        <>
+          <h2 className="text-xl font-semibold mb-2">All Registrations</h2>
+          <div className="grid gap-4 sm:grid-cols-1 md:grid-cols-2">
+            {others.map((r) => (
+              <EventSessionCard
+                key={r.id}
+                id={r.id}
+                title={r.event_name}
+                description={`👤 ${r.user_name},   (${r.user_number})
 🕒 Registered: ${formatDate(r.created_at)}
 ${r.session_name ? `🎟️ Session: ${r.session_name}, ` : ''} 
 ${r.reference ? `Ref: ${r.reference}, ` : ''}`}
-                  imageUrl={r.image_url}
-                  eventId={''}
-                  sessionId={r.session_name ?? ''}
-                  isRegistered={true}
-                  paymentStatus={''}
-                  cost={0}
-                />
-              ))}
-            </div>
-          </>
-        )}
-      </div>
+                imageUrl={r.image_url}
+                eventId=""
+                sessionId={r.session_name ?? ''}
+                isRegistered={true}
+                paymentStatus=""
+                cost={0}
+              />
+            ))}
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
+// ✅ Wrap only where useSearchParams is used
+export default function EventRegistrations() {
+  return (
+    <Suspense fallback={<div>Loading search params...</div>}>
+      <EventRegistrationsContent />
     </Suspense>
   );
 }
