@@ -14,8 +14,6 @@ interface EventData {
   eventId: string;
   sessionId: string;
   cost: number;
-  isRegistered: boolean;
-  paymentStatus: string;
 }
 
 export const EventPopup: FC = () => {
@@ -24,14 +22,13 @@ export const EventPopup: FC = () => {
   const [mounted, setMounted] = useState(false);
   const [eventData, setEventData] = useState<EventData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [tick, setTick] = useState(0); // new state to force updates
 
   useEffect(() => {
     setMounted(true);
-    console.log('[EventPopup] Component mounted');
 
     const fetchLatestEvent = async () => {
       try {
-        console.log('[EventPopup] Fetching latest event...');
         const { data, error } = await supabase
           .from('events')
           .select('*')
@@ -40,19 +37,15 @@ export const EventPopup: FC = () => {
           .maybeSingle();
 
         if (error) {
-          console.error('[EventPopup] Supabase error:', error);
+          console.error(error);
           return;
         }
-
-        console.log('[EventPopup] Supabase returned data:', data);
 
         if (data) {
           const imageUrl =
             data.photo_url?.startsWith('http')
               ? data.photo_url
               : 'https://uhbnssgxxszdqwmspxkm.supabase.co/storage/v1/object/public/current_event/default.jpg';
-
-          console.log('[EventPopup] Using image URL:', imageUrl);
 
           setEventData({
             id: data.id,
@@ -62,49 +55,31 @@ export const EventPopup: FC = () => {
             eventId: data.event_id || data.id,
             sessionId: data.id,
             cost: data.cost || 0,
-            isRegistered: false,
-            paymentStatus: '',
           });
-        } else {
-          console.warn('[EventPopup] No event data returned from Supabase');
         }
       } catch (err) {
-        console.error('[EventPopup] Unexpected error:', err);
+        console.error(err);
       } finally {
         setLoading(false);
-        console.log('[EventPopup] Fetching finished, loading set to false');
       }
     };
 
     fetchLatestEvent();
   }, []);
 
-  if (!mounted) {
-    console.log('[EventPopup] Not mounted yet');
-    return null;
-  }
+  // Force update RegisterButton every second
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setTick((prev) => prev + 1);
+    }, 1000);
+    return () => clearInterval(interval);
+  }, []);
 
-  if (!isOpen) {
-    console.log('[EventPopup] Modal is closed');
-    return null;
-  }
-
-  if (loading) {
-    console.log('[EventPopup] Loading latest event...');
-    return null;
-  }
-
-  if (!eventData) {
-    console.warn('[EventPopup] No event data available');
-    return null;
-  }
-
-  console.log('[EventPopup] Rendering modal with event data:', eventData);
+  if (!mounted || !isOpen || loading || !eventData) return null;
 
   const modalRoot =
     document.getElementById('modal-root') ||
     (() => {
-      console.log('[EventPopup] Creating modal-root div');
       const root = document.createElement('div');
       root.id = 'modal-root';
       document.body.appendChild(root);
@@ -114,12 +89,7 @@ export const EventPopup: FC = () => {
   return createPortal(
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4"
-      onMouseDown={(e) => {
-        if (e.target === e.currentTarget) {
-          console.log('[EventPopup] Backdrop clicked, closing modal');
-          setIsOpen(false);
-        }
-      }}
+      onMouseDown={(e) => e.target === e.currentTarget && setIsOpen(false)}
     >
       <div
         ref={modalRef}
@@ -127,10 +97,7 @@ export const EventPopup: FC = () => {
       >
         <button
           className="absolute -top-3 -right-3 w-12 h-12 flex items-center justify-center bg-gray-800 rounded-full hover:bg-gray-900 text-white font-bold text-2xl shadow-lg transition z-10"
-          onClick={() => {
-            console.log('[EventPopup] Close button clicked');
-            setIsOpen(false);
-          }}
+          onClick={() => setIsOpen(false)}
         >
           ×
         </button>
@@ -143,10 +110,6 @@ export const EventPopup: FC = () => {
               width={600}
               height={600}
               className="object-contain max-h-full max-w-full"
-              onError={(e) => console.error('[EventPopup] Image failed to load', e)}
-              onLoad={() =>
-                console.log('[EventPopup] Image loaded successfully')
-              }
             />
           </div>
 
@@ -165,7 +128,9 @@ export const EventPopup: FC = () => {
                   <p className="text-lg font-semibold text-green-600">
                     {eventData.cost > 0 ? `₹${eventData.cost}` : 'Free'}
                   </p>
+                  {/* Pass tick as key to force re-render */}
                   <RegisterButton
+                    key={tick}
                     eventId={eventData.eventId}
                     sessionId={eventData.sessionId}
                   />
