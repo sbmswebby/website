@@ -2,7 +2,7 @@
 "use client";
 
 import { useSearchParams, useRouter } from "next/navigation";
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import useEventRegistration from "@/utils/useEventRegistration";
 import Modal from "@/components/Modal"; // make sure the path is correct
 
@@ -48,6 +48,8 @@ export default function RegisterPage() {
   };
 
   return (
+    <Suspense fallback = "loading">
+
     <div id="signIn">
       <div className="w-full max-w-md bg-white p-6 rounded shadow">
         <h2 className="text-2xl font-bold text-center mb-4">Manual Registration</h2>
@@ -104,5 +106,6 @@ export default function RegisterPage() {
 
 
     </div>
+    </Suspense>
   );
 }
