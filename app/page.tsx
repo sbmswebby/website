@@ -30,7 +30,7 @@ export default function HomePage() {
       <Competitions />
       <Seminars />
       <Academy />
-      <Events />
+      <Events /> 
       <Awards />
       <Gallery />
       <MediaCoverage />
