@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabaseClient";
-import { generatePdfTicket } from "@/utils/ticketUtils";
+import { generateTicketImage } from "@/utils/ticketUtils";
 
 export interface EventRegistration {
   id: string;
@@ -229,7 +229,7 @@ export default function useEventRegistration(eventId: string, sessionId: string)
       };
 
       console.log("[handleManualSubmit] Generating PDF ticket:", ticket);
-      await generatePdfTicket(ticket);
+      await generateTicketImage(ticket);
       alert("Guest registration successful! Ticket downloaded.");
       
     } catch (err) {
@@ -283,7 +283,7 @@ export default function useEventRegistration(eventId: string, sessionId: string)
     };
 
     console.log("[handleDownloadPass] Generating PDF ticket:", ticket);
-    await generatePdfTicket(ticket);
+    await generateTicketImage(ticket);
   };
 
   return {
