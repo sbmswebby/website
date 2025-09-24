@@ -1,22 +1,53 @@
 "use client";
 
 import { useSearchParams, useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { supabase } from "@/lib/supabaseClient";
 import useEventRegistration from "@/utils/useEventRegistration";
+
+interface Session {
+  id: string;
+  name: string;
+}
 
 export default function RegisterPageContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
 
   const eventId = searchParams.get("eventId") || "";
-  const sessionId = searchParams.get("sessionId") || "";
 
+  const [sessionId, setSessionId] = useState("");
   const { handleManualSubmit, isProcessing } = useEventRegistration(eventId, sessionId);
 
   const [name, setName] = useState("");
   const [whatsapp, setWhatsapp] = useState("");
   const [parlor, setParlor] = useState("");
-  const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
+  const [sessions, setSessions] = useState<Session[]>([]);
+  const [message, setMessage] = useState<{
+    type: "success" | "error";
+    text: string;
+  } | null>(null);
+  const [photo, setPhoto] = useState<File | null>(null);
+  const [profession, setProfession] = useState("");
+
+  // Fetch sessions for the event
+  useEffect(() => {
+    const fetchSessions = async () => {
+      if (!eventId) return;
+      const { data, error } = await supabase
+        .from("sessions")
+        .select("id, name")
+        .eq("event_id", eventId);
+
+      if (error) {
+        console.error("Error fetching sessions:", error.message);
+      } else {
+        setSessions(data || []);
+      }
+    };
+
+    fetchSessions();
+  }, [eventId]);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -24,9 +55,12 @@ export default function RegisterPageContent() {
 
     try {
       await handleManualSubmit({
-        user_name: name,
-        whatsapp_number: whatsapp,
-        beautyparlor_name: parlor,
+        name,
+        whatsapp,
+        organisation: parlor,
+        user_selected_session_id: sessionId, // <-- passes the selected session properly
+        profession: profession || undefined,
+        photo,
       });
 
       setMessage({ type: "success", text: "Registered successfully!" });
@@ -90,7 +124,7 @@ export default function RegisterPageContent() {
 
           <div>
             <label className="block mb-1">
-              Beauty Parlor / Salon Name <span className="text-red-500">*</span>
+              Organization <span className="text-red-500">*</span>
             </label>
             <input
               type="text"
@@ -99,6 +133,45 @@ export default function RegisterPageContent() {
               onChange={(e) => setParlor(e.target.value)}
               className="w-full border p-2 rounded"
             />
+          </div>
+
+          <div>
+            <label className="block mb-1">Profession</label>
+            <input
+              type="text"
+              value={profession}
+              onChange={(e) => setProfession(e.target.value)}
+              className="w-full border p-2 rounded"
+            />
+          </div>
+
+          <div>
+            <label className="block mb-1">Upload Photo</label>
+            <input
+              type="file"
+              accept="image/*"
+              onChange={(e) => setPhoto(e.target.files?.[0] || null)}
+              className="w-full border p-2 rounded"
+            />
+          </div>
+
+          <div>
+            <label className="block mb-1">
+              Select Session <span className="text-red-500">*</span>
+            </label>
+            <select
+              required
+              value={sessionId}
+              onChange={(e) => setSessionId(e.target.value)}
+              className="w-full border p-2 rounded"
+            >
+              <option value="">-- Select Session --</option>
+              {sessions.map((s) => (
+                <option key={s.id} value={s.id}>
+                  {s.name}
+                </option>
+              ))}
+            </select>
           </div>
 
           <button

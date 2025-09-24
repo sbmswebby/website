@@ -6,15 +6,30 @@ import { createPortal } from "react-dom";
 
 interface ManualRegisterModalProps {
   onClose: () => void;
-  onSubmit: (form: { user_name: string; whatsapp_number: string; beautyparlor_name: string }) => Promise<void>;
+  onSubmit: (form: {
+    name: string;
+    whatsapp: string;
+    organisation?: string;
+    profession?: string;
+    user_selected_session_id: string;
+    photo?: File | null;
+  }) => Promise<void>;
+  sessionId: string;
   isProcessing: boolean;
 }
 
-export default function ManualRegisterModal({ onClose, onSubmit, isProcessing }: ManualRegisterModalProps) {
+export default function ManualRegisterModal({
+  onClose,
+  onSubmit,
+  sessionId,
+  isProcessing,
+}: ManualRegisterModalProps) {
   const [formData, setFormData] = useState({
     user_name: "",
     whatsapp_number: "",
     beautyparlor_name: "",
+    profession: "",
+    photo: null as File | null,
   });
 
   const [mounted, setMounted] = useState(false);
@@ -23,38 +38,47 @@ export default function ManualRegisterModal({ onClose, onSubmit, isProcessing }:
     setMounted(true);
     const prev = document.body.style.overflow;
     document.body.style.overflow = "hidden";
-    return () => { document.body.style.overflow = prev; };
+    return () => {
+      document.body.style.overflow = prev;
+    };
   }, []);
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    await onSubmit(formData);
+
+    await onSubmit({
+      name: formData.user_name,
+      whatsapp: formData.whatsapp_number,
+      organisation: formData.beautyparlor_name,
+      profession: formData.profession || undefined,
+      user_selected_session_id: sessionId,
+      photo: formData.photo,
+    });
   };
 
   const modalContent = (
     <div
-        id="form"
+      id="form"
       role="dialog"
       aria-modal="true"
       className="fixed inset-0 z-[9999] flex items-center justify-center bg-black bg-opacity-50"
     >
       <div className="bg-[#0a0a0a] rounded-lg shadow-lg p-6 w-full max-w-md relative border border-[rgba(255,107,157,0.15)]">
-<button
-  type="button"
-  onClick={onClose}
-  aria-label="Close modal"
-  style={{
-    width: "32px",
-    height: "32px",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-  }}
-  className="absolute top-2 right-2 text-gray-300 hover:text-white"
->
-  <p className=" font-black text-5xl">✕</p> 
-</button>
-
+        <button
+          type="button"
+          onClick={onClose}
+          aria-label="Close modal"
+          style={{
+            width: "32px",
+            height: "32px",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+          className="absolute top-2 right-2 text-gray-300 hover:text-white"
+        >
+          <p className=" font-black text-5xl">✕</p>
+        </button>
 
         <h3 className="mb-4 text-lg font-bold text-white text-center">Register</h3>
 
@@ -78,11 +102,26 @@ export default function ManualRegisterModal({ onClose, onSubmit, isProcessing }:
           <input
             type="text"
             placeholder="Beauty Parlor / Salon Name"
-            required
             value={formData.beautyparlor_name}
             onChange={(e) => setFormData({ ...formData, beautyparlor_name: e.target.value })}
             className="mb-2 w-full p-2 border rounded bg-[#0a0a0a] text-white"
           />
+          <input
+            type="text"
+            placeholder="Profession (optional)"
+            value={formData.profession}
+            onChange={(e) => setFormData({ ...formData, profession: e.target.value })}
+            className="mb-2 w-full p-2 border rounded bg-[#0a0a0a] text-white"
+          />
+          <input
+            type="file"
+            accept="image/*"
+            onChange={(e) =>
+              setFormData({ ...formData, photo: e.target.files ? e.target.files[0] : null })
+            }
+            className="mb-2 w-full p-2 border rounded bg-[#0a0a0a] text-white"
+          />
+
           <button
             type="submit"
             disabled={isProcessing}

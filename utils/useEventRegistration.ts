@@ -4,32 +4,19 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import { generatePdfTicket } from "@/utils/ticketUtils";
 
-export interface AllEventRegistration {
-  id: string;
-  user_name: string;
-  whatsapp_number: string;
-  beautyparlor_name: string | null;
-  event_name: string;
-  session_name: string | null;
-  registration_number: number;
-}
-
-export interface UserProfile {
-  full_name: string;
-  number: string;
-  organisation: string | null;
-  role?: string;
-}
-
 export interface EventRegistration {
   id: string;
+  name: string;
+  whatsapp: string;
+  profession: string | null;
+  organisation: string | null;
+  event_id: string;
+  session_id: string;
+  photo_url: string | null;
+  serial_no: number;
 }
 
 export interface SessionData {
-  name: string;
-}
-
-export interface EventData {
   name: string;
 }
 
@@ -37,15 +24,16 @@ export interface TicketData {
   id: string;
   name: string;
   whatsapp: string;
-  beautyParlor: string;
+  profession?: string | null;
+  organisation?: string | null;
   eventName: string;
   sessionName?: string;
   registrationNumber: string | number;
+  photoUrl?: string | null;
 }
 
-// --- Utility to check if string is valid UUID ---
 const isValidUuid = (id: string) =>
-  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
 
 export default function useEventRegistration(eventId: string, sessionId: string) {
   const [isRegistering, setIsRegistering] = useState(false);
@@ -54,8 +42,9 @@ export default function useEventRegistration(eventId: string, sessionId: string)
   const [registrationId, setRegistrationId] = useState<string | null>(null);
   const [eventName, setEventName] = useState<string>("");
 
-  // --- Fetch event name safely ---
+  // --- Fetch event name ---
   useEffect(() => {
+    console.log("[useEventRegistration] Fetching event name", eventId);
     if (!eventId || !isValidUuid(eventId)) return;
 
     const fetchEventName = async () => {
@@ -65,37 +54,39 @@ export default function useEventRegistration(eventId: string, sessionId: string)
         .eq("id", eventId)
         .maybeSingle();
 
+      console.log("[useEventRegistration] Event fetch:", { data, error });
       if (data?.name) setEventName(data.name);
-      if (error && error.code !== "22P02")
-        console.error("[useEventRegistration] Failed to load event name:", error);
+      if (error && error.code !== "22P02") console.error("[useEventRegistration] Event fetch error:", error);
     };
 
     fetchEventName();
   }, [eventId]);
 
-  // --- Check user status (registration + admin role) safely ---
+  // --- Check user status ---
   useEffect(() => {
+    console.log("[useEventRegistration] Checking user status", sessionId);
     if (!sessionId || !isValidUuid(sessionId)) return;
 
     const checkUserStatus = async () => {
       const { data: sessionData } = await supabase.auth.getSession();
       const user = sessionData.session?.user;
+      console.log("[useEventRegistration] Current user:", user);
       if (!user) return;
 
-      // Check registration
       const { data: existing } = await supabase
         .from("event_registrations")
         .select("id")
-        .eq("user_id", user.id)
+        .eq("event_id", eventId)
         .eq("session_id", sessionId)
+        .eq("name", user.email)
         .maybeSingle();
 
+      console.log("[useEventRegistration] Existing registration:", existing);
       if (existing?.id) {
         setIsRegistered(true);
         setRegistrationId(existing.id);
       }
 
-      // Check admin role
       if (!isAdmin) {
         const { data: profile } = await supabase
           .from("user_profiles")
@@ -103,196 +94,195 @@ export default function useEventRegistration(eventId: string, sessionId: string)
           .eq("id", user.id)
           .maybeSingle();
 
+        console.log("[useEventRegistration] User profile:", profile);
         if (profile?.role === "admin") setIsAdmin(true);
       }
     };
 
     checkUserStatus();
-  }, [sessionId, isAdmin]);
-
-  // --- Register logged-in user ---
-  const handleRegister = async (): Promise<boolean> => {
-    setIsRegistering(true);
-    try {
-      const { data: sessionData } = await supabase.auth.getSession();
-      const user = sessionData.session?.user;
-
-      if (!user) return true; // No login → open manual modal
-
-      // Already registered?
-      const { data: existing } = await supabase
-        .from("event_registrations")
-        .select("id")
-        .eq("user_id", user.id)
-        .eq("session_id", sessionId)
-        .maybeSingle();
-
-      if (existing?.id) {
-        setIsRegistered(true);
-        setRegistrationId(existing.id);
-        alert("Already registered.");
-        return false;
-      }
-
-      // Insert event_registrations
-      const { data: eventReg, error: regError } = await supabase
-        .from("event_registrations")
-        .insert({
-          user_id: user.id,
-          event_id: eventId,
-          session_id: sessionId,
-          payment_status: "pending",
-        })
-        .select("id")
-        .returns<EventRegistration[]>();
-
-      if (regError || !eventReg) throw regError;
-      const regId = eventReg[0].id;
-      setIsRegistered(true);
-      setRegistrationId(regId);
-
-      // Fetch profile + session
-      const { data: profile } = await supabase
-        .from("user_profiles")
-        .select("full_name, number, organisation")
-        .eq("id", user.id)
-        .maybeSingle()
-        .returns<UserProfile | null>();
-
-      const { data: sessionRow } = await supabase
-        .from("sessions")
-        .select("name")
-        .eq("id", sessionId)
-        .maybeSingle()
-        .returns<SessionData | null>();
-
-      // Insert into all_event_registrations
-      const { data: allReg } = await supabase
-        .from("all_event_registrations")
-        .insert({
-          user_name: profile?.full_name,
-          whatsapp_number: profile?.number,
-          beautyparlor_name: profile?.organisation || null,
-          event_name: eventName,
-          session_name: sessionRow?.name,
-          payment_status: "pending",
-        })
-        .select(
-          "id, user_name, whatsapp_number, beautyparlor_name, event_name, session_name, registration_number"
-        )
-        .returns<AllEventRegistration[]>();
-
-      if (allReg?.[0]) {
-        const ticket: TicketData = {
-          id: allReg[0].id,
-          name: allReg[0].user_name,
-          whatsapp: allReg[0].whatsapp_number,
-          beautyParlor: allReg[0].beautyparlor_name || "Unknown",
-          eventName: allReg[0].event_name,
-          sessionName: allReg[0].session_name || undefined,
-          registrationNumber: allReg[0].registration_number,
-        };
-
-        await generatePdfTicket(ticket);
-        alert("Registered! Ticket downloaded.");
-      }
-    } catch (err) {
-      console.error("[useEventRegistration] handleRegister error:", err);
-      alert("Registration failed.");
-    } finally {
-      setIsRegistering(false);
-    }
-    return false;
-  };
+  }, [sessionId, isAdmin, eventId]);
 
   // --- Manual (guest) submit ---
   const handleManualSubmit = async (form: {
-    user_name: string;
-    whatsapp_number: string;
-    beautyparlor_name: string;
+    name: string;
+    whatsapp: string;
+    profession?: string;
+    organisation?: string;
+    user_selected_session_id: string;
+    photo?: File | null;
   }) => {
+    console.log("[handleManualSubmit] Form data:", form);
     setIsRegistering(true);
+
     try {
+      let photoUrl: string | null = null;
+
+      if (form.photo) {
+        const file = form.photo;
+
+        // Validate file type
+        const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+        if (!allowedTypes.includes(file.type)) {
+          throw new Error('Invalid file type. Please upload a JPEG, PNG, or WebP image.');
+        }
+
+        // Validate file size (5MB limit)
+        const maxSize = 5 * 1024 * 1024; // 5MB in bytes
+        if (file.size > maxSize) {
+          throw new Error('File size too large. Please upload an image smaller than 5MB.');
+        }
+
+        // Generate a unique filename with proper extension
+        const fileExt = file.type.split('/')[1]; // Get extension from MIME type
+        const timestamp = Date.now();
+        const random = Math.random().toString(36).substring(7);
+        const fileName = `${timestamp}_${random}.${fileExt}`;
+
+        console.log("[handleManualSubmit] Uploading file with details:", {
+          originalName: file.name,
+          fileName,
+          size: file.size,
+          type: file.type,
+          bucket: "event_registrations_photos",
+        });
+
+        // Note: Skipping bucket existence check as listBuckets() may require admin permissions
+        // The bucket exists as confirmed by the working URL structure
+
+        // Upload the file
+        const { data: uploadData, error: uploadError } = await supabase.storage
+          .from("event_registrations_photos")
+          .upload(fileName, file, {
+            cacheControl: '3600',
+            upsert: false,
+            contentType: file.type
+          });
+
+        console.log("[handleManualSubmit] Upload result:", { uploadData, uploadError });
+
+        if (uploadError) {
+          console.error("[handleManualSubmit] Upload failed:", uploadError);
+          
+          // Provide more specific error messages
+          if (uploadError.message.includes('duplicate')) {
+            throw new Error('File upload failed: duplicate file. Please try again.');
+          } else if (uploadError.message.includes('size')) {
+            throw new Error('File too large. Please upload a smaller image.');
+          } else if (uploadError.message.includes('policy')) {
+            throw new Error('File upload not allowed. Please check file type and size.');
+          } else {
+            throw new Error(`File upload failed: ${uploadError.message}`);
+          }
+        }
+
+        // Get the public URL
+        const { data: publicData } = supabase.storage
+          .from("event_registrations_photos")
+          .getPublicUrl(fileName);
+
+        console.log("[handleManualSubmit] Public URL generated:", publicData?.publicUrl);
+        photoUrl = publicData?.publicUrl || null;
+      }
+
+      // Insert registration data
       const { data, error } = await supabase
-        .from("all_event_registrations")
+        .from("event_registrations")
         .insert({
-          user_name: form.user_name,
-          whatsapp_number: form.whatsapp_number,
-          beautyparlor_name: form.beautyparlor_name,
-          event_name: eventName,
+          name: form.name,
+          whatsapp: form.whatsapp,
+          profession: form.profession || null,
+          organisation: form.organisation || null,
+          event_id: eventId,
+          session_id: form.user_selected_session_id,
+          photo_url: photoUrl,
         })
         .select(
-          "id, user_name, whatsapp_number, beautyparlor_name, event_name, session_name, registration_number"
+          "id, name, whatsapp, profession, organisation, event_id, session_id, photo_url, serial_no"
         )
-        .returns<AllEventRegistration[]>();
+        .returns<EventRegistration[]>();
 
+      console.log("[handleManualSubmit] Registration insert result:", { data, error });
       if (error || !data) throw error;
 
       const reg = data[0];
+
+      // Fetch session data
+      const { data: sessionRow } = await supabase
+        .from("sessions")
+        .select("name")
+        .eq("id", reg.session_id)
+        .maybeSingle<SessionData>();
+
+      console.log("[handleManualSubmit] Fetched session:", sessionRow);
+
+      // Generate ticket
       const ticket: TicketData = {
         id: reg.id,
-        name: reg.user_name,
-        whatsapp: reg.whatsapp_number,
-        beautyParlor: reg.beautyparlor_name || "Unknown",
-        eventName: reg.event_name,
-        registrationNumber: reg.registration_number,
+        name: reg.name,
+        whatsapp: reg.whatsapp,
+        profession: reg.profession,
+        organisation: reg.organisation,
+        eventName,
+        sessionName: sessionRow?.name || undefined,
+        registrationNumber: reg.serial_no,
+        photoUrl: reg.photo_url,
       };
 
+      console.log("[handleManualSubmit] Generating PDF ticket:", ticket);
       await generatePdfTicket(ticket);
       alert("Guest registration successful! Ticket downloaded.");
+      
     } catch (err) {
-      console.error("[useEventRegistration] handleManualSubmit error:", err);
-      alert("Manual registration failed.");
+      console.error("[handleManualSubmit] Error during registration:", err);
+      const errorMessage = err instanceof Error ? err.message : "Manual registration failed.";
+      alert(errorMessage);
     } finally {
       setIsRegistering(false);
+      console.log("[handleManualSubmit] Registration process finished.");
     }
   };
 
-  // --- Download pass (logged in) safely ---
+  // --- Download pass ---
   const handleDownloadPass = async () => {
+    console.log("[handleDownloadPass] registrationId:", registrationId);
     if (!registrationId) {
       alert("No registration found.");
       return;
     }
 
-    const { data: sessionData } = await supabase.auth.getSession();
-    const user = sessionData.session?.user;
-    if (!user) return;
+    const { data } = await supabase
+      .from("event_registrations")
+      .select(
+        "id, name, whatsapp, profession, organisation, event_id, session_id, photo_url, serial_no"
+      )
+      .eq("id", registrationId)
+      .maybeSingle();
 
-    const { data: profile } = await supabase
-      .from("user_profiles")
-      .select("full_name, number, organisation")
-      .eq("id", user.id)
-      .maybeSingle()
-      .returns<UserProfile | null>();
+    console.log("[handleDownloadPass] Registration data:", data);
+    if (!data) {
+      alert("No registration found.");
+      return;
+    }
 
     const { data: sessionRow } = await supabase
       .from("sessions")
       .select("name")
-      .eq("id", sessionId)
-      .maybeSingle()
-      .returns<SessionData | null>();
-
-    const { data: allReg } = await supabase
-      .from("all_event_registrations")
-      .select("id, registration_number")
-      .eq("user_name", profile?.full_name || "")
-      .eq("event_name", eventName)
-      .eq("session_name", sessionRow?.name || "")
-      .maybeSingle();
-
-    const registrationNumber = allReg?.registration_number || registrationId;
+      .eq("id", data.session_id)
+      .maybeSingle<SessionData>();
 
     const ticket: TicketData = {
-      id: allReg?.id || "",
-      name: profile?.full_name || "Unknown",
-      whatsapp: profile?.number || "Unknown",
-      beautyParlor: profile?.organisation || "Unknown",
+      id: data.id,
+      name: data.name,
+      whatsapp: data.whatsapp,
+      profession: data.profession,
+      organisation: data.organisation,
       eventName,
       sessionName: sessionRow?.name || undefined,
-      registrationNumber,
+      registrationNumber: data.serial_no,
+      photoUrl: data.photo_url,
     };
 
+    console.log("[handleDownloadPass] Generating PDF ticket:", ticket);
     await generatePdfTicket(ticket);
   };
 
@@ -300,7 +290,6 @@ export default function useEventRegistration(eventId: string, sessionId: string)
     isProcessing: isRegistering,
     isRegistered,
     isAdmin,
-    handleRegister,
     handleManualSubmit,
     handleDownloadPass,
   };
