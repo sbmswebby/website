@@ -20,6 +20,7 @@ export default function RegisterPage() {
           onClose={() => setShowModal(false)}
           onSubmit={handleManualSubmit}
           isProcessing={isProcessing}
+          sessionId= {sessionId}
         />
       )}
     </div>
