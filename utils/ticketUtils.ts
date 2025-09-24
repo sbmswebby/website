@@ -105,7 +105,7 @@ export const generatePdfTicket = async (data: TicketData): Promise<void> => {
       }
     }
 
-    // --- Save PDF ---
+    // --- Save PDF --- 
     const pdfBlob = pdf.output("blob");
     const url = URL.createObjectURL(pdfBlob);
     const a = document.createElement("a");
