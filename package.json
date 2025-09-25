@@ -12,6 +12,7 @@
   "dependencies": {
     "@supabase/ssr": "^0.7.0",
     "@supabase/supabase-js": "^2.56.1",
+    "cloudinary": "^2.7.0",
     "fs": "^0.0.1-security",
     "jspdf": "^3.0.2",
     "lucide-react": "^0.540.0",
