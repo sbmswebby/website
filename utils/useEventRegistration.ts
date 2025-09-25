@@ -13,7 +13,6 @@ export interface EventRegistration {
   event_id: string;
   session_id: string;
   photo_url: string | null;
-  serial_no: number;
 }
 
 export interface SessionData {
@@ -28,7 +27,7 @@ export interface TicketData {
   organisation?: string | null;
   eventName: string;
   sessionName?: string;
-  registrationNumber: string | number;
+  registrationNumber: string; // UUID now
   photoUrl?: string | null;
 }
 
@@ -38,69 +37,57 @@ const isValidUuid = (id: string) =>
 export default function useEventRegistration(eventId: string, sessionId: string) {
   const [isRegistering, setIsRegistering] = useState(false);
   const [isRegistered, setIsRegistered] = useState(false);
-  const [isAdmin, setIsAdmin] = useState(false);
   const [registrationId, setRegistrationId] = useState<string | null>(null);
   const [eventName, setEventName] = useState<string>("");
 
   // --- Fetch event name ---
   useEffect(() => {
-    console.log("[useEventRegistration] Fetching event name", eventId);
     if (!eventId || !isValidUuid(eventId)) return;
 
     const fetchEventName = async () => {
+      console.log("[useEventRegistration] Fetching event name for ID:", eventId);
       const { data, error } = await supabase
         .from("events")
         .select("name")
         .eq("id", eventId)
         .maybeSingle();
 
-      console.log("[useEventRegistration] Event fetch:", { data, error });
-      if (data?.name) setEventName(data.name);
-      if (error && error.code !== "22P02") console.error("[useEventRegistration] Event fetch error:", error);
+      if (data?.name) {
+        console.log("[useEventRegistration] Event name fetched:", data.name);
+        setEventName(data.name);
+      }
+      if (error && error.code !== "22P02")
+        console.error("[useEventRegistration] Event fetch error:", error);
     };
 
     fetchEventName();
   }, [eventId]);
 
-  // --- Check user status ---
-  useEffect(() => {
-    console.log("[useEventRegistration] Checking user status", sessionId);
-    if (!sessionId || !isValidUuid(sessionId)) return;
+  // --- Check if a WhatsApp number is already registered for the session ---
+  const checkWhatsAppRegistration = async (whatsapp: string) => {
+    console.log("[checkWhatsAppRegistration] Checking WhatsApp:", whatsapp, "Session:", sessionId);
+    if (!whatsapp || !sessionId) return null;
 
-    const checkUserStatus = async () => {
-      const { data: sessionData } = await supabase.auth.getSession();
-      const user = sessionData.session?.user;
-      console.log("[useEventRegistration] Current user:", user);
-      if (!user) return;
+    const { data: userProfile } = await supabase
+      .from("user_profiles")
+      .select("id")
+      .eq("whatsapp_number", whatsapp)
+      .maybeSingle();
 
-      const { data: existing } = await supabase
-        .from("event_registrations")
-        .select("id")
-        .eq("event_id", eventId)
-        .eq("session_id", sessionId)
-        .eq("name", user.email)
-        .maybeSingle();
+    console.log("[checkWhatsAppRegistration] User profile found:", userProfile);
 
-      console.log("[useEventRegistration] Existing registration:", existing);
-      if (existing?.id) {
-        setIsRegistered(true);
-        setRegistrationId(existing.id);
-      }
+    if (!userProfile) return null;
 
-      if (!isAdmin) {
-        const { data: profile } = await supabase
-          .from("user_profiles")
-          .select("role")
-          .eq("id", user.id)
-          .maybeSingle();
+    const { data: registration } = await supabase
+      .from("registrations")
+      .select("id")
+      .eq("user_profile_id", userProfile.id)
+      .eq("session_id", sessionId)
+      .maybeSingle();
 
-        console.log("[useEventRegistration] User profile:", profile);
-        if (profile?.role === "admin") setIsAdmin(true);
-      }
-    };
-
-    checkUserStatus();
-  }, [sessionId, isAdmin, eventId]);
+    console.log("[checkWhatsAppRegistration] Existing registration:", registration);
+    return registration || null;
+  };
 
   // --- Manual (guest) submit ---
   const handleManualSubmit = async (form: {
@@ -117,180 +104,173 @@ export default function useEventRegistration(eventId: string, sessionId: string)
     try {
       let photoUrl: string | null = null;
 
+      // --- Handle photo upload ---
       if (form.photo) {
+        console.log("[handleManualSubmit] Uploading photo...");
         const file = form.photo;
+        const allowedTypes = ["image/jpeg", "image/jpg", "image/png", "image/webp"];
+        if (!allowedTypes.includes(file.type)) throw new Error("Invalid file type.");
+        if (file.size > 5 * 1024 * 1024) throw new Error("File too large.");
 
-        // Validate file type
-        const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
-        if (!allowedTypes.includes(file.type)) {
-          throw new Error('Invalid file type. Please upload a JPEG, PNG, or WebP image.');
-        }
-
-        // Validate file size (5MB limit)
-        const maxSize = 5 * 1024 * 1024; // 5MB in bytes
-        if (file.size > maxSize) {
-          throw new Error('File size too large. Please upload an image smaller than 5MB.');
-        }
-
-        // Generate a unique filename with proper extension
-        const fileExt = file.type.split('/')[1]; // Get extension from MIME type
+        const fileExt = file.type.split("/")[1].toLowerCase();
         const timestamp = Date.now();
         const random = Math.random().toString(36).substring(7);
         const fileName = `${timestamp}_${random}.${fileExt}`;
 
-        console.log("[handleManualSubmit] Uploading file with details:", {
-          originalName: file.name,
-          fileName,
-          size: file.size,
-          type: file.type,
-          bucket: "event_registrations_photos",
-        });
+        console.log("[handleManualSubmit] Uploading file with name:", fileName);
 
-        // Note: Skipping bucket existence check as listBuckets() may require admin permissions
-        // The bucket exists as confirmed by the working URL structure
-
-        // Upload the file
-        const { data: uploadData, error: uploadError } = await supabase.storage
+        const { error: uploadError } = await supabase.storage
           .from("event_registrations_photos")
-          .upload(fileName, file, {
-            cacheControl: '3600',
-            upsert: false,
-            contentType: file.type
-          });
+          .upload(fileName, file, { cacheControl: "3600", upsert: false, contentType: file.type });
 
-        console.log("[handleManualSubmit] Upload result:", { uploadData, uploadError });
+        if (uploadError) throw new Error(`File upload failed: ${uploadError.message}`);
+        console.log("[handleManualSubmit] Photo uploaded successfully");
 
-        if (uploadError) {
-          console.error("[handleManualSubmit] Upload failed:", uploadError);
-          
-          // Provide more specific error messages
-          if (uploadError.message.includes('duplicate')) {
-            throw new Error('File upload failed: duplicate file. Please try again.');
-          } else if (uploadError.message.includes('size')) {
-            throw new Error('File too large. Please upload a smaller image.');
-          } else if (uploadError.message.includes('policy')) {
-            throw new Error('File upload not allowed. Please check file type and size.');
-          } else {
-            throw new Error(`File upload failed: ${uploadError.message}`);
-          }
-        }
-
-        // Get the public URL
         const { data: publicData } = supabase.storage
           .from("event_registrations_photos")
           .getPublicUrl(fileName);
 
-        console.log("[handleManualSubmit] Public URL generated:", publicData?.publicUrl);
         photoUrl = publicData?.publicUrl || null;
+        console.log("[handleManualSubmit] Public URL:", photoUrl);
       }
 
-      // Insert registration data
-      const { data, error } = await supabase
-        .from("event_registrations")
-        .insert({
-          name: form.name,
-          whatsapp: form.whatsapp,
-          profession: form.profession || null,
-          organisation: form.organisation || null,
-          event_id: eventId,
-          session_id: form.user_selected_session_id,
-          photo_url: photoUrl,
-        })
-        .select(
-          "id, name, whatsapp, profession, organisation, event_id, session_id, photo_url, serial_no"
+      // --- Upsert user profile ---
+      console.log("[handleManualSubmit] Upserting user profile...");
+      const { data: userProfiles, error: profileError } = await supabase
+        .from("user_profiles")
+        .upsert(
+          {
+            whatsapp_number: form.whatsapp,
+            name: form.name,
+            profession: form.profession || null,
+            organisation_name: form.organisation || null,
+            image_url: photoUrl,
+          },
+          { onConflict: "whatsapp_number" }
         )
-        .returns<EventRegistration[]>();
+        .select();
 
-      console.log("[handleManualSubmit] Registration insert result:", { data, error });
-      if (error || !data) throw error;
+      if (profileError) throw profileError;
+      const userProfile = userProfiles?.[0];
+      console.log("[handleManualSubmit] Upserted user profile:", userProfile);
+      if (!userProfile) throw new Error("Failed to upsert user profile");
 
-      const reg = data[0];
+      // --- Check if already registered ---
+      console.log("[handleManualSubmit] Checking existing registration...");
+      let finalRegistrationId: string;
+      const existingRegistration = await checkWhatsAppRegistration(form.whatsapp);
+      if (existingRegistration) {
+        console.log("[handleManualSubmit] Already registered. ID:", existingRegistration.id);
+        finalRegistrationId = existingRegistration.id;
+        setIsRegistered(true);
+        setRegistrationId(finalRegistrationId);
+      } else {
+        console.log("[handleManualSubmit] Inserting new registration...");
+        const { data: registrationData, error: registrationError } = await supabase
+          .from("registrations")
+          .insert({
+            user_profile_id: userProfile.id,
+            session_id: form.user_selected_session_id,
+            status: "registered",
+          })
+          .select()
+          .maybeSingle();
 
-      // Fetch session data
+        if (registrationError?.code === "23505") throw new Error("Already registered for this session.");
+        if (!registrationData) throw registrationError || new Error("Registration failed");
+
+        finalRegistrationId = registrationData.id;
+        console.log("[handleManualSubmit] Registration inserted:", registrationData);
+        setIsRegistered(true);
+        setRegistrationId(finalRegistrationId);
+      }
+
+      // --- Fetch session name ---
+      console.log("[handleManualSubmit] Fetching session name...");
       const { data: sessionRow } = await supabase
         .from("sessions")
         .select("name")
-        .eq("id", reg.session_id)
+        .eq("id", form.user_selected_session_id)
         .maybeSingle<SessionData>();
+      console.log("[handleManualSubmit] Session fetched:", sessionRow);
 
-      console.log("[handleManualSubmit] Fetched session:", sessionRow);
-
-      // Generate ticket
+      // --- Generate ticket ---
       const ticket: TicketData = {
-        id: reg.id,
-        name: reg.name,
-        whatsapp: reg.whatsapp,
-        profession: reg.profession,
-        organisation: reg.organisation,
+        id: finalRegistrationId,
+        name: userProfile.name,
+        whatsapp: userProfile.whatsapp_number,
+        profession: userProfile.profession,
+        organisation: userProfile.organisation_name,
         eventName,
         sessionName: sessionRow?.name || undefined,
-        registrationNumber: reg.serial_no,
-        photoUrl: reg.photo_url,
+        registrationNumber: finalRegistrationId,
+        photoUrl: userProfile.image_url,
       };
 
-      console.log("[handleManualSubmit] Generating PDF ticket:", ticket);
+      console.log("[handleManualSubmit] Generating ticket with data:", ticket);
       await generateTicketImage(ticket);
+      console.log("[handleManualSubmit] Ticket generated successfully");
       alert("Guest registration successful! Ticket downloaded.");
-      
     } catch (err) {
       console.error("[handleManualSubmit] Error during registration:", err);
-      const errorMessage = err instanceof Error ? err.message : "Manual registration failed.";
-      alert(errorMessage);
+      alert(err instanceof Error ? err.message : "Manual registration failed.");
     } finally {
       setIsRegistering(false);
-      console.log("[handleManualSubmit] Registration process finished.");
+      console.log("[handleManualSubmit] Registration process completed");
     }
   };
 
   // --- Download pass ---
   const handleDownloadPass = async () => {
-    console.log("[handleDownloadPass] registrationId:", registrationId);
-    if (!registrationId) {
-      alert("No registration found.");
-      return;
-    }
+    console.log("[handleDownloadPass] Downloading pass for registrationId:", registrationId);
+    if (!registrationId) return alert("No registration found.");
 
-    const { data } = await supabase
-      .from("event_registrations")
-      .select(
-        "id, name, whatsapp, profession, organisation, event_id, session_id, photo_url, serial_no"
-      )
+    const { data: registrationData } = await supabase
+      .from("registrations")
+      .select("id, user_profile_id, session_id")
       .eq("id", registrationId)
       .maybeSingle();
 
-    console.log("[handleDownloadPass] Registration data:", data);
-    if (!data) {
-      alert("No registration found.");
-      return;
-    }
+    if (!registrationData) return alert("No registration found.");
+    console.log("[handleDownloadPass] Registration data:", registrationData);
+
+    const { data: userProfile } = await supabase
+      .from("user_profiles")
+      .select("name, whatsapp_number, profession, organisation_name, image_url")
+      .eq("id", registrationData.user_profile_id)
+      .maybeSingle();
 
     const { data: sessionRow } = await supabase
       .from("sessions")
       .select("name")
-      .eq("id", data.session_id)
+      .eq("id", registrationData.session_id)
       .maybeSingle<SessionData>();
 
+    if (!userProfile) return alert("User profile not found.");
+    console.log("[handleDownloadPass] User profile:", userProfile);
+    console.log("[handleDownloadPass] Session:", sessionRow);
+
     const ticket: TicketData = {
-      id: data.id,
-      name: data.name,
-      whatsapp: data.whatsapp,
-      profession: data.profession,
-      organisation: data.organisation,
+      id: registrationData.id,
+      name: userProfile.name,
+      whatsapp: userProfile.whatsapp_number,
+      profession: userProfile.profession,
+      organisation: userProfile.organisation_name,
       eventName,
       sessionName: sessionRow?.name || undefined,
-      registrationNumber: data.serial_no,
-      photoUrl: data.photo_url,
+      registrationNumber: registrationData.id,
+      photoUrl: userProfile.image_url,
     };
 
-    console.log("[handleDownloadPass] Generating PDF ticket:", ticket);
+    console.log("[handleDownloadPass] Generating ticket for download:", ticket);
     await generateTicketImage(ticket);
   };
 
   return {
     isProcessing: isRegistering,
     isRegistered,
-    isAdmin,
     handleManualSubmit,
     handleDownloadPass,
+    checkWhatsAppRegistration, // ✅ helper
   };
 }

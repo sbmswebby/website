@@ -106,7 +106,7 @@ export const generateTicketImage = async (data: TicketData, type?: "ticket" | "c
   try {
     // Helper: create and download canvas
     const downloadCanvas = (canvas: HTMLCanvasElement, filename: string) => {
-      const imageUrl = canvas.toDataURL("image/jpeg", 1.0);
+      const imageUrl = canvas.toDataURL("image/jpeg", 0.9);
       const a = document.createElement("a");
       a.href = imageUrl;
       a.download = filename;
