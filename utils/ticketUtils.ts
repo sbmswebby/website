@@ -93,10 +93,10 @@ const certificateLayout = {
     textAlign: "center" as CanvasTextAlign,
   },
   userPhoto: {
-    x: 800, // will be dynamically centered
-    y: -100, // will be relative to canvas height
-    width: 400,
-    height: 400,
+    x: 742, // will be dynamically centered
+    y: -240, // will be relative to canvas height
+    width: 217,
+    height: 316,
   },
   backgroundUrl: "/images/bbn_certificate.jpg",
 };

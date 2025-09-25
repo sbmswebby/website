@@ -155,7 +155,7 @@ export default function RegisterPageContent() {
             />
           </div>
 
-          <div>
+          <div className="session-select">
             <label className="block mb-1">
               Select Session <span className="text-red-500">*</span>
             </label>

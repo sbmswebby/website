@@ -574,6 +574,54 @@ nav.scrolled {
   margin-bottom: 16px;
 }
 
+/* Session Select Container */
+.session-select {
+  margin-bottom: 16px; /* Matches .form-group spacing */
+}
+
+/* Label Styling */
+.session-select label {
+  display: block;
+  font-size: 1rem;
+  color: #ededed;
+  margin-bottom: 8px;
+  font-weight: 500;
+}
+
+/* Select Styling */
+.session-select select {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid rgba(255, 107, 157, 0.3);
+  border-radius: 8px;
+  font-size: 1rem;
+  color: #ededed;
+  background: rgba(255, 255, 255, 0.05);
+  outline: none;
+  transition: all 0.3s;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path fill="rgba(255,255,255,0.8)" d="M7 10l5 5 5-5z"/></svg>');
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  background-size: 1em;
+}
+
+/* Focus Effect */
+.session-select select:focus {
+  border-color: #ff6b9d;
+  box-shadow: 0 0 0 1px #ff6b9d, 0 0 15px rgba(255, 107, 157, 0.3);
+}
+
+/* Dropdown Options */
+.session-select select option {
+  background: #0a0a0a;
+  color: #ededed;
+}
+
+
+
 /*HeroSection*/
 /* Hero Section Styles */
 .hero {
