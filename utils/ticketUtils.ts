@@ -51,7 +51,7 @@ const svgToImage = (svgText: string, width: number, height: number): Promise<HTM
   });
 
 /** Layout configuration for ticket elements */
-const layout = {
+const ticketLayout = {
   canvas: {
     widthInches: 3.5,
     heightInches: 4.5,
@@ -71,98 +71,188 @@ const layout = {
   textBox: {
     x: 280,
     y: 700,
-    lineHeight: 60, // spacing between lines
+    lineHeight: 60,
     color: "#000",
     font: "bold 45px Helvetica",
     titleFont: "bold 45px Helvetica",
   },
 };
 
-/** Generates a ticket as an image (JPEG) and triggers download */
-export const generateTicketImage = async (data: TicketData): Promise<void> => {
+/** Layout configuration for certificate elements */
+const certificateLayout = {
+  canvas: {
+    // These are default sizes but final canvas size will match the background image
+    width: 1240, // 4.18in @ 150dpi
+    height: 1800, // 5.55in @ 150dpi
+  },
+  textBox: {
+    x: 620, // centered
+    y: 780,
+    color: "#000",
+    font: "bold 100px Helvetica",
+    textAlign: "center" as CanvasTextAlign,
+  },
+  userPhoto: {
+    x: 800, // will be dynamically centered
+    y: -100, // will be relative to canvas height
+    width: 400,
+    height: 400,
+  },
+  backgroundUrl: "/images/bbn_certificate.jpg",
+};
+
+/** Generates a ticket or certificate image and triggers download */
+export const generateTicketImage = async (data: TicketData, type?: "ticket" | "certificate"): Promise<void> => {
   try {
-    // --- Load background SVG ---
-    const bgSvg = await loadBackgroundSvg();
-    if (!bgSvg) throw new Error("Background SVG not found");
-
-    // --- Create canvas ---
-    const canvas = document.createElement("canvas");
-    const ctx = canvas.getContext("2d");
-    if (!ctx) throw new Error("Failed to get canvas context");
-
-    const { widthInches, heightInches, dpi } = layout.canvas;
-    const canvasWidth = widthInches * dpi;
-    const canvasHeight = heightInches * dpi;
-    canvas.width = canvasWidth;
-    canvas.height = canvasHeight;
-
-    // --- Draw white background ---
-    ctx.fillStyle = "#ffffff";
-    ctx.fillRect(0, 0, canvasWidth, canvasHeight);
-
-    // --- Draw SVG background ---
-    const bgImg = await svgToImage(bgSvg, canvasWidth, canvasHeight);
-    ctx.drawImage(bgImg, 0, 0, canvasWidth, canvasHeight);
-
-    // --- Draw QR code ---
-    const qrSvgText = await QRCode.toString(
-      `https://sbmsacademy.in/registrations?registration_id=${data.id}`,
-      { type: "svg" }
-    );
-    const qrImg = await svgToImage(qrSvgText, layout.qr.size, layout.qr.size);
-    ctx.drawImage(qrImg, layout.qr.x, layout.qr.y, layout.qr.size, layout.qr.size);
-
-    // --- Draw user photo if exists ---
-    if (data.photoUrl) {
-      try {
-        const userPhotoBlob = await fetch(data.photoUrl).then((res) => res.blob());
-        const userPhotoDataUrl = await new Promise<string>((resolve) => {
-          const reader = new FileReader();
-          reader.onloadend = () => resolve(reader.result as string);
-          reader.readAsDataURL(userPhotoBlob);
-        });
-        const userImg = new Image();
-        await new Promise<void>((resolve, reject) => {
-          userImg.onload = () => resolve();
-          userImg.onerror = reject;
-          userImg.src = userPhotoDataUrl;
-        });
-        const p = layout.userPhoto;
-        ctx.drawImage(userImg, p.x, p.y, p.width, p.height);
-      } catch (err) {
-        console.warn("[generateTicketImage] Failed to load user photo:", err);
-      }
-    }
-
-    // --- Draw text inside text box ---
-    const box = layout.textBox;
-    let y = box.y;
-
-    const drawLine = (text: string, font: string = box.font) => {
-      ctx.font = font;
-      ctx.fillStyle = box.color;
-      ctx.fillText(text, box.x, y);
-      y += box.lineHeight;
+    // Helper: create and download canvas
+    const downloadCanvas = (canvas: HTMLCanvasElement, filename: string) => {
+      const imageUrl = canvas.toDataURL("image/jpeg", 1.0);
+      const a = document.createElement("a");
+      a.href = imageUrl;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
     };
 
-    drawLine(data.eventName, box.titleFont);
-    drawLine(`Name: ${data.name}`);
-    drawLine(`WhatsApp: ${data.whatsapp}`);
-    if (data.profession) drawLine(`Profession: ${data.profession}`);
-    if (data.organisation) drawLine(`Organisation: ${data.organisation}`);
-    if (data.sessionName) drawLine(`Session: ${data.sessionName}`);
-    drawLine(`Reg No: ${data.registrationNumber}`);
+    // --- Generate Ticket ---
+    const generateTicket = async () => {
+      const bgSvg = await loadBackgroundSvg();
+      if (!bgSvg) throw new Error("Background SVG not found");
 
-    // --- Download as JPEG ---
-    const imageUrl = canvas.toDataURL("image/jpeg", 1.0); // quality 100%
-    const a = document.createElement("a");
-    a.href = imageUrl;
-    a.download = `${data.eventName}_Ticket_${data.registrationNumber}.jpg`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
+      const canvas = document.createElement("canvas");
+      const ctx = canvas.getContext("2d");
+      if (!ctx) throw new Error("Failed to get canvas context");
+
+      const { widthInches, heightInches, dpi } = ticketLayout.canvas;
+      const canvasWidth = widthInches * dpi;
+      const canvasHeight = heightInches * dpi;
+      canvas.width = canvasWidth;
+      canvas.height = canvasHeight;
+
+      ctx.fillStyle = "#ffffff";
+      ctx.fillRect(0, 0, canvasWidth, canvasHeight);
+
+      const bgImg = await svgToImage(bgSvg, canvasWidth, canvasHeight);
+      ctx.drawImage(bgImg, 0, 0, canvasWidth, canvasHeight);
+
+      const qrSvgText = await QRCode.toString(
+        `https://sbmsacademy.in/registrations?registration_id=${data.id}`,
+        { type: "svg" }
+      );
+      const qrImg = await svgToImage(qrSvgText, ticketLayout.qr.size, ticketLayout.qr.size);
+      ctx.drawImage(qrImg, ticketLayout.qr.x, ticketLayout.qr.y, ticketLayout.qr.size, ticketLayout.qr.size);
+
+      if (data.photoUrl) {
+        try {
+          const userPhotoBlob = await fetch(data.photoUrl).then((res) => res.blob());
+          const userPhotoDataUrl = await new Promise<string>((resolve) => {
+            const reader = new FileReader();
+            reader.onloadend = () => resolve(reader.result as string);
+            reader.readAsDataURL(userPhotoBlob);
+          });
+          const userImg = new Image();
+          await new Promise<void>((resolve, reject) => {
+            userImg.onload = () => resolve();
+            userImg.onerror = reject;
+            userImg.src = userPhotoDataUrl;
+          });
+          const p = ticketLayout.userPhoto;
+          ctx.drawImage(userImg, p.x, p.y, p.width, p.height);
+        } catch (err) {
+          console.warn("[generateTicketImage] Failed to load user photo:", err);
+        }
+      }
+
+      const box = ticketLayout.textBox;
+      let y = box.y;
+      const drawLine = (text: string, font: string = box.font) => {
+        ctx.font = font;
+        ctx.fillStyle = box.color;
+        ctx.fillText(text, box.x, y);
+        y += box.lineHeight;
+      };
+
+      drawLine(data.eventName, box.titleFont);
+      drawLine(`Name: ${data.name}`);
+      drawLine(`WhatsApp: ${data.whatsapp}`);
+      if (data.profession) drawLine(`Profession: ${data.profession}`);
+      if (data.organisation) drawLine(`Organisation: ${data.organisation}`);
+      if (data.sessionName) drawLine(`Session: ${data.sessionName}`);
+      drawLine(`Reg No: ${data.registrationNumber}`);
+
+      downloadCanvas(canvas, `${data.eventName}_Ticket_${data.registrationNumber}.jpg`);
+    };
+
+    // --- Generate Certificate ---
+// --- Generate Certificate ---
+const generateCertificate = async () => {
+  const canvas = document.createElement("canvas");
+  const ctx = canvas.getContext("2d");
+  if (!ctx) throw new Error("Failed to get canvas context");
+
+  // Load background image first to get its dimensions
+  const bgImg = new Image();
+  await new Promise<void>((resolve, reject) => {
+    bgImg.onload = () => resolve();
+    bgImg.onerror = reject;
+    bgImg.src = certificateLayout.backgroundUrl;
+  });
+
+  // Set canvas size to match background image
+  canvas.width = bgImg.width;
+  canvas.height = bgImg.height;
+
+  // Draw certificate background
+  ctx.drawImage(bgImg, 0, 0, canvas.width, canvas.height);
+
+  // Draw user photo if available
+  if (data.photoUrl) {
+    try {
+      const userPhotoBlob = await fetch(data.photoUrl).then((res) => res.blob());
+      const userPhotoDataUrl = await new Promise<string>((resolve) => {
+        const reader = new FileReader();
+        reader.onloadend = () => resolve(reader.result as string);
+        reader.readAsDataURL(userPhotoBlob);
+      });
+      const userImg = new Image();
+      await new Promise<void>((resolve, reject) => {
+        userImg.onload = () => resolve();
+        userImg.onerror = reject;
+        userImg.src = userPhotoDataUrl;
+      });
+
+      // Use layout config
+      const photo = certificateLayout.userPhoto;
+      const photoX = canvas.width / 2 - photo.width / 2 + photo.x; // center + offset
+      const photoY = canvas.height / 2 - photo.height / 2 + photo.y;
+      ctx.drawImage(userImg, photoX, photoY, photo.width, photo.height);
+    } catch (err) {
+      console.warn("[generateCertificate] Failed to load user photo:", err);
+    }
+  }
+
+  // Draw name
+  ctx.font = certificateLayout.textBox.font;
+  ctx.fillStyle = certificateLayout.textBox.color;
+  ctx.textAlign = certificateLayout.textBox.textAlign;
+  ctx.fillText(data.name, canvas.width / 2, certificateLayout.textBox.y);
+
+  downloadCanvas(canvas, `${data.eventName}_Certificate_${data.registrationNumber}.jpg`);
+};
+
+
+
+    if (!type) {
+      await generateTicket();
+      await generateCertificate();
+    } else if (type === "ticket") {
+      await generateTicket();
+    } else if (type === "certificate") {
+      await generateCertificate();
+    }
   } catch (err) {
     console.error("[generateTicketImage] Failed:", err);
-    alert("Ticket generation failed. Please try again.");
+    alert("Ticket/Certificate generation failed. Please try again.");
   }
 };
