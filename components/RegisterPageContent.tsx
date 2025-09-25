@@ -65,9 +65,7 @@ export default function RegisterPageContent() {
 
       setMessage({ type: "success", text: "Registered successfully!" });
 
-      setTimeout(() => {
-        router.push(`/events/${eventId}?sessionId=${sessionId}`);
-      }, 2000);
+
     } catch (error) {
       setMessage({
         type: "error",
