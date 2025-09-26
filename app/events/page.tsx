@@ -5,12 +5,16 @@ import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabaseClient';
 import { EventSessionCard } from '@/components/EventSessionCard';
 
+/**
+ * Matches the schema of `events` table
+ */
 type Event = {
   id: string;
   name: string;
   description: string | null;
-  date: string;
-  photo_url: string | null;
+  start_time: string;       // ✅ use start_time from schema
+  end_time: string;         // optional if you need it later
+  image_url: string | null; // ✅ matches schema
 };
 
 export default function EventsPage() {
@@ -22,10 +26,11 @@ export default function EventsPage() {
   useEffect(() => {
     const fetchEvents = async () => {
       setIsLoading(true);
+
       const { data, error } = await supabase
         .from('events')
-        .select('*')
-        .order('date', { ascending: true });
+        .select('id, name, description, start_time, end_time, image_url')
+        .order('start_time', { ascending: true }); // ✅ fixed
 
       if (error) {
         console.error('[EventsPage] Error fetching events:', error);
@@ -33,6 +38,7 @@ export default function EventsPage() {
       } else {
         setEvents(data as Event[]);
       }
+
       setIsLoading(false);
     };
 
@@ -62,8 +68,8 @@ export default function EventsPage() {
         {events.length > 0 ? (
           events.map((event) => {
             const safeImageUrl =
-              event.photo_url && event.photo_url.trim() !== ''
-                ? event.photo_url
+              event.image_url && event.image_url.trim() !== ''
+                ? event.image_url
                 : '/images/placeholder.png';
 
             return (

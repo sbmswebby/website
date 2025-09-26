@@ -4,9 +4,29 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import {
   generateAndUploadBoth,
-  TicketData
+  TicketData,
 } from "@/utils/ticketUtils";
 
+/**
+ * Represents a row in the `events` table
+ */
+export interface EventRow {
+  id: string;
+  name: string;
+  description: string | null;
+  slug: string | null;
+  image_public_id: string | null;
+  image_url: string | null;
+  venue: string;
+  start_time: string;
+  end_time: string;
+  created_at: string;
+  updated_at: string;
+}
+
+/**
+ * Represents the structure of a user registration
+ */
 export interface EventRegistration {
   id: string;
   name: string;
@@ -18,20 +38,31 @@ export interface EventRegistration {
   photo_url: string | null;
 }
 
+/**
+ * Represents a session row
+ */
 export interface SessionData {
   name: string;
 }
 
-const isValidUuid = (id: string) =>
+/**
+ * Utility to check UUID validity
+ */
+const isValidUuid = (id: string): boolean =>
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
 
+/**
+ * Custom hook to handle event registration logic
+ */
 export default function useEventRegistration(eventId: string, sessionId: string) {
-  const [isProcessing, setIsProcessing] = useState(false);
-  const [isRegistered, setIsRegistered] = useState(false);
+  const [isProcessing, setIsProcessing] = useState<boolean>(false);
+  const [isRegistered, setIsRegistered] = useState<boolean>(false);
   const [registrationId, setRegistrationId] = useState<string | null>(null);
   const [eventName, setEventName] = useState<string>("");
 
-  // --- Fetch event name ---
+  /**
+   * Fetch the event name for the given `eventId`
+   */
   useEffect(() => {
     if (!eventId || !isValidUuid(eventId)) return;
 
@@ -40,19 +71,26 @@ export default function useEventRegistration(eventId: string, sessionId: string)
         .from("events")
         .select("name")
         .eq("id", eventId)
-        .maybeSingle();
+        .maybeSingle<EventRow>();
 
       if (data?.name) setEventName(data.name);
-      if (error && error.code !== "22P02") console.error(error);
+      if (error && error.code !== "22P02") {
+        console.error("[fetchEventName] Error:", error);
+      }
     };
 
     fetchEventName();
   }, [eventId]);
 
-  // --- Check existing WhatsApp registration ---
-  const checkWhatsAppRegistration = async (whatsapp: string) => {
+  /**
+   * Check if a user with given WhatsApp is already registered for a session
+   */
+  const checkWhatsAppRegistration = async (
+    whatsapp: string
+  ): Promise<{ id: string } | null> => {
     if (!whatsapp || !sessionId) return null;
 
+    // Get user profile by WhatsApp
     const { data: userProfile } = await supabase
       .from("user_profiles")
       .select("id")
@@ -61,6 +99,7 @@ export default function useEventRegistration(eventId: string, sessionId: string)
 
     if (!userProfile) return null;
 
+    // Check if registration exists for this session
     const { data: registration } = await supabase
       .from("registrations")
       .select("id")
@@ -71,7 +110,9 @@ export default function useEventRegistration(eventId: string, sessionId: string)
     return registration || null;
   };
 
-  // --- Manual guest submit ---
+  /**
+   * Handle manual registration form submission
+   */
   const handleManualSubmit = async (form: {
     name: string;
     whatsapp: string;
@@ -79,25 +120,34 @@ export default function useEventRegistration(eventId: string, sessionId: string)
     organisation?: string;
     user_selected_session_id: string;
     photo?: File | null;
-  }) => {
+  }): Promise<
+    | { idUrl: string; certUrl: string; registrationId: string }
+    | null
+  > => {
     setIsProcessing(true);
 
     try {
       let photoUrl: string | null = null;
 
-      // --- Handle photo upload ---
+      // --- Handle photo upload to Supabase Storage ---
       if (form.photo) {
         const file = form.photo;
-        const fileExt = file.type.split("/")[1].toLowerCase();
+        const fileExt = file.type.split("/")[1]?.toLowerCase() || "jpg";
         const timestamp = Date.now();
         const random = Math.random().toString(36).substring(7);
         const fileName = `${timestamp}_${random}.${fileExt}`;
 
         const { error: uploadError } = await supabase.storage
           .from("event_registrations_photos")
-          .upload(fileName, file, { cacheControl: "3600", upsert: false, contentType: file.type });
+          .upload(fileName, file, {
+            cacheControl: "3600",
+            upsert: false,
+            contentType: file.type,
+          });
 
-        if (uploadError) throw new Error(`File upload failed: ${uploadError.message}`);
+        if (uploadError) {
+          throw new Error(`File upload failed: ${uploadError.message}`);
+        }
 
         const { data: publicData } = supabase.storage
           .from("event_registrations_photos")
@@ -122,29 +172,38 @@ export default function useEventRegistration(eventId: string, sessionId: string)
         .select();
 
       if (profileError) throw profileError;
+
       const userProfile = userProfiles?.[0];
       if (!userProfile) throw new Error("Failed to upsert user profile");
 
-      // --- Check existing registration ---
+      // --- Check if already registered ---
       let finalRegistrationId: string;
-      const existingRegistration = await checkWhatsAppRegistration(form.whatsapp);
+      const existingRegistration = await checkWhatsAppRegistration(
+        form.whatsapp
+      );
+
       if (existingRegistration) {
         finalRegistrationId = existingRegistration.id;
         setIsRegistered(true);
         setRegistrationId(finalRegistrationId);
       } else {
-        const { data: registrationData, error: registrationError } = await supabase
-          .from("registrations")
-          .insert({
-            user_profile_id: userProfile.id,
-            session_id: form.user_selected_session_id,
-            status: "registered",
-          })
-          .select()
-          .maybeSingle();
+        const { data: registrationData, error: registrationError } =
+          await supabase
+            .from("registrations")
+            .insert({
+              user_profile_id: userProfile.id,
+              session_id: form.user_selected_session_id,
+              status: "registered",
+            })
+            .select()
+            .maybeSingle();
 
-        if (registrationError?.code === "23505") throw new Error("Already registered for this session.");
-        if (!registrationData) throw registrationError || new Error("Registration failed");
+        if (registrationError?.code === "23505") {
+          throw new Error("Already registered for this session.");
+        }
+        if (!registrationData) {
+          throw registrationError || new Error("Registration failed");
+        }
 
         finalRegistrationId = registrationData.id;
         setIsRegistered(true);
@@ -161,7 +220,7 @@ export default function useEventRegistration(eventId: string, sessionId: string)
       // --- Ticket & Certificate Data ---
       const ticket: TicketData = {
         registrationId: finalRegistrationId,
-        userProfileId: userProfile.id, // correct user_profile_id
+        userProfileId: userProfile.id,
         name: userProfile.name,
         whatsapp: userProfile.whatsapp_number,
         profession: userProfile.profession,
@@ -172,14 +231,22 @@ export default function useEventRegistration(eventId: string, sessionId: string)
         photoUrl: userProfile.image_url,
       };
 
-      // --- Generate & upload both ID and certificate ---
-      const { idUrl, certUrl } = await generateAndUploadBoth(ticket, form.user_selected_session_id);
+      // --- Generate & upload ID card & certificate ---
+      const { idUrl, certUrl } = await generateAndUploadBoth(
+        ticket,
+        form.user_selected_session_id
+      );
 
-      alert(`Guest registration successful!\nTicket URL: ${idUrl}\nCertificate URL: ${certUrl}`);
+      alert(
+        `Guest registration successful!\nTicket URL: ${idUrl}\nCertificate URL: ${certUrl}`
+      );
+
       return { idUrl, certUrl, registrationId: finalRegistrationId };
     } catch (err) {
       console.error("[handleManualSubmit]", err);
-      alert(err instanceof Error ? err.message : "Manual registration failed.");
+      alert(
+        err instanceof Error ? err.message : "Manual registration failed."
+      );
       return null;
     } finally {
       setIsProcessing(false);
