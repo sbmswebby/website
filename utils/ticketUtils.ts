@@ -132,7 +132,7 @@ export const generateIDCanvas = async (data: TicketData): Promise<HTMLCanvasElem
   drawLine(`WhatsApp: ${data.whatsapp}`);
   if (data.profession) drawLine(`Profession: ${data.profession}`);
   if (data.organisation) drawLine(`Organisation: ${data.organisation}`);
-  if (data.city)
+  if (data.city) drawLine(`City: ${data.city}`);
   if (data.sessionName) drawLine(`Session: ${data.sessionName}`);
   drawLine(`Reg No: ${data.registrationNumber}`);
 
