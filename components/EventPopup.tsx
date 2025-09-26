@@ -26,11 +26,14 @@ export const EventPopup: FC = () => {
   const [loading, setLoading] = useState(true);
   const [tick, setTick] = useState(0); // new state to force updates
 
-    
+  console.log('Component rendered', { mounted, isOpen, loading, eventData });
+
   useEffect(() => {
     setMounted(true);
+    console.log('Mounted set to true');
 
     const fetchLatestEvent = async () => {
+      console.log('Fetching latest event from Supabase...');
       try {
         const { data, error } = await supabase
           .from('events')
@@ -40,15 +43,19 @@ export const EventPopup: FC = () => {
           .maybeSingle();
 
         if (error) {
-          console.error(error);
+          console.error('Supabase error fetching event:', error);
           return;
         }
+
+        console.log('Supabase data received:', data);
 
         if (data) {
           const imageUrl =
             data.photo_url?.startsWith('http')
               ? data.photo_url
-              : 'https://uhbnssgxxszdqwmspxkm.supabase.co/storage/v1/object/public/current_event/default.jpg';
+              : 'https://res.cloudinary.com/dz2cmusyt/image/upload/v1758865308/dec_9_szsqw7.webp';
+          
+          console.log('Using image URL:', imageUrl);
 
           setEventData({
             id: data.id,
@@ -59,11 +66,17 @@ export const EventPopup: FC = () => {
             sessionId: data.id,
             cost: data.cost || 0,
           });
+          console.log('Event data set', {
+            id: data.id,
+            title: data.name || data.event_name || 'Event',
+            imageUrl,
+          });
         }
       } catch (err) {
-        console.error(err);
+        console.error('Error in fetchLatestEvent:', err);
       } finally {
         setLoading(false);
+        console.log('Loading set to false');
       }
     };
 
@@ -72,34 +85,48 @@ export const EventPopup: FC = () => {
 
   // Force update RegisterButton every second
   useEffect(() => {
+    console.log('Setting up interval to force RegisterButton updates');
     const interval = setInterval(() => {
       setTick((prev) => prev + 1);
+      console.log('Tick incremented:', tick + 1);
     }, 1000);
-    return () => clearInterval(interval);
-  }, []);
+    return () => {
+      clearInterval(interval);
+      console.log('Interval cleared');
+    };
+  }, [tick]);
 
-  if (!mounted || !isOpen || loading || !eventData) return null;
+  if (!mounted || !isOpen || loading || !eventData) {
+    console.log('Popup not rendered yet', { mounted, isOpen, loading, eventData });
+    return null;
+  }
 
   const modalRoot =
     document.getElementById('modal-root') ||
     (() => {
+      console.log('Creating modal root dynamically');
       const root = document.createElement('div');
       root.id = 'modal-root';
       document.body.appendChild(root);
       return root;
     })();
 
+  if (pathname === '/register') {
+    console.log('Popup not rendered on /register page');
+    return null;
+  }
 
-  if (pathname === '/register')
-    {
-      return null;
-    }
+  console.log('Rendering EventPopup portal', { eventData });
 
-    
   return createPortal(
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4"
-      onMouseDown={(e) => e.target === e.currentTarget && setIsOpen(false)}
+      onMouseDown={(e) => {
+        if (e.target === e.currentTarget) {
+          console.log('Backdrop clicked, closing popup');
+          setIsOpen(false);
+        }
+      }}
     >
       <div
         ref={modalRef}
@@ -107,7 +134,10 @@ export const EventPopup: FC = () => {
       >
         <button
           className="absolute -top-3 -right-3 w-12 h-12 flex items-center justify-center bg-gray-800 rounded-full hover:bg-gray-900 text-white font-bold text-2xl shadow-lg transition z-10"
-          onClick={() => setIsOpen(false)}
+          onClick={() => {
+            console.log('Close button clicked');
+            setIsOpen(false);
+          }}
         >
           ×
         </button>
@@ -120,6 +150,10 @@ export const EventPopup: FC = () => {
               width={600}
               height={600}
               className="object-contain max-h-full max-w-full"
+              onError={(e) => {
+                console.error('Failed to load image:', eventData.imageUrl, e);
+              }}
+              onLoadingComplete={() => console.log('Image loaded successfully:', eventData.imageUrl)}
             />
           </div>
 
