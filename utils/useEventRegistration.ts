@@ -5,6 +5,8 @@ import { supabase } from "@/lib/supabaseClient";
 import {
   generateAndUploadBoth,
   TicketData,
+  canvasToFile,
+  uploadImageToCloudinary
 } from "@/utils/ticketUtils";
 
 /**
@@ -130,50 +132,30 @@ export default function useEventRegistration(eventId: string, sessionId: string)
     try {
       let photoUrl: string | null = null;
 
-      // --- Handle photo upload to Supabase Storage ---
-      if (form.photo) {
-        const file = form.photo;
-        const fileExt = file.type.split("/")[1]?.toLowerCase() || "jpg";
-        const timestamp = Date.now();
-        const random = Math.random().toString(36).substring(7);
-        const fileName = `${timestamp}_${random}.${fileExt}`;
+      // --- Handle photo upload to cloudinary ---
+if (form.photo) {
+  const file = form.photo;
+  const fileName = `${form.name}_${Date.now()}.${file.type.split("/")[1]}`;
+  
+  // Upload to Cloudinary (folder: "user_photos")
+  photoUrl = await uploadImageToCloudinary(file, "user_photos");
+}
 
-        const { error: uploadError } = await supabase.storage
-          .from("event_registrations_photos")
-          .upload(fileName, file, {
-            cacheControl: "3600",
-            upsert: false,
-            contentType: file.type,
-          });
-
-        if (uploadError) {
-          throw new Error(`File upload failed: ${uploadError.message}`);
-        }
-
-        const { data: publicData } = supabase.storage
-          .from("event_registrations_photos")
-          .getPublicUrl(fileName);
-
-        photoUrl = publicData?.publicUrl || null;
-      }
-
-      // --- Upsert user profile ---
-      const { data: userProfiles, error: profileError } = await supabase
-        .from("user_profiles")
-        .upsert(
-          {
-            whatsapp_number: form.whatsapp,
-            name: form.name,
-            profession: form.profession || null,
-            organisation_name: form.organisation || null,
-            image_url: photoUrl,
-            city: form.city,
-          },
-          { onConflict: "whatsapp_number" }
-        )
-        .select();
-
-      if (profileError) throw profileError;
+// --- Upsert user profile with Cloudinary URL ---
+const { data: userProfiles, error: profileError } = await supabase
+  .from("user_profiles")
+  .upsert(
+    {
+      whatsapp_number: form.whatsapp,
+      name: form.name,
+      profession: form.profession || null,
+      organisation_name: form.organisation || null,
+      image_url: photoUrl, // Cloudinary URL
+      city: form.city,
+    },
+    { onConflict: "whatsapp_number" }
+  )
+  .select();
 
       const userProfile = userProfiles?.[0];
       if (!userProfile) throw new Error("Failed to upsert user profile");

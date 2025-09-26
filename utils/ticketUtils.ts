@@ -68,7 +68,7 @@ const certificateLayout = {
 };
 
 /** Convert canvas to File */
-const canvasToFile = async (canvas: HTMLCanvasElement, filename: string): Promise<File> =>
+export const canvasToFile = async (canvas: HTMLCanvasElement, filename: string): Promise<File> =>
   new Promise<File>((resolve) => {
     canvas.toBlob((blob) => {
       if (!blob) throw new Error("Failed to convert canvas to blob");
