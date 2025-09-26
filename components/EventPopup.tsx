@@ -28,74 +28,90 @@ export const EventPopup: FC = () => {
 
   console.log('Component rendered', { mounted, isOpen, loading, eventData });
 
-  useEffect(() => {
-    setMounted(true);
-    console.log('Mounted set to true');
+useEffect(() => {
+  setMounted(true);
+  console.log('Mounted set to true');
 
-    const fetchLatestEvent = async () => {
-      console.log('Fetching latest event from Supabase...');
-      try {
-        const { data, error } = await supabase
-          .from('events')
-          .select('*')
-          .order('created_at', { ascending: false })
-          .limit(1)
-          .maybeSingle();
+  const fetchLatestEvent = async () => {
+    console.log('Fetching latest event from Supabase...');
+    try {
+      const { data, error } = await supabase
+        .from('events')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
 
-        if (error) {
-          console.error('Supabase error fetching event:', error);
-          return;
-        }
-
-        console.log('Supabase data received:', data);
-
-        if (data) {
-          const imageUrl =
-            data.photo_url?.startsWith('http')
-              ? data.photo_url
-              : 'https://res.cloudinary.com/dz2cmusyt/image/upload/v1758865308/dec_9_szsqw7.webp';
-          
-          console.log('Using image URL:', imageUrl);
-
-          setEventData({
-            id: data.id,
-            title: data.name || data.event_name || 'Event',
-            description: data.description || '',
-            imageUrl,
-            eventId: data.event_id || data.id,
-            sessionId: data.id,
-            cost: data.cost || 0,
-          });
-          console.log('Event data set', {
-            id: data.id,
-            title: data.name || data.event_name || 'Event',
-            imageUrl,
-          });
-        }
-      } catch (err) {
-        console.error('Error in fetchLatestEvent:', err);
-      } finally {
-        setLoading(false);
-        console.log('Loading set to false');
+      if (error) {
+        console.error('Supabase error fetching event:', error);
+        return;
       }
-    };
 
-    fetchLatestEvent();
-  }, []);
+      console.log('Supabase data received:', data);
+
+if (data) {
+  // Use the correct column from your table
+  const rawUrl = data.image_url; 
+  const imageUrl = rawUrl || 'https://res.cloudinary.com/dz2cmusyt/image/upload/v1758865308/dec_9_szsqw7.webp';
+  const isFallback = !rawUrl;
+
+  console.log('Image URL decision:', {
+    image_url: rawUrl,
+    usingFallback: isFallback,
+    finalImageUrl: imageUrl
+  });
+
+  setEventData({
+    id: data.id,
+    title: data.name || 'Event',
+    description: data.description || '',
+    imageUrl,
+    eventId: data.id,
+    sessionId: data.id,
+    cost: data.cost || 0,
+  });
+
+  console.log('Event data set', {
+    id: data.id,
+    title: data.name || 'Event',
+    imageUrl,
+  });
+}
+
+    } catch (err) {
+      console.error('Error in fetchLatestEvent:', err);
+    } finally {
+      setLoading(false);
+      console.log('Loading set to false');
+    }
+  };
+
+  fetchLatestEvent();
+}, []);
+
 
   // Force update RegisterButton every second
-  useEffect(() => {
-    console.log('Setting up interval to force RegisterButton updates');
-    const interval = setInterval(() => {
-      setTick((prev) => prev + 1);
-      console.log('Tick incremented:', tick + 1);
-    }, 1000);
-    return () => {
-      clearInterval(interval);
-      console.log('Interval cleared');
-    };
-  }, [tick]);
+useEffect(() => {
+  console.log('Setting up interval to force RegisterButton updates');
+  
+  const interval = setInterval(() => {
+    setTick((prev) => {
+      if (prev >= 4) { // 0 → 4 = 5 increments
+        clearInterval(interval);
+        console.log('Tick interval cleared after 5 increments');
+        return prev; // stop incrementing
+      }
+      console.log('Tick incremented:', prev + 1);
+      return prev + 1;
+    });
+  }, 1000);
 
+  // Cleanup in case the component unmounts early
+  return () => {
+    clearInterval(interval);
+    console.log('Interval cleared on unmount');
+  };
+}, []);
   if (!mounted || !isOpen || loading || !eventData) {
     console.log('Popup not rendered yet', { mounted, isOpen, loading, eventData });
     return null;
