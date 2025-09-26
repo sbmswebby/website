@@ -87,155 +87,144 @@ export default function useEventRegistration(eventId: string, sessionId: string)
   /**
    * Check if a user with given WhatsApp is already registered for a session
    */
-  const checkWhatsAppRegistration = async (
-    whatsapp: string
-  ): Promise<{ id: string } | null> => {
-    if (!whatsapp || !sessionId) return null;
+const checkWhatsAppRegistration = async (
+  whatsapp: string
+): Promise<{ id: string; registration_number: number } | null> => {
+  if (!whatsapp || !sessionId) return null;
 
-    // Get user profile by WhatsApp
-    const { data: userProfile } = await supabase
-      .from("user_profiles")
-      .select("id")
-      .eq("whatsapp_number", whatsapp)
-      .maybeSingle();
+  // Get user profile by WhatsApp
+  const { data: userProfile } = await supabase
+    .from("user_profiles")
+    .select("id")
+    .eq("whatsapp_number", whatsapp)
+    .maybeSingle();
 
-    if (!userProfile) return null;
+  if (!userProfile) return null;
 
-    // Check if registration exists for this session
-    const { data: registration } = await supabase
-      .from("registrations")
-      .select("id")
-      .eq("user_profile_id", userProfile.id)
-      .eq("session_id", sessionId)
-      .maybeSingle();
+  // Check if registration exists for this session
+  const { data: registration } = await supabase
+    .from("registrations")
+    .select("id, registration_number")  // <--- select the number
+    .eq("user_profile_id", userProfile.id)
+    .eq("session_id", sessionId)
+    .maybeSingle();
 
-    return registration || null;
-  };
+  return registration || null;
+};
+
 
   /**
    * Handle manual registration form submission
    */
-  const handleManualSubmit = async (form: {
-    name: string;
-    whatsapp: string;
-    profession?: string;
-    organisation?: string;
-    user_selected_session_id: string;
-    photo?: File | null;
-    city: string;
-  }): Promise<
-    | { idUrl: string; certUrl: string; registrationId: string }
-    | null
-  > => {
-    setIsProcessing(true);
+const handleManualSubmit = async (form: {
+  name: string;
+  whatsapp: string;
+  profession?: string;
+  organisation?: string;
+  user_selected_session_id: string;
+  photo?: File | null;
+  city: string;
+}): Promise<{ idUrl: string; certUrl: string; registrationId: string } | null> => {
+  setIsProcessing(true);
 
-    try {
-      let photoUrl: string | null = null;
+  try {
+    let photoUrl: string | null = null;
 
-      // --- Handle photo upload to cloudinary ---
-if (form.photo) {
-  const file = form.photo;
-  const fileName = `${form.name}_${Date.now()}.${file.type.split("/")[1]}`;
-  
-  // Upload to Cloudinary (folder: "user_photos")
-  photoUrl = await uploadImageToCloudinary(file, "user_photos");
-}
-
-// --- Upsert user profile with Cloudinary URL ---
-const { data: userProfiles, error: profileError } = await supabase
-  .from("user_profiles")
-  .upsert(
-    {
-      whatsapp_number: form.whatsapp,
-      name: form.name,
-      profession: form.profession || null,
-      organisation_name: form.organisation || null,
-      image_url: photoUrl, // Cloudinary URL
-      city: form.city,
-    },
-    { onConflict: "whatsapp_number" }
-  )
-  .select();
-
-      const userProfile = userProfiles?.[0];
-      if (!userProfile) throw new Error("Failed to upsert user profile");
-
-      // --- Check if already registered ---
-      let finalRegistrationId: string;
-      const existingRegistration = await checkWhatsAppRegistration(
-        form.whatsapp
-      );
-
-      if (existingRegistration) {
-        finalRegistrationId = existingRegistration.id;
-        setIsRegistered(true);
-        setRegistrationId(finalRegistrationId);
-      } else {
-        const { data: registrationData, error: registrationError } =
-          await supabase
-            .from("registrations")
-            .insert({
-              user_profile_id: userProfile.id,
-              session_id: form.user_selected_session_id,
-              status: "registered",
-            })
-            .select()
-            .maybeSingle();
-
-        if (registrationError?.code === "23505") {
-          throw new Error("Already registered for this session.");
-        }
-        if (!registrationData) {
-          throw registrationError || new Error("Registration failed");
-        }
-
-        finalRegistrationId = registrationData.id;
-        setIsRegistered(true);
-        setRegistrationId(finalRegistrationId);
-      }
-
-      // --- Fetch session name ---
-      const { data: sessionRow } = await supabase
-        .from("sessions")
-        .select("name")
-        .eq("id", form.user_selected_session_id)
-        .maybeSingle<SessionData>();
-
-      // --- Ticket & Certificate Data ---
-      const ticket: TicketData = {
-        registrationId: finalRegistrationId,
-        userProfileId: userProfile.id,
-        name: userProfile.name,
-        whatsapp: userProfile.whatsapp_number,
-        profession: userProfile.profession,
-        organisation: userProfile.organisation_name,
-        eventName,
-        sessionName: sessionRow?.name || undefined,
-        registrationNumber: finalRegistrationId,
-        photoUrl: userProfile.image_url,
-      };
-
-      // --- Generate & upload ID card & certificate ---
-      const { idUrl, certUrl } = await generateAndUploadBoth(
-        ticket,
-        form.user_selected_session_id
-      );
-
-      alert(
-        `Guest registration successful!\nTicket URL: ${idUrl}\nCertificate URL: ${certUrl}`
-      );
-
-      return { idUrl, certUrl, registrationId: finalRegistrationId };
-    } catch (err) {
-      console.error("[handleManualSubmit]", err);
-      alert(
-        err instanceof Error ? err.message : "Manual registration failed."
-      );
-      return null;
-    } finally {
-      setIsProcessing(false);
+    // --- Handle photo upload to Cloudinary ---
+    if (form.photo) {
+      const file = form.photo;
+      photoUrl = await uploadImageToCloudinary(file, "user_photos");
     }
-  };
+
+    // --- Upsert user profile ---
+    const { data: userProfiles } = await supabase
+      .from("user_profiles")
+      .upsert(
+        {
+          whatsapp_number: form.whatsapp,
+          name: form.name,
+          profession: form.profession || null,
+          organisation_name: form.organisation || null,
+          image_url: photoUrl,
+          city: form.city,
+        },
+        { onConflict: "whatsapp_number" }
+      )
+      .select();
+
+    const userProfile = userProfiles?.[0];
+    if (!userProfile) throw new Error("Failed to upsert user profile");
+
+    // --- Check if already registered ---
+    let finalRegistrationId: string;
+    let registrationNumber: number | string;
+
+    const existingRegistration = await checkWhatsAppRegistration(form.whatsapp);
+
+    if (existingRegistration) {
+      finalRegistrationId = existingRegistration.id;
+      registrationNumber = existingRegistration.registration_number; // <--- fetch here
+      setIsRegistered(true);
+      setRegistrationId(finalRegistrationId);
+    } else {
+      const { data: registrationData, error: registrationError } = await supabase
+        .from("registrations")
+        .insert({
+          user_profile_id: userProfile.id,
+          session_id: form.user_selected_session_id,
+          status: "registered",
+        })
+        .select()
+        .maybeSingle();
+
+      if (registrationError?.code === "23505") {
+        throw new Error("Already registered for this session.");
+      }
+      if (!registrationData) throw registrationError || new Error("Registration failed");
+
+      finalRegistrationId = registrationData.id;
+      registrationNumber = registrationData.registration_number; // <--- take it here
+      setIsRegistered(true);
+      setRegistrationId(finalRegistrationId);
+    }
+
+    // --- Fetch session name ---
+    const { data: sessionRow } = await supabase
+      .from("sessions")
+      .select("name")
+      .eq("id", form.user_selected_session_id)
+      .maybeSingle<SessionData>();
+
+    // --- Ticket & Certificate Data ---
+    const ticket: TicketData = {
+      registrationId: finalRegistrationId,
+      userProfileId: userProfile.id,
+      name: userProfile.name,
+      whatsapp: userProfile.whatsapp_number,
+      profession: userProfile.profession,
+      organisation: userProfile.organisation_name,
+      city: form.city,
+      eventName,
+      sessionName: sessionRow?.name || undefined,
+      registrationNumber, // <--- always set correctly
+      photoUrl: userProfile.image_url,
+    };
+
+    // --- Generate & upload ID card & certificate ---
+    const { idUrl, certUrl } = await generateAndUploadBoth(ticket, form.user_selected_session_id);
+
+    alert(`Guest registration successful!\nTicket URL: ${idUrl}\nCertificate URL: ${certUrl}`);
+
+    return { idUrl, certUrl, registrationId: finalRegistrationId };
+  } catch (err) {
+    console.error("[handleManualSubmit]", err);
+    alert(err instanceof Error ? err.message : "Manual registration failed.");
+    return null;
+  } finally {
+    setIsProcessing(false);
+  }
+};
+
 
   return {
     isProcessing,

@@ -21,6 +21,7 @@ export const loadBackgroundSvg = async (): Promise<string> => {
 };
 
 export interface TicketData {
+  city: string;
   registrationId: string;    // the registration row ID
   userProfileId: string;     // the actual user_profile_id
   name: string;
@@ -57,7 +58,7 @@ const ticketLayout = {
   canvas: { widthInches: 3.5, heightInches: 4.5, dpi: 300 },
   qr: { x: 19, y: 23, size: 290 },
   userPhoto: { x: 330, y: 250, width: 390, height: 390 },
-  textBox: { x: 280, y: 700, lineHeight: 60, color: "#000", font: "bold 45px Helvetica", titleFont: "bold 45px Helvetica" },
+  textBox: { x: 250, y: 700, lineHeight: 60, color: "#000", font: "bold 45px Helvetica", titleFont: "bold 45px Helvetica" },
 };
 
 const certificateLayout = {
@@ -131,6 +132,7 @@ export const generateIDCanvas = async (data: TicketData): Promise<HTMLCanvasElem
   drawLine(`WhatsApp: ${data.whatsapp}`);
   if (data.profession) drawLine(`Profession: ${data.profession}`);
   if (data.organisation) drawLine(`Organisation: ${data.organisation}`);
+  if (data.city)
   if (data.sessionName) drawLine(`Session: ${data.sessionName}`);
   drawLine(`Reg No: ${data.registrationNumber}`);
 
