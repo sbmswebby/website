@@ -120,6 +120,7 @@ export default function useEventRegistration(eventId: string, sessionId: string)
     organisation?: string;
     user_selected_session_id: string;
     photo?: File | null;
+    city: string;
   }): Promise<
     | { idUrl: string; certUrl: string; registrationId: string }
     | null
@@ -166,6 +167,7 @@ export default function useEventRegistration(eventId: string, sessionId: string)
             profession: form.profession || null,
             organisation_name: form.organisation || null,
             image_url: photoUrl,
+            city: form.city,
           },
           { onConflict: "whatsapp_number" }
         )

@@ -29,6 +29,8 @@ export default function RegisterPageContent() {
   } | null>(null);
   const [photo, setPhoto] = useState<File | null>(null);
   const [profession, setProfession] = useState("");
+  const [city, setCity] = useState("");
+
 
   // Fetch sessions for the event
   useEffect(() => {
@@ -61,6 +63,7 @@ export default function RegisterPageContent() {
         user_selected_session_id: sessionId, // <-- passes the selected session properly
         profession: profession || undefined,
         photo,
+        city: city || '',
       });
 
       setMessage({ type: "success", text: "Registered successfully!" });
@@ -142,6 +145,20 @@ export default function RegisterPageContent() {
               className="w-full border p-2 rounded"
             />
           </div>
+
+          <div>
+  <label className="block mb-1">
+    City <span className="text-red-500">*</span>
+  </label>
+  <input
+    type="text"
+    required
+    value={city}
+    onChange={(e) => setCity(e.target.value)}
+    className="w-full border p-2 rounded"
+  />
+</div>
+
 
           <div>
             <label className="block mb-1">Upload Photo</label>
