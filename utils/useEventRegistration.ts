@@ -213,12 +213,12 @@ const handleManualSubmit = async (form: {
     // --- Generate & upload ID card & certificate ---
     const { idUrl, certUrl } = await generateAndUploadBoth(ticket, form.user_selected_session_id);
 
-    alert(`Guest registration successful!\nTicket URL: ${idUrl}\nCertificate URL: ${certUrl}`);
+    console.log(`Guest registration successful!\nTicket URL: ${idUrl}\nCertificate URL: ${certUrl}`);
 
     return { idUrl, certUrl, registrationId: finalRegistrationId };
   } catch (err) {
     console.error("[handleManualSubmit]", err);
-    alert(err instanceof Error ? err.message : "Manual registration failed.");
+    console.log(err instanceof Error ? err.message : "Manual registration failed.");
     return null;
   } finally {
     setIsProcessing(false);
