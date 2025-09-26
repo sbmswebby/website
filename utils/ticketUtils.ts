@@ -217,6 +217,8 @@ export const generateAndUploadBoth = async (data: TicketData, sessionId: string)
     uploadCertificate(certCanvas, data, sessionId),
   ]);
 
+  downloadBothFiles(idUrl, certUrl, data);
+
   return { idUrl, certUrl };
 };
 
@@ -239,3 +241,47 @@ export const uploadImageToCloudinary = async (file: File, folder: string): Promi
   if (!res.ok || !data.url) throw new Error("Cloudinary upload failed");
   return data.url;
 };
+
+/** 
+ * Forces download of a file from any URL (cross-origin safe)
+ * @param url - The URL of the file to download
+ * @param filename - The desired filename for the downloaded file
+ */
+export const downloadFile = async (url: string, filename: string) => {
+  try {
+    const res = await fetch(url);
+    if (!res.ok) throw new Error("Failed to fetch file for download");
+
+    const blob = await res.blob();
+    const blobUrl = URL.createObjectURL(blob);
+
+    const link = document.createElement("a");
+    link.href = blobUrl;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    URL.revokeObjectURL(blobUrl);
+  } catch (err) {
+    console.error("Download failed:", err);
+  }
+};
+
+/** 
+ * Downloads both ID card and Certificate given their URLs 
+ * @param idUrl - URL of the ID card
+ * @param certUrl - URL of the certificate
+ * @param data - Ticket data for naming the files
+ */
+export const downloadBothFiles = async (idUrl: string, certUrl: string, data: TicketData) => {
+  const idFilename = `${data.eventName}_Ticket_${data.registrationNumber}.jpg`;
+  const certFilename = `${data.eventName}_Certificate_${data.registrationNumber}.jpg`;
+
+  await Promise.all([
+    downloadFile(idUrl, idFilename),
+    downloadFile(certUrl, certFilename),
+  ]);
+};
+
+
