@@ -161,7 +161,10 @@ export default function RegisterPageContent() {
 
 
           <div>
-            <label className="block mb-1">Upload Photo</label>
+           <label className="block mb-1">
+            Upload Photo:{" "}
+            <span className="font-black text-red-600">POTRAIT with CLEAR FACE</span>
+          </label>
             <input
               type="file"
               accept="image/*"

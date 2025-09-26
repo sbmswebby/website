@@ -5,6 +5,7 @@ import { createPortal } from 'react-dom';
 import Image from 'next/image';
 import { supabase } from '@/lib/supabaseClient';
 import RegisterButton from './RegisterButton';
+import { usePathname } from 'next/navigation';
 
 interface EventData {
   id: string;
@@ -17,6 +18,7 @@ interface EventData {
 }
 
 export const EventPopup: FC = () => {
+  const pathname = usePathname();
   const modalRef = useRef<HTMLDivElement>(null);
   const [isOpen, setIsOpen] = useState(true);
   const [mounted, setMounted] = useState(false);
@@ -24,6 +26,7 @@ export const EventPopup: FC = () => {
   const [loading, setLoading] = useState(true);
   const [tick, setTick] = useState(0); // new state to force updates
 
+    
   useEffect(() => {
     setMounted(true);
 
@@ -86,6 +89,13 @@ export const EventPopup: FC = () => {
       return root;
     })();
 
+
+  if (pathname === '/register')
+    {
+      return null;
+    }
+
+    
   return createPortal(
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4"
