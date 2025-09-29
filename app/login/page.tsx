@@ -1,4 +1,4 @@
-import SignInForm from "@/components/SignIn";
+import SignInForm from "@/components/shared/SignIn";
 
 
 

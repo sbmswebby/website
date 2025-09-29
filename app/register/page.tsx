@@ -1,6 +1,6 @@
 "use client";
 
-import RegisterPageContent from "@/components/RegisterPageContent";
+import RegisterPageContent from "@/components/shared/RegisterPageContent";
 import { Suspense } from "react";
 
 export default function RegisterPage() {

@@ -1,6 +1,6 @@
 // app/magazine/page.tsx
 
-import Magazine from "@/components/Magazines";
+import Magazine from "@/components/sbms/Magazines";
 
 
 

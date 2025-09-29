@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import Navbar from "@/components/NavBar";
-import { AuthProvider } from '@/components/AuthProvider'
+import { AuthProvider } from '@/components/shared/AuthProvider'
 import Footer from "@/components/Footer";
-import { EventPopup } from "@/components/EventPopup";
+import { EventPopup } from "@/components/shared/EventPopup";
 
 export const metadata: Metadata = {
   title: "SBMS Academy",

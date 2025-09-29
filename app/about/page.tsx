@@ -1,6 +1,6 @@
 // app/about/page.tsx
 
-import AboutUs from "@/components/AboutUs";
+import AboutUs from "@/components/sbms/AboutUs";
 
 
 

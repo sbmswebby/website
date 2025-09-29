@@ -1,6 +1,6 @@
 // app/gallery/page.tsx
 
-import Gallery from "@/components/Gallary";
+import Gallery from "@/components/shared/Gallary";
 
 
 

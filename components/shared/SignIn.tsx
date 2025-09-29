@@ -3,7 +3,7 @@
 import { supabase } from '@/lib/supabaseClient';
 import React, { Suspense, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import ForgotPassword from './ForgotPassword';
+import ForgotPassword from '@/components/shared/ForgotPassword';
 
 // Main component for the sign-in form
 export default function SignInForm() {

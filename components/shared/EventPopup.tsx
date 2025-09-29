@@ -4,7 +4,7 @@ import { FC, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import Image from 'next/image';
 import { supabase } from '@/lib/supabaseClient';
-import RegisterButton from './RegisterButton';
+import RegisterButton from '@/components/shared/RegisterButton';
 import { usePathname } from 'next/navigation';
 
 interface EventData {

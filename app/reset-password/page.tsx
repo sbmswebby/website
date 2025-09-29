@@ -1,6 +1,6 @@
 'use client'
 
-import ResetPassword from "@/components/ResetPassword"
+import ResetPassword from "@/components/shared/ResetPassword"
 import { Suspense } from "react"
 
 

@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabaseClient';
-import { EventSessionCard } from '@/components/EventSessionCard';
+import { EventSessionCard } from '@/components/shared/EventSessionCard';
 
 /**
  * Matches the schema of `events` table

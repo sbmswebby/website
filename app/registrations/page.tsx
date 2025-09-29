@@ -1,6 +1,6 @@
 // app/registrations/page.tsx
 
-import EventRegistrations from "@/components/EventRegistrations";
+import EventRegistrations from "@/components/shared/UserRegistrations";
 import { Suspense } from "react";
 
 

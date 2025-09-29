@@ -1,6 +1,6 @@
 // app/awards/page.tsx
 
-import Awards from "@/components/Awards";
+import Awards from "@/components/sbms/Awards";
 
 
 

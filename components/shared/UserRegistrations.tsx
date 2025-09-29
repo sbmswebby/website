@@ -3,7 +3,7 @@
 import { Suspense, useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabaseClient';
 import { useSearchParams } from 'next/navigation';
-import { EventSessionCard } from '@/components/EventSessionCard';
+import { EventSessionCard } from '@/components/shared/EventSessionCard';
 
 // --- Types ---
 interface EventRegistrationRow {

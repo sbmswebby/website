@@ -3,8 +3,8 @@
 import React, { useEffect, useState } from "react";
 import Image from "next/image";
 import { supabase } from "@/lib/supabaseClient";
-import RegisterButton from "@/components/RegisterButton";
-import { EventSessionCard } from "@/components/EventSessionCard";
+import RegisterButton from "@/components/shared/RegisterButton";
+import { EventSessionCard } from "@/components/shared/EventSessionCard";
 
 /** Type definition for a single session */
 type Session = {

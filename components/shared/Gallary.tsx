@@ -1,6 +1,6 @@
 "use client";
 import React from "react";
-import { ImageGallery } from "./ImageGallery";
+import { ImageGallery } from "@/components/ImageGallery";
 
 export default function Gallery() {
   return (

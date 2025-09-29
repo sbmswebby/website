@@ -1,6 +1,6 @@
 // app/competitions/page.tsx
 
-import Competitions from "@/components/CompetitionsSection";
+import Competitions from "@/components/sbms/CompetitionsSection";
 
 
 

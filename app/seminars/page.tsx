@@ -1,6 +1,6 @@
 // app/seminars/page.tsx
 
-import Seminars from "@/components/Seminars";
+import Seminars from "@/components/sbms/Seminars";
 
 
 
