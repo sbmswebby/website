@@ -2,7 +2,7 @@
 import React from 'react'
 import { useAuth } from '@/components/shared/AuthProvider'
 import ForgotPassword from '@/components/shared/ForgotPassword'
-import EventRegistrations from '@/components/EventRegistrations'
+import EventRegistrations from '@/components/shared/UserRegistrations'
 import UserProfileForm from '@/components/shared/profile_page'
 
 /**
