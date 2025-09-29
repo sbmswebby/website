@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useRef } from "react"
 import { Menu, X, User } from "lucide-react"
 import Image from "next/image"
-import { useAuth } from "@/components/AuthProvider"
+import { useAuth } from "@/components/shared/AuthProvider"
 import Link from "next/link"
 
 const Navbar = () => {

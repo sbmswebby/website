@@ -1,20 +1,17 @@
-import AboutUs from "@/components/AboutUs";
-import Academy from "@/components/Academy";
-import Awards from "@/components/Awards";
-import Competitions from "@/components/CompetitionsSection";
-import Contact from "@/components/Contact";
-import Events from "@/components/Events";
-import FairyCursor from "@/components/FairyCursor";
-import Gallery from "@/components/Gallary";
-import Hero from "@/components/HeroSection";
-import { ImageGallery } from "@/components/ImageGallery";
-import LoadingScreen from "@/components/LoadingScreen";
-import Magazine from "@/components/Magazines";
-import MediaCoverage from "@/components/MediaCoverage";
-import Seminars from "@/components/Seminars";
+import AboutUs from "@/components/sbms/AboutUs";
+import Academy from "@/components/sbms/Academy";
+import Awards from "@/components/sbms/Awards";
+import Competitions from "@/components/sbms/CompetitionsSection";
+import Contact from "@/components/sbms/Contact";
+import Events from "@/components/sbms/Events";
+import FairyCursor from "@/components/sbms/FairyCursor";
+import Gallery from "@/components/shared/Gallary";
+import Hero from "@/components/sbms/HeroSection";
+import LoadingScreen from "@/components/sbms/LoadingScreen";
+import Magazine from "@/components/sbms/Magazines";
+import MediaCoverage from "@/components/sbms/MediaCoverage";
+import Seminars from "@/components/sbms/Seminars";
 
-
- 
 
 export default function HomePage() {
   return ( 

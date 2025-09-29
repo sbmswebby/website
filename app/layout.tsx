@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 import "./globals.css";
-import Navbar from "@/components/NavBar";
+import Navbar from "@/components/sbms/NavBar";
 import { AuthProvider } from '@/components/shared/AuthProvider'
-import Footer from "@/components/Footer";
+import Footer from "@/components/sbms/Footer";
 import { EventPopup } from "@/components/shared/EventPopup";
 
 export const metadata: Metadata = {
