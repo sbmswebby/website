@@ -1,26 +1,13 @@
 'use client';
 
-import { Suspense, useEffect, useState } from 'react';
+import { Suspense, useEffect, useState, useCallback } from 'react';
 import { supabase } from '@/lib/supabaseClient';
 import { useSearchParams } from 'next/navigation';
 import { EventSessionCard } from '@/components/shared/EventSessionCard';
 
-// --- Types ---
-interface EventRegistrationRow {
-  id: string;
-  name: string;
-  whatsapp: string;
-  profession?: string | null;
-  organisation?: string | null;
-  event_id: string;
-  session_id: string;
-  photo_url?: string | null;
-  created_at: string;
-  serial_no: number;
-  events?: { name: string };
-  sessions?: { title: string; image_url?: string | null };
-}
-
+// --------------------
+// Types
+// --------------------
 interface Registration {
   id: string;
   eventName: string;
@@ -34,20 +21,17 @@ interface Registration {
   serialNo: number;
 }
 
-// --- Logging ---
-const logActivity = (msg: string, data?: unknown) =>
-  typeof window !== 'undefined' && console.log(`🔄 [EventRegistrations] ${msg}`, data || '');
-const logError = (msg: string, err: unknown) =>
-  typeof window !== 'undefined' && console.error(`❌ [EventRegistrations] ${msg}`, err);
-
-// --- Component ---
+// --------------------
+// Component
+// --------------------
 function EventRegistrationsContent() {
   const [registrations, setRegistrations] = useState<Registration[]>([]);
   const [loading, setLoading] = useState(true);
   const searchParams = useSearchParams();
   const registrationId = searchParams.get('registration_id');
 
-  const fetchRegistrations = async () => {
+  // Fetch registrations from Supabase
+  const fetchRegistrations = useCallback(async () => {
     setLoading(true);
     try {
       // --- Single registration by ID ---
@@ -106,21 +90,24 @@ function EventRegistrationsContent() {
         setRegistrations([]);
       }
     } catch (err) {
-      logError('Error fetching registrations:', err);
+      console.error('Error fetching registrations:', err);
       setRegistrations([]);
     } finally {
       setLoading(false);
     }
-  };
+  }, [registrationId]);
 
+  // Fetch registrations on mount or when registrationId changes
   useEffect(() => {
     fetchRegistrations();
-  }, [registrationId]);
+  }, [fetchRegistrations]);
 
   if (loading) return <p>Loading registrations...</p>;
   if (!registrations.length) return <p>No registrations found.</p>;
 
   const formatDate = (d: string) => new Date(d).toLocaleDateString();
+
+  // Highlight a registration if `registrationId` is present
   const highlighted = registrations[0]?.id === registrationId ? registrations[0] : null;
   const others = highlighted ? registrations.slice(1) : registrations;
 
@@ -176,6 +163,9 @@ Ref: ${r.serialNo}`}
   );
 }
 
+// --------------------
+// Wrapper Component
+// --------------------
 export default function EventRegistrations() {
   return (
     <Suspense fallback={<p>Loading registrations...</p>}>

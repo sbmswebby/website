@@ -12,7 +12,7 @@ interface ModalProps {
 
 const Modal = ({ src, alt, onClose }: ModalProps) => {
   const modalRef = useRef<HTMLDivElement>(null);
-  const [scrollY, setScrollY] = useState(0);
+  const [isMounted, setIsMounted] = useState(false);
 
   // Close modal on clicking outside
   useEffect(() => {
@@ -25,12 +25,9 @@ const Modal = ({ src, alt, onClose }: ModalProps) => {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [onClose]);
 
-  // Track scroll Y
+  // Mount modal with animation
   useEffect(() => {
-    const handleScroll = () => setScrollY(window.scrollY);
-    handleScroll(); // initial value
-    window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
+    setIsMounted(true);
   }, []);
 
   // Portal root
@@ -46,17 +43,39 @@ const Modal = ({ src, alt, onClose }: ModalProps) => {
   return createPortal(
     <div
       style={{
-        position: "absolute",
-        top: scrollY + 50, // offset if needed
-        left: "50%",
-        transform: "translateX(-50%)",
-        zIndex: 9999,
+        position: "fixed",
+        inset: 0,
         backgroundColor: "rgba(0,0,0,0.7)",
-        padding: "16px",
+        display: "flex",
+        justifyContent: "center",
+        alignItems: "center",
+        zIndex: 9999,
       }}
     >
-      <div ref={modalRef} style={{ maxWidth: "90vw", maxHeight: "80vh", overflow: "auto" }}>
-        <Image src={src} alt={alt} width={1920} height={1080} style={{ objectFit: "contain", width: "100%", height: "100%" }} />
+      <div
+        ref={modalRef}
+        style={{
+          width: "80vw",
+          height: "90vh",
+          backgroundColor: "#111",
+          borderRadius: "12px",
+          overflow: "hidden",
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          transform: isMounted
+            ? "translateY(0)"
+            : "translateY(-100px)",
+          transition: "transform 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55)", // bounce effect
+        }}
+      >
+        <Image
+          src={src}
+          alt={alt}
+          width={1920}
+          height={1080}
+          style={{ objectFit: "contain", width: "100%", height: "100%" }}
+        />
       </div>
     </div>,
     modalRoot

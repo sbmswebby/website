@@ -1,10 +1,13 @@
 'use client'
 
-import { createContext, useContext, useEffect, useState } from 'react'
+import { createContext, useContext, useEffect, useState, useCallback } from 'react'
 import type { User } from '@supabase/supabase-js'
 import { supabase } from '@/lib/supabaseClient'
 import { getUserProfile, UserProfile } from '@/lib/supabaseHelpers'
 
+// --------------------
+// Types
+// --------------------
 type AuthContextType = {
   user: User | null
   profile: UserProfile | null
@@ -24,6 +27,9 @@ type AuthContextType = {
   updateProfile: (updates: Partial<UserProfile>) => Promise<{ error?: string }>
 }
 
+// --------------------
+// Context
+// --------------------
 const AuthContext = createContext<AuthContextType>({
   user: null,
   profile: null,
@@ -34,6 +40,9 @@ const AuthContext = createContext<AuthContextType>({
   updateProfile: async () => ({ error: 'Not implemented' }),
 })
 
+// --------------------
+// Provider
+// --------------------
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [profile, setProfile] = useState<UserProfile | null>(null)
@@ -41,20 +50,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loadingProfile, setLoadingProfile] = useState(true)
   const loading = loadingUser || loadingProfile
 
+  // Clear auth state
   const clearAuth = () => {
     setUser(null)
     setProfile(null)
   }
 
-  // Load user session
-  const loadSession = async () => {
+  // Load user session and profile
+  const loadSession = useCallback(async () => {
     setLoadingUser(true)
     setLoadingProfile(true)
 
     try {
       const { data: { session } } = await supabase.auth.getSession()
 
-      if (!session || !session.user) {
+      if (!session?.user) {
         console.log('[AuthProvider] ❌ Invalid or missing session, clearing')
         clearAuth()
         return
@@ -63,32 +73,29 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       console.log('[AuthProvider] ✅ Valid session, user:', session.user)
       setUser(session.user)
 
-       setLoadingUser(false) 
-
       try {
         const p = await getUserProfile()
         setProfile(p)
       } catch (err) {
         console.error('[AuthProvider] ❌ Failed to fetch profile:', err)
         setProfile(null)
-      } finally {
-        setLoadingProfile(false)
       }
     } catch (err) {
       console.error('[AuthProvider] ❌ getSession error:', err)
       clearAuth()
     } finally {
       setLoadingUser(false)
+      setLoadingProfile(false)
     }
-  }
+  }, [])
 
   // Listen to auth state changes
   useEffect(() => {
-    loadSession()
+    loadSession() // run on mount
 
     const { data: subscription } = supabase.auth.onAuthStateChange(
       async (_event, session) => {
-        if (!session || !session.user) {
+        if (!session?.user) {
           console.log('[AuthProvider:onAuthStateChange] ❌ Invalid session → clear')
           clearAuth()
           setLoadingUser(false)
@@ -112,21 +119,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     )
 
     return () => subscription.subscription.unsubscribe()
-  }, [])
+  }, [loadSession])
 
+  // Logout function
   const logout = async () => {
-    console.log("user before sign out: ", user)
     await supabase.auth.signOut()
-    console.log("user after sign out: ", user)
     clearAuth()
-    console.log("user auth removed: ", user)
-    console.log("user auth profile: ", profile)
   }
 
+  // Refresh session
   const refreshSession = async () => {
     await loadSession()
   }
 
+  // Sign-up new user
   const signUp: AuthContextType['signUp'] = async ({
     email, password, fullName, number, instaId, organisation, age, gender,
   }) => {
@@ -157,11 +163,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       return {}
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Sign-up failed'
-      return { error: message }
+      return { error: err instanceof Error ? err.message : 'Sign-up failed' }
     }
   }
 
+  // Update user profile
   const updateProfile: AuthContextType['updateProfile'] = async (updates) => {
     if (!user) return { error: 'Not signed in' }
 
@@ -177,8 +183,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setProfile(p)
       return {}
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Update failed'
-      return { error: message }
+      return { error: err instanceof Error ? err.message : 'Update failed' }
     }
   }
 
@@ -191,4 +196,5 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   )
 }
 
+// Hook to use auth context
 export const useAuth = () => useContext(AuthContext)

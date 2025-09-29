@@ -1,6 +1,6 @@
 "use client";
 
-import { useSearchParams, useRouter } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import useEventRegistration from "@/utils/useEventRegistration";
@@ -12,7 +12,6 @@ interface Session {
 
 export default function RegisterPageContent() {
   const searchParams = useSearchParams();
-  const router = useRouter();
 
   const eventId = searchParams.get("eventId") || "";
 
