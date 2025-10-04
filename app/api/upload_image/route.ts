@@ -1,5 +1,5 @@
-import { NextRequest, NextResponse } from "next/server";
 import { uploadToCloudinary } from "@/lib/cloudinaryUpload";
+import { NextRequest, NextResponse } from "next/server";
 
 interface UploadImageRequest {
   imageBase64: string;
