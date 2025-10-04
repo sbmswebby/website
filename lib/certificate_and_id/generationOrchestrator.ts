@@ -65,8 +65,9 @@ export class GenerationOrchestrator {
       const canvas = await generator.generate(data);
       console.log('✅ Certificate canvas generated successfully');
 
+      const layoutId = template.id; 
       console.log('☁️ Uploading certificate to Cloudinary...');
-      const filename = `certificate_${userProfileId}_${sessionId}.jpg`;
+      const filename = `certificate_${template.id}_${userProfileId}_${sessionId}.jpg`;
       const url = await CloudinaryService.uploadCanvas(canvas, filename, 'certificates');
       console.log(`✅ Certificate uploaded: ${url}`);
 
@@ -94,6 +95,67 @@ export class GenerationOrchestrator {
       };
     }
   }
+
+  /**
+ * Generates certificates for all users in a session
+ */
+static async generateCertificatesForSession(
+  sessionId: string,
+  downloadAfter: boolean = true,
+  customText?: Record<string, string>,
+  onProgress?: (current: number, total: number) => void
+): Promise<{ successful: string[]; failed: string[] }> {
+  console.log(`🎓 [Session Certificates] Starting for session: ${sessionId}`);
+
+  try {
+    // Step 1: Fetch all registrations for this session
+    const registrations = await DatabaseService.getRegistrationsBySession(sessionId);
+    if (!registrations || registrations.length === 0) {
+      console.warn(`⚠️ No registrations found for session ${sessionId}`);
+      return { successful: [], failed: [] };
+    }
+
+    const successful: string[] = [];
+    const failed: string[] = [];
+
+    // Step 2: Loop through each user and generate their certificate
+    for (let i = 0; i < registrations.length; i++) {
+      const registration = registrations[i];
+      console.log(`\n🔹 [${i + 1}/${registrations.length}] Generating for user: ${registration.user_profile_id}`);
+
+      try {
+        const result = await this.generateCertificate(
+          sessionId,
+          registration.user_profile_id,
+          customText,
+          downloadAfter
+        );
+
+        if (result.success) {
+          console.log(`✅ Certificate generated for ${registration.user_profile_id}`);
+          successful.push(registration.user_profile_id);
+        } else {
+          console.warn(`⚠️ Failed for ${registration.user_profile_id}: ${result.error}`);
+          failed.push(registration.user_profile_id);
+        }
+      } catch (err) {
+        console.error(`❌ Exception for ${registration.user_profile_id}:`, err);
+        failed.push(registration.user_profile_id);
+      }
+
+      // Optional progress callback
+      onProgress?.(i + 1, registrations.length);
+    }
+
+    console.log(`🎉 [Session Certificates] Generation completed for session: ${sessionId}`);
+    console.log(`📊 Success: ${successful.length}, Failed: ${failed.length}`);
+
+    return { successful, failed };
+  } catch (error) {
+    console.error(`❌ Session certificate generation failed:`, error);
+    return { successful: [], failed: [] };
+  }
+}
 
   /**
    * Generates ID card for a registration

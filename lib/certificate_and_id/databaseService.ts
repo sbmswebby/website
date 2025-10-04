@@ -5,6 +5,7 @@ import { supabase } from '@/lib/supabaseClient';
 import { CertificateTemplate, IDCardDetails, UserProfile } from './types';
 
 export class DatabaseService {
+  
   /**
    * Fetches certificate template for a session
    */
@@ -26,6 +27,30 @@ export class DatabaseService {
     console.log("✅ [getCertificateTemplate] Certificate template fetched successfully");
     return data.certificate_templates as unknown as CertificateTemplate;
   }
+
+  /**
+ * Fetches all registrations for a given session
+ */
+static async getRegistrationsBySession(sessionId: string) {
+  console.log("🔍 [getRegistrationsBySession] Fetching registrations for session:", sessionId);
+
+  const { data, error } = await supabase
+    .from('registrations')
+    .select(`
+      *,
+      user_profiles(*),
+      sessions(*)
+    `)
+    .eq('session_id', sessionId);
+
+  if (error) {
+    console.error("❌ [getRegistrationsBySession] Failed to fetch registrations:", error);
+    return [];
+  }
+
+  console.log(`✅ [getRegistrationsBySession] Retrieved ${data.length} registrations`);
+  return data;
+}
 
   /**
    * Fetches multiple certificate templates for a session
