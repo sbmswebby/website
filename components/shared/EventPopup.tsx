@@ -26,14 +26,11 @@ export const EventPopup: FC = () => {
   const [loading, setLoading] = useState(true);
   const [tick, setTick] = useState(0); // new state to force updates
 
-  console.log('Component rendered', { mounted, isOpen, loading, eventData });
 
 useEffect(() => {
   setMounted(true);
-  console.log('Mounted set to true');
 
   const fetchLatestEvent = async () => {
-    console.log('Fetching latest event from Supabase...');
     try {
       const { data, error } = await supabase
         .from('events')
@@ -47,19 +44,12 @@ useEffect(() => {
         return;
       }
 
-      console.log('Supabase data received:', data);
 
 if (data) {
   // Use the correct column from your table
   const rawUrl = data.image_url; 
   const imageUrl = rawUrl || 'https://res.cloudinary.com/dz2cmusyt/image/upload/v1758865308/dec_9_szsqw7.webp';
-  const isFallback = !rawUrl;
 
-  console.log('Image URL decision:', {
-    image_url: rawUrl,
-    usingFallback: isFallback,
-    finalImageUrl: imageUrl
-  });
 
   setEventData({
     id: data.id,
@@ -71,18 +61,13 @@ if (data) {
     cost: data.cost || 0,
   });
 
-  console.log('Event data set', {
-    id: data.id,
-    title: data.name || 'Event',
-    imageUrl,
-  });
+
 }
 
     } catch (err) {
       console.error('Error in fetchLatestEvent:', err);
     } finally {
       setLoading(false);
-      console.log('Loading set to false');
     }
   };
 
@@ -92,24 +77,20 @@ if (data) {
 
   // Force update RegisterButton every second
 useEffect(() => {
-  console.log('Setting up interval to force RegisterButton updates');
   
   const interval = setInterval(() => {
     setTick((prev) => {
-      if (prev >= 4) { // 0 → 4 = 5 increments
+      if (prev >= 0) { // 0 → 4 = 5 increments
         clearInterval(interval);
-        console.log('Tick interval cleared after 5 increments');
         return prev; // stop incrementing
       }
-      console.log('Tick incremented:', prev + 1);
       return prev + 1;
     });
-  }, 1000);
+  }, 3000);
 
   // Cleanup in case the component unmounts early
   return () => {
     clearInterval(interval);
-    console.log('Interval cleared on unmount');
   };
 }, []);
   if (!mounted || !isOpen || loading || !eventData) {
@@ -120,7 +101,6 @@ useEffect(() => {
   const modalRoot =
     document.getElementById('modal-root') ||
     (() => {
-      console.log('Creating modal root dynamically');
       const root = document.createElement('div');
       root.id = 'modal-root';
       document.body.appendChild(root);
@@ -128,18 +108,15 @@ useEffect(() => {
     })();
 
   if (pathname === '/register') {
-    console.log('Popup not rendered on /register page');
     return null;
   }
 
-  console.log('Rendering EventPopup portal', { eventData });
 
   return createPortal(
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4"
       onMouseDown={(e) => {
         if (e.target === e.currentTarget) {
-          console.log('Backdrop clicked, closing popup');
           setIsOpen(false);
         }
       }}
@@ -151,7 +128,6 @@ useEffect(() => {
         <button
           className="absolute -top-3 -right-3 w-12 h-12 flex items-center justify-center bg-gray-800 rounded-full hover:bg-gray-900 text-white font-bold text-2xl shadow-lg transition z-10"
           onClick={() => {
-            console.log('Close button clicked');
             setIsOpen(false);
           }}
         >
@@ -169,7 +145,7 @@ useEffect(() => {
               onError={(e) => {
                 console.error('Failed to load image:', eventData.imageUrl, e);
               }}
-              onLoadingComplete={() => console.log('Image loaded successfully:', eventData.imageUrl)}
+              
             />
           </div>
 
