@@ -2,11 +2,26 @@
 import * as XLSX from 'xlsx';
 
 /**
+ * Row type for Excel export
+ */
+export interface ExcelRow {
+  RegistrationID: string | number;
+  Name: string;
+  WhatsApp: string;
+  Organisation: string;
+  Session: string;
+  Event: string;
+  Status: string;
+  CreatedAt: string;
+  [key: string]: string | number; // allow extra fields if needed
+}
+
+/**
  * Generates an XLSX file from an array of objects and triggers download
  * @param data Array of objects containing your data
  * @param filename Name of the downloaded file
  */
-export const downloadExcel = (data: Record<string, string | number | boolean>[], filename: string) => {
+export const downloadExcel = (data: ExcelRow[], filename: string) => {
   if (!data || data.length === 0) return;
 
   // Create a worksheet from the data

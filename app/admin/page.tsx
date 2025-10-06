@@ -127,6 +127,7 @@ const AdminDashboard: React.FC = () => {
         RegistrationID: r.registration_number,
         Name: r.user?.name ?? "",
         WhatsApp: r.user?.whatsapp_number ?? "",
+        Organisation: r.user?.organisation_name ?? "",
         Session: r.session?.name ?? "",
         Event: r.event?.name ?? "",
         Status: r.status ?? "",
@@ -153,7 +154,7 @@ const AdminDashboard: React.FC = () => {
       }> = [];
 
       filteredRegistrations.forEach((r) => {
-        const academyName = r.academy?.name || "Unknown_Academy";
+        const academyName = r.user?.organisation_name || "Unknown_Academy";
         const userName = r.user?.name?.replace(/[^a-zA-Z0-9]/g, "_") || "User";
         const regNumber = r.registration_number || "0";
 

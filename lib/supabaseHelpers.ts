@@ -86,25 +86,25 @@ export const getAllRegistrations = async () => {
 }
 
 export const getAllRegistrationsWithDetails = async (): Promise<types.RegistrationWithDetails[]> => {
-  console.log("[getAllRegistrationsWithDetails] Fetching registrations with details...")
+  console.log("[getAllRegistrationsWithDetails] Fetching registrations with details...");
   try {
     const { data: registrations, error: regError } = await supabase
       .from("registrations")
       .select("*")
-      .order("created_at", { ascending: false })
+      .order("created_at", { ascending: false });
 
-    if (regError) throw regError
-    console.log("[getAllRegistrationsWithDetails] Registrations fetched:", registrations?.length)
+    if (regError) throw regError;
+    console.log("[getAllRegistrationsWithDetails] Registrations fetched:", registrations?.length);
 
-    const userIds = [...new Set(registrations.map(r => r.user_profile_id))]
-    const sessionIds = [...new Set(registrations.map(r => r.session_id))]
+    const userIds = [...new Set(registrations.map(r => r.user_profile_id))];
+    const sessionIds = [...new Set(registrations.map(r => r.session_id))];
     const transactionIds = registrations
       .map(r => r.transaction_id)
-      .filter(id => id !== null) as string[]
+      .filter(id => id !== null) as string[];
 
-    console.log("[getAllRegistrationsWithDetails] userIds:", userIds)
-    console.log("[getAllRegistrationsWithDetails] sessionIds:", sessionIds)
-    console.log("[getAllRegistrationsWithDetails] transactionIds:", transactionIds)
+    console.log("[getAllRegistrationsWithDetails] userIds:", userIds);
+    console.log("[getAllRegistrationsWithDetails] sessionIds:", sessionIds);
+    console.log("[getAllRegistrationsWithDetails] transactionIds:", transactionIds);
 
     const [
       { data: users },
@@ -118,32 +118,32 @@ export const getAllRegistrationsWithDetails = async (): Promise<types.Registrati
       transactionIds.length > 0
         ? supabase.from("transactions").select("*").in("id", transactionIds)
         : Promise.resolve({ data: [] })
-    ])
+    ]);
 
-    console.log("[getAllRegistrationsWithDetails] Users:", users?.length)
-    console.log("[getAllRegistrationsWithDetails] Sessions:", sessions?.length)
-    console.log("[getAllRegistrationsWithDetails] Certificates:", certificates?.length)
-    console.log("[getAllRegistrationsWithDetails] Transactions:", transactions?.length)
+    console.log("[getAllRegistrationsWithDetails] Users:", users?.length);
+    console.log("[getAllRegistrationsWithDetails] Sessions:", sessions?.length);
+    console.log("[getAllRegistrationsWithDetails] Certificates:", certificates?.length);
+    console.log("[getAllRegistrationsWithDetails] Transactions:", transactions?.length);
 
-    const eventIds = [...new Set(sessions?.map(s => s.event_id) || [])]
+    const eventIds = [...new Set(sessions?.map(s => s.event_id) || [])];
     const { data: events } = await supabase
       .from("events")
       .select("*")
-      .in("id", eventIds)
-    console.log("[getAllRegistrationsWithDetails] Events:", events?.length)
+      .in("id", eventIds);
+    console.log("[getAllRegistrationsWithDetails] Events:", events?.length);
 
-    const userMap = new Map(users?.map(u => [u.id, u]) || [])
-    const sessionMap = new Map(sessions?.map(s => [s.id, s]) || [])
-    const eventMap = new Map(events?.map(e => [e.id, e]) || [])
-    const certMap = new Map(certificates?.map(c => [`${c.user_profile_id}-${c.session_id}`, c]) || [])
-    const transactionMap = new Map(transactions?.map(t => [t.id, t]) || [])
+    const userMap = new Map(users?.map(u => [u.id, u]) || []);
+    const sessionMap = new Map(sessions?.map(s => [s.id, s]) || []);
+    const eventMap = new Map(events?.map(e => [e.id, e]) || []);
+    const certMap = new Map(certificates?.map(c => [`${c.user_profile_id}-${c.session_id}`, c]) || []);
+    const transactionMap = new Map(transactions?.map(t => [t.id, t]) || []);
 
     return registrations.map(reg => {
-      const user = userMap.get(reg.user_profile_id) || null
-      const session = sessionMap.get(reg.session_id) || null
-      const event = session ? eventMap.get(session.event_id) || null : null
-      const certificate = certMap.get(`${reg.user_profile_id}-${reg.session_id}`) || null
-      const transaction = reg.transaction_id ? transactionMap.get(reg.transaction_id) || null : null
+      const user = userMap.get(reg.user_profile_id) || null;
+      const session = sessionMap.get(reg.session_id) || null;
+      const event = session ? eventMap.get(session.event_id) || null : null;
+      const certificate = certMap.get(`${reg.user_profile_id}-${reg.session_id}`) || null;
+      const transaction = reg.transaction_id ? transactionMap.get(reg.transaction_id) || null : null;
 
       const regWithDetails = {
         ...reg,
@@ -151,16 +151,19 @@ export const getAllRegistrationsWithDetails = async (): Promise<types.Registrati
         session,
         event,
         certificate,
-        transaction
-      }
-      console.log("[getAllRegistrationsWithDetails] Registration with details:", regWithDetails)
-      return regWithDetails
-    })
+        transaction,
+        // Added organisation from user profile
+        organisation: user?.organisation || null
+      };
+
+      console.log("[getAllRegistrationsWithDetails] Registration with details:", regWithDetails);
+      return regWithDetails;
+    });
   } catch (error) {
-    console.error("[getAllRegistrationsWithDetails] Error fetching registrations with details:", error)
-    return []
+    console.error("[getAllRegistrationsWithDetails] Error fetching registrations with details:", error);
+    return [];
   }
-}
+};
 
 // ==================== OTHER FUNCTIONS ====================
 

@@ -35,6 +35,9 @@ const RegistrationsTable: React.FC<RegistrationsTableProps> = ({
               Name
             </th>
             <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              Organisation
+            </th>
+            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
               WhatsApp
             </th>
             <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -68,9 +71,12 @@ const RegistrationsTable: React.FC<RegistrationsTableProps> = ({
               <td className="px-4 py-3 text-sm font-medium text-gray-900">
                 #{reg.registration_number}
               </td>
-              <td className="px-4 py-3">
-                <div className="text-sm font-medium text-gray-900">{reg.user?.name || 'N/A'}</div>
+              <td className="px-4 py-3 text-sm font-medium text-gray-900">
+                {reg.user?.name || 'N/A'}
                 <div className="text-xs text-gray-500">{reg.user?.city || ''}</div>
+              </td>
+              <td className="px-4 py-3 text-sm text-gray-600">
+                {reg.user?.organisation_name || 'N/A'}
               </td>
               <td className="px-4 py-3 text-sm text-gray-600">
                 {reg.user?.whatsapp_number || 'N/A'}
