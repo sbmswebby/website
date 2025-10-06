@@ -1,20 +1,46 @@
+// AdminDashboard.tsx
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Filter, Users, Calendar, Building2, Loader2 } from "lucide-react";
+import { Filter, Users, Calendar, Building2, Loader2, FileSpreadsheet, Download } from "lucide-react";
 import * as types from "@/lib/certificate_and_id/types";
-import ActionButtons from "@/components/shared/admin/ActionBtn";
 import FiltersPanel from "@/components/shared/admin/FilterPannel";
 import RegistrationsTable from "@/components/shared/admin/RegistrationTables";
 import StatsCard from "@/components/shared/admin/StatsCard";
 import SearchBar from "@/components/shared/admin/Searchbar";
+import { getAllRegistrationsWithDetails } from "@/lib/supabaseHelpers";
+import { downloadExcel } from "@/components/shared/admin/utils/downloadExcel";
+import { downloadFilesAsZip } from "@/components/shared/admin/utils/downloadcertandid";
 
-// Import Supabase helpers
-import {
-  getAllRegistrationsWithDetails,
-} from "@/lib/supabaseHelpers";
+// ==================== DOWNLOAD BUTTONS COMPONENT ====================
+const DownloadButtons: React.FC<{
+  selectedCount: number;
+  onDownloadXLSX: () => void;
+  onDownloadCertsAndIDs: () => void;
+  isDownloading: boolean;
+}> = ({ selectedCount, onDownloadXLSX, onDownloadCertsAndIDs, isDownloading }) => (
+  <div className="flex gap-3">
+    <button
+      onClick={onDownloadXLSX}
+      disabled={isDownloading}
+      className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+    >
+      {isDownloading ? <Loader2 className="w-4 h-4 animate-spin" /> : <FileSpreadsheet className="w-4 h-4" />}
+      Download XLSX
+    </button>
 
-// ==================== MAIN ADMIN DASHBOARD COMPONENT ====================
+    <button
+      onClick={onDownloadCertsAndIDs}
+      disabled={selectedCount === 0 || isDownloading}
+      className="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed"
+    >
+      {isDownloading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
+      Download Certs & IDs ({selectedCount})
+    </button>
+  </div>
+);
+
+// ==================== ADMIN DASHBOARD ====================
 const AdminDashboard: React.FC = () => {
   const [registrations, setRegistrations] = useState<types.RegistrationWithDetails[]>([]);
   const [filteredRegistrations, setFilteredRegistrations] = useState<types.RegistrationWithDetails[]>([]);
@@ -22,47 +48,31 @@ const AdminDashboard: React.FC = () => {
   const [loading, setLoading] = useState<boolean>(true);
   const [isDownloading, setIsDownloading] = useState<boolean>(false);
   const [searchTerm, setSearchTerm] = useState<string>("");
-  const [filters, setFilters] = useState<types.FilterState>({
-    session: "",
-    status: "",
-    dateFrom: "",
-    dateTo: "",
-  });
+  const [filters, setFilters] = useState<types.FilterState>({ session: "", status: "", dateFrom: "", dateTo: "", academy: "" });
   const [showFilters, setShowFilters] = useState<boolean>(false);
-  const [stats, setStats] = useState<types.StatsData>({
-    total: 0,
-    today: 0,
-    thisWeek: 0,
-  });
+  const [stats, setStats] = useState<types.StatsData>({ total: 0, today: 0, thisWeek: 0 });
 
-  // ==================== FETCH REGISTRATIONS FROM SUPABASE ====================
+  // ==================== FETCH REGISTRATIONS ====================
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
       try {
-        console.log("[AdminDashboard] Fetching registrations from Supabase...");
         const data = await getAllRegistrationsWithDetails();
-        console.log("[AdminDashboard] Fetched registrations:", data.length);
-
         setRegistrations(data);
         calculateStats(data);
       } catch (error) {
-        console.error("[AdminDashboard] Failed to fetch registrations:", error);
+        console.error(error);
       } finally {
         setLoading(false);
       }
     };
-
     fetchData();
   }, []);
 
-  // ==================== APPLY FILTERS WHEN SEARCH OR FILTERS CHANGE ====================
-  useEffect(() => {
-    applyFilters();
-  }, [searchTerm, filters, registrations]);
+  // ==================== FILTERING ====================
+  useEffect(() => applyFilters(), [searchTerm, filters, registrations]);
 
-  // ==================== CALCULATE STATS ====================
-  const calculateStats = (regs: types.RegistrationWithDetails[]): void => {
+  const calculateStats = (regs: types.RegistrationWithDetails[]) => {
     const now = new Date();
     const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
     const weekAgo = new Date(today);
@@ -75,171 +85,169 @@ const AdminDashboard: React.FC = () => {
     });
   };
 
-  // ==================== FILTERING FUNCTION ====================
-  const applyFilters = (): void => {
+  const applyFilters = () => {
     let filtered = [...registrations];
-
     if (searchTerm) {
       const term = searchTerm.toLowerCase();
       filtered = filtered.filter(
-        (reg) =>
-          reg.user?.name?.toLowerCase().includes(term) ||
-          reg.user?.whatsapp_number?.includes(term) ||
-          reg.session?.name?.toLowerCase().includes(term) ||
-          reg.event?.name?.toLowerCase().includes(term) ||
-          reg.registration_number?.toString().includes(term)
+        (r) =>
+          r.user?.name?.toLowerCase().includes(term) ||
+          r.user?.whatsapp_number?.includes(term) ||
+          r.session?.name?.toLowerCase().includes(term) ||
+          r.event?.name?.toLowerCase().includes(term) ||
+          r.registration_number?.toString().includes(term)
       );
     }
-
-    if (filters.session) {
-      filtered = filtered.filter((reg) => reg.session?.id === filters.session);
-    }
-
-    if (filters.status) {
-      filtered = filtered.filter((reg) => reg.status === filters.status);
-    }
-
-    if (filters.dateFrom) {
-      filtered = filtered.filter(
-        (reg) => new Date(reg.created_at) >= new Date(filters.dateFrom)
-      );
-    }
-
-    if (filters.dateTo) {
-      filtered = filtered.filter(
-        (reg) => new Date(reg.created_at) <= new Date(filters.dateTo)
-      );
-    }
+    if (filters.session) filtered = filtered.filter((r) => r.session?.id === filters.session);
+    if (filters.status) filtered = filtered.filter((r) => r.status === filters.status);
+    if (filters.dateFrom) filtered = filtered.filter((r) => new Date(r.created_at) >= new Date(filters.dateFrom));
+    if (filters.dateTo) filtered = filtered.filter((r) => new Date(r.created_at) <= new Date(filters.dateTo));
 
     setFilteredRegistrations(filtered);
   };
 
   // ==================== SELECT / DESELECT ====================
-  const toggleSelectAll = (): void => {
-    if (selectedIds.size === filteredRegistrations.length) {
-      setSelectedIds(new Set());
-    } else {
-      setSelectedIds(new Set(filteredRegistrations.map((r) => r.id)));
-    }
-  };
+  const toggleSelectAll = () =>
+    selectedIds.size === filteredRegistrations.length
+      ? setSelectedIds(new Set())
+      : setSelectedIds(new Set(filteredRegistrations.map((r) => r.id)));
 
-  const toggleSelect = (id: string): void => {
+  const toggleSelect = (id: string) => {
     const newSelected = new Set(selectedIds);
-    if (newSelected.has(id)) {
-      newSelected.delete(id);
-    } else {
-      newSelected.add(id);
-    }
+    newSelected.has(id) ? newSelected.delete(id) : newSelected.add(id);
     setSelectedIds(newSelected);
   };
 
-  // ==================== DOWNLOAD FUNCTIONS ====================
-  const downloadAsXLSX = async (regsToDownload: types.RegistrationWithDetails[]): Promise<void> => {
+  // ==================== DOWNLOAD XLSX ====================
+  const downloadAsXLSX = (regsToDownload: types.RegistrationWithDetails[]) => {
+    if (regsToDownload.length === 0) return;
     setIsDownloading(true);
     try {
-      console.log("[AdminDashboard] Preparing XLSX download:", regsToDownload.length);
-      // TODO: Replace with XLSX generation code
-      alert(`Would download ${regsToDownload.length} registrations as XLSX`);
+      const dataForExcel = regsToDownload.map((r) => ({
+        RegistrationID: r.registration_number,
+        Name: r.user?.name ?? "",
+        WhatsApp: r.user?.whatsapp_number ?? "",
+        Session: r.session?.name ?? "",
+        Event: r.event?.name ?? "",
+        Status: r.status ?? "",
+        CreatedAt: new Date(r.created_at).toLocaleString(),
+      }));
+      downloadExcel(dataForExcel, "Registrations.xlsx");
     } catch (error) {
-      console.error("[AdminDashboard] Failed to download XLSX:", error);
+      console.error(error);
     } finally {
       setIsDownloading(false);
     }
   };
 
-  const downloadCertificatesAndIDs = async (): Promise<void> => {
+  // ==================== DOWNLOAD CERTIFICATES & IDs ====================
+  const downloadCertificatesAndIDs = async () => {
     setIsDownloading(true);
     try {
-      const selected = filteredRegistrations.filter((r) => selectedIds.has(r.id));
-      const urls: string[] = [];
+      // Collect file info for all filtered registrations
+      const files: Array<{
+        url: string;
+        type: "certificate" | "id_card";
+        academyName: string;
+        filename: string;
+      }> = [];
 
-      selected.forEach((reg) => {
-        if (reg.certificate?.download_url) urls.push(reg.certificate.download_url);
-        if (reg.ticket_url) urls.push(reg.ticket_url);
+      filteredRegistrations.forEach((r) => {
+        const academyName = r.academy?.name || "Unknown_Academy";
+        const userName = r.user?.name?.replace(/[^a-zA-Z0-9]/g, "_") || "User";
+        const regNumber = r.registration_number || "0";
+
+        // Add certificate
+        if (r.certificate?.download_url) {
+          files.push({
+            url: r.certificate.download_url,
+            type: "certificate",
+            academyName: academyName,
+            filename: `${regNumber}_${userName}_Certificate.pdf`,
+          });
+        }
+
+        // Add ID card
+        if (r.ticket_url) {
+          files.push({
+            url: r.ticket_url,
+            type: "id_card",
+            academyName: academyName,
+            filename: `${regNumber}_${userName}_IDCard.pdf`,
+          });
+        }
       });
 
-      console.log("[AdminDashboard] Downloading certificates and IDs:", urls);
-      alert(`Would download ${urls.length} files (certificates and ID cards)`);
-    } catch (error) {
-      console.error("[AdminDashboard] Failed to download certificates/IDs:", error);
+      if (files.length === 0) {
+        alert("No certificates or IDs found.");
+        return;
+      }
+
+      await downloadFilesAsZip(files, "All_Certificates_and_IDs.zip");
+    } catch (err) {
+      console.error(err);
     } finally {
       setIsDownloading(false);
     }
   };
 
-  // ==================== CLEAR FILTERS ====================
-  const clearFilters = (): void => {
-    setFilters({ session: "", status: "", dateFrom: "", dateTo: "" });
+  const clearFilters = () => {
+    setFilters({ session: "", status: "", dateFrom: "", dateTo: "", academy: "" });
     setSearchTerm("");
   };
 
-  // ==================== UNIQUE SESSIONS ====================
   const uniqueSessions = registrations
     .map((r) => r.session)
-    .filter((session): session is types.Session => session !== null && session !== undefined)
-    .filter((session, index, self) => self.findIndex((s) => s.id === session.id) === index);
+    .filter((s): s is types.Session => !!s)
+    .filter((s, idx, self) => self.findIndex((x) => x.id === s.id) === idx);
 
-  // ==================== LOADING STATE ====================
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <Loader2 className="animate-spin h-12 w-12 text-blue-600 mx-auto mb-4" />
-          <p className="text-gray-600">Loading registrations...</p>
-        </div>
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <Loader2 className="animate-spin h-12 w-12 text-blue-600" />
       </div>
     );
   }
 
-  // ==================== RENDER DASHBOARD ====================
   return (
     <div className="min-h-screen bg-gray-50 p-6">
       <div className="max-w-7xl mx-auto">
-        {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Admin Dashboard</h1>
-          <p className="text-gray-600">Manage event registrations, certificates, and ID cards</p>
-        </div>
+        <h1 className="text-3xl font-bold text-gray-900 mb-2">Admin Dashboard</h1>
+        <p className="text-gray-600 mb-6">Manage registrations, certificates, and ID cards</p>
 
-        {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
           <StatsCard title="Total Registrations" value={stats.total} icon={<Users className="w-12 h-12 text-blue-600" />} color="text-gray-900" />
           <StatsCard title="Today" value={stats.today} icon={<Calendar className="w-12 h-12 text-green-600" />} color="text-green-600" />
           <StatsCard title="This Week" value={stats.thisWeek} icon={<Building2 className="w-12 h-12 text-purple-600" />} color="text-purple-600" />
         </div>
 
-        {/* Action Bar */}
         <div className="bg-white rounded-lg shadow mb-6 p-4">
           <div className="flex flex-wrap gap-3 items-center justify-between">
             <div className="flex gap-3 flex-1 min-w-0">
               <SearchBar searchTerm={searchTerm} onSearchChange={setSearchTerm} />
               <button onClick={() => setShowFilters(!showFilters)} className="flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50">
-                <Filter className="w-4 h-4" />
-                Filters
+                <Filter className="w-4 h-4" /> Filters
               </button>
             </div>
 
-            <ActionButtons
-              selectedCount={selectedIds.size}
-              onDownloadAll={() => downloadAsXLSX(filteredRegistrations)}
-              onDownloadSelected={() => {
-                const selected = filteredRegistrations.filter((r) => selectedIds.has(r.id));
-                downloadAsXLSX(selected);
-              }}
+            <DownloadButtons
+              selectedCount={filteredRegistrations.length}
+              onDownloadXLSX={() => downloadAsXLSX(filteredRegistrations)}
               onDownloadCertsAndIDs={downloadCertificatesAndIDs}
               isDownloading={isDownloading}
             />
           </div>
 
-          {showFilters && (
-            <FiltersPanel filters={filters} onFilterChange={setFilters} uniqueSessions={uniqueSessions} onClearFilters={clearFilters} />
-          )}
+          {showFilters && <FiltersPanel filters={filters} onFilterChange={setFilters} uniqueSessions={uniqueSessions} onClearFilters={clearFilters} />}
         </div>
 
-        {/* Registrations Table */}
-        <RegistrationsTable registrations={filteredRegistrations} selectedIds={selectedIds} onToggleSelectAll={toggleSelectAll} onToggleSelect={toggleSelect} />
+        <RegistrationsTable
+          registrations={filteredRegistrations}
+          selectedIds={selectedIds}
+          onToggleSelectAll={toggleSelectAll}
+          onToggleSelect={toggleSelect}
+        />
 
-        {/* Results count */}
         <div className="mt-4 text-sm text-gray-600">
           Showing {filteredRegistrations.length} of {registrations.length} registrations
           {selectedIds.size > 0 && ` • ${selectedIds.size} selected`}

@@ -103,6 +103,7 @@ export interface RegistrationWithDetails extends Registration {
 }
 
 export interface FilterState {
+  academy: string;
   session: string;
   status: string;
   dateFrom: string;
