@@ -14,6 +14,13 @@ export interface UserProfile {
   created_at?: string;
   updated_at?: string;
 }
+export interface GenerationData {
+  userProfile: UserProfile;
+  sessionId: string;
+  registrationId?: string;          // optional for certificates
+  registrationNumber?: string;      // optional for ID cards
+  customText?: Record<string, string>; // optional overrides for template placeholders
+}
 
 export type Academy = {
   id: string

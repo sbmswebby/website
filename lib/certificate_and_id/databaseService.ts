@@ -120,7 +120,6 @@ static async getRegistrationsBySession(sessionId: string) {
     userProfileId: string,
     sessionId: string,
     downloadUrl: string,
-    publicId?: string  // Made optional since column doesn't exist
   ): Promise<void> {
     console.log("💾 [saveCertificate] Saving generated certificate to DB:", { userProfileId, sessionId });
     const { error } = await supabase.from('certificates').upsert(

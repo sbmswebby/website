@@ -41,6 +41,9 @@ export class IDCardGenerator {
 
     // Step 2: Draw QR code
     console.log('[IDCardGenerator] ⏳ Generating QR code...');
+    if (!data.registrationId) {
+      throw new Error("Registration ID is required to generate QR code");
+    }
     await this.drawQRCode(ctx, data.registrationId);
     console.log('[IDCardGenerator] ✅ QR code added successfully');
 

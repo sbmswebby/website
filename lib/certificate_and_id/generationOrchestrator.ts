@@ -65,7 +65,7 @@ export class GenerationOrchestrator {
       const canvas = await generator.generate(data);
       console.log('✅ Certificate canvas generated successfully');
 
-      const layoutId = template.id; 
+      
       console.log('☁️ Uploading certificate to Cloudinary...');
       const filename = `certificate_${template.id}_${userProfileId}_${sessionId}.jpg`;
       const url = await CloudinaryService.uploadCanvas(canvas, filename, 'certificates');
@@ -75,7 +75,7 @@ export class GenerationOrchestrator {
       console.log(`🆔 Extracted Cloudinary public_id: ${publicId}`);
 
       console.log('💾 Saving certificate details to database...');
-      await DatabaseService.saveCertificate(userProfileId, sessionId, url, publicId);
+      await DatabaseService.saveCertificate(userProfileId, sessionId, url);
       console.log('✅ Certificate record saved in database');
 
       // Download after upload

@@ -1,21 +1,15 @@
-// ==================== FILTERS PANEL COMPONENT ====================
-// A modern, intuitive filter panel using clickable filter chips,
-// sticky positioning, and responsive design with instant feedback.
-
 "use client";
+
 import React, { useEffect, useRef } from "react";
 import * as types from "@/lib/certificate_and_id/types";
 import { X, ChevronDown, ChevronUp } from "lucide-react";
 
-/**
- * Props for the FiltersPanel component
- */
 interface FiltersPanelProps {
   filters: types.FilterState;
   onFilterChange: (filters: types.FilterState) => void;
   uniqueSessions: types.Session[];
   onClearFilters: () => void;
-  uniqueAcademies?: string[]; // Optional academy filter list
+  uniqueAcademies?: string[];
 }
 
 const FiltersPanel: React.FC<FiltersPanelProps> = ({
@@ -25,55 +19,40 @@ const FiltersPanel: React.FC<FiltersPanelProps> = ({
   onClearFilters,
   uniqueAcademies = [],
 }) => {
-  // Accordion open/close state for mobile responsiveness
   const [isSessionsOpen, setIsSessionsOpen] = React.useState<boolean>(true);
   const [isAcademiesOpen, setIsAcademiesOpen] = React.useState<boolean>(true);
   const [isStatusOpen, setIsStatusOpen] = React.useState<boolean>(true);
 
-  // ✅ Fix: only auto-select latest session once, on initial mount
   const initializedRef = useRef<boolean>(false);
 
+  // ✅ Proper useEffect with correct dependencies
   useEffect(() => {
     if (!initializedRef.current && !filters.session && uniqueSessions.length > 0) {
       const latest = uniqueSessions[uniqueSessions.length - 1];
       onFilterChange({ ...filters, session: latest.id });
-      initializedRef.current = true; // Prevent re-running on future clears
+      initializedRef.current = true;
     }
-  }, [uniqueSessions]);
+  }, [filters, onFilterChange, uniqueSessions]);
 
-  /**
-   * Handles filter chip clicks for any field (session, status, academy)
-   * Clicking again on the same value resets it (toggle behavior)
-   */
-  const handleFilterClick = (
-    field: keyof types.FilterState,
-    value: string
-  ): void => {
+  const handleFilterClick = (field: keyof types.FilterState, value: string): void => {
     onFilterChange({
       ...filters,
       [field]: filters[field] === value ? "" : value,
     });
   };
 
-  /**
-   * Removes a specific filter when the user clicks its tag's "X"
-   */
   const handleRemoveTag = (field: keyof types.FilterState): void => {
     onFilterChange({ ...filters, [field]: "" });
   };
 
   return (
     <div className="sticky top-0 z-10 bg-white border-b border-gray-200 shadow-sm p-10 m-10 rounded-lg">
-      {/* ==================== ACTIVE FILTER SUMMARY ==================== */}
       {(filters.session || filters.status || filters.academy) && (
         <div className="flex flex-wrap gap-2 mb-3">
           {filters.session && (
             <div className="flex items-center bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-sm">
               Session:&nbsp;
-              {
-                uniqueSessions.find((s) => s.id === filters.session)?.name ??
-                filters.session
-              }
+              {uniqueSessions.find((s) => s.id === filters.session)?.name ?? filters.session}
               <X
                 className="ml-2 w-3 h-3 cursor-pointer hover:text-blue-900"
                 onClick={() => handleRemoveTag("session")}
@@ -103,44 +82,33 @@ const FiltersPanel: React.FC<FiltersPanelProps> = ({
         </div>
       )}
 
-      {/* ==================== FILTER SECTIONS ==================== */}
+      {/* Filter sections */}
       <div className="space-y-4">
-        {/* -------- Session Filter Section -------- */}
+        {/* Sessions */}
         <div className="border rounded-lg p-3">
           <button
             className="w-full flex justify-between items-center text-gray-700 font-medium mb-2"
             onClick={() => setIsSessionsOpen(!isSessionsOpen)}
           >
             <span>Sessions</span>
-            {isSessionsOpen ? (
-              <ChevronUp className="w-4 h-4" />
-            ) : (
-              <ChevronDown className="w-4 h-4" />
-            )}
+            {isSessionsOpen ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
           </button>
 
           {isSessionsOpen && (
             <div className="flex flex-wrap gap-2">
-              {/* "All" Button */}
               <button
                 className={`px-3 py-1 rounded-full border ${
-                  filters.session === ""
-                    ? "bg-blue-600 text-white"
-                    : "bg-gray-100 hover:bg-gray-200"
+                  filters.session === "" ? "bg-blue-600 text-white" : "bg-gray-100 hover:bg-gray-200"
                 }`}
                 onClick={() => handleFilterClick("session", "")}
               >
                 All
               </button>
-
-              {/* Dynamic session buttons */}
               {uniqueSessions.map((session) => (
                 <button
                   key={session.id}
                   className={`px-3 py-1 rounded-full border text-sm ${
-                    filters.session === session.id
-                      ? "bg-blue-600 text-white"
-                      : "bg-gray-100 hover:bg-gray-200"
+                    filters.session === session.id ? "bg-blue-600 text-white" : "bg-gray-100 hover:bg-gray-200"
                   }`}
                   onClick={() => handleFilterClick("session", session.id)}
                 >
@@ -151,7 +119,7 @@ const FiltersPanel: React.FC<FiltersPanelProps> = ({
           )}
         </div>
 
-        {/* -------- Academy Filter Section -------- */}
+        {/* Academies */}
         {uniqueAcademies.length > 0 && (
           <div className="border rounded-lg p-3">
             <button
@@ -159,35 +127,24 @@ const FiltersPanel: React.FC<FiltersPanelProps> = ({
               onClick={() => setIsAcademiesOpen(!isAcademiesOpen)}
             >
               <span>Academies</span>
-              {isAcademiesOpen ? (
-                <ChevronUp className="w-4 h-4" />
-              ) : (
-                <ChevronDown className="w-4 h-4" />
-              )}
+              {isAcademiesOpen ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
             </button>
 
             {isAcademiesOpen && (
               <div className="flex flex-wrap gap-2">
-                {/* "All" Button */}
                 <button
                   className={`px-3 py-1 rounded-full border ${
-                    filters.academy === ""
-                      ? "bg-purple-600 text-white"
-                      : "bg-gray-100 hover:bg-gray-200"
+                    filters.academy === "" ? "bg-purple-600 text-white" : "bg-gray-100 hover:bg-gray-200"
                   }`}
                   onClick={() => handleFilterClick("academy", "")}
                 >
                   All
                 </button>
-
-                {/* Dynamic academy buttons */}
                 {uniqueAcademies.map((academy) => (
                   <button
                     key={academy}
                     className={`px-3 py-1 rounded-full border text-sm ${
-                      filters.academy === academy
-                        ? "bg-purple-600 text-white"
-                        : "bg-gray-100 hover:bg-gray-200"
+                      filters.academy === academy ? "bg-purple-600 text-white" : "bg-gray-100 hover:bg-gray-200"
                     }`}
                     onClick={() => handleFilterClick("academy", academy)}
                   >
@@ -199,51 +156,37 @@ const FiltersPanel: React.FC<FiltersPanelProps> = ({
           </div>
         )}
 
-        {/* -------- Status Filter Section -------- */}
+        {/* Status */}
         <div className="border rounded-lg p-3">
           <button
             className="w-full flex justify-between items-center text-gray-700 font-medium mb-2"
             onClick={() => setIsStatusOpen(!isStatusOpen)}
           >
             <span>Status</span>
-            {isStatusOpen ? (
-              <ChevronUp className="w-4 h-4" />
-            ) : (
-              <ChevronDown className="w-4 h-4" />
-            )}
+            {isStatusOpen ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
           </button>
 
           {isStatusOpen && (
             <div className="flex flex-wrap gap-2">
-              {/* "All" Button */}
               <button
                 className={`px-3 py-1 rounded-full border ${
-                  filters.status === ""
-                    ? "bg-green-600 text-white"
-                    : "bg-gray-100 hover:bg-gray-200"
+                  filters.status === "" ? "bg-green-600 text-white" : "bg-gray-100 hover:bg-gray-200"
                 }`}
                 onClick={() => handleFilterClick("status", "")}
               >
                 All
               </button>
-
-              {/* Status options */}
               <button
                 className={`px-3 py-1 rounded-full border text-sm ${
-                  filters.status === "registered"
-                    ? "bg-green-600 text-white"
-                    : "bg-gray-100 hover:bg-gray-200"
+                  filters.status === "registered" ? "bg-green-600 text-white" : "bg-gray-100 hover:bg-gray-200"
                 }`}
                 onClick={() => handleFilterClick("status", "registered")}
               >
                 Registered
               </button>
-
               <button
                 className={`px-3 py-1 rounded-full border text-sm ${
-                  filters.status === "cancelled"
-                    ? "bg-green-600 text-white"
-                    : "bg-gray-100 hover:bg-gray-200"
+                  filters.status === "cancelled" ? "bg-green-600 text-white" : "bg-gray-100 hover:bg-gray-200"
                 }`}
                 onClick={() => handleFilterClick("status", "cancelled")}
               >
@@ -254,7 +197,6 @@ const FiltersPanel: React.FC<FiltersPanelProps> = ({
         </div>
       </div>
 
-      {/* ==================== CLEAR ALL BUTTON ==================== */}
       <div className="mt-4 flex justify-end">
         <button
           onClick={onClearFilters}

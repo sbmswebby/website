@@ -115,9 +115,10 @@ export default function RegisterPageContent() {
     useEffect(() => {
       setIsMounted(true);
     }, []);
-
+    
     useEffect(() => {
-      const handleClickOutside = (event: MouseEvent) => {
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const handleClickOutside = (_event: MouseEvent) => {
 
       };
       document.addEventListener("mousedown", handleClickOutside);

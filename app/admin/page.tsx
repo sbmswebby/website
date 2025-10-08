@@ -1,7 +1,6 @@
-// AdminDashboard.tsx
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { Filter, Users, Calendar, Building2, Loader2, FileSpreadsheet, Download } from "lucide-react";
 import * as types from "@/lib/certificate_and_id/types";
 import FiltersPanel from "@/components/shared/admin/FilterPannel";
@@ -48,7 +47,13 @@ const AdminDashboard: React.FC = () => {
   const [loading, setLoading] = useState<boolean>(true);
   const [isDownloading, setIsDownloading] = useState<boolean>(false);
   const [searchTerm, setSearchTerm] = useState<string>("");
-  const [filters, setFilters] = useState<types.FilterState>({ session: "", status: "", dateFrom: "", dateTo: "", academy: "" });
+  const [filters, setFilters] = useState<types.FilterState>({
+    session: "",
+    status: "",
+    dateFrom: "",
+    dateTo: "",
+    academy: "",
+  });
   const [showFilters, setShowFilters] = useState<boolean>(false);
   const [stats, setStats] = useState<types.StatsData>({ total: 0, today: 0, thisWeek: 0 });
 
@@ -70,23 +75,9 @@ const AdminDashboard: React.FC = () => {
   }, []);
 
   // ==================== FILTERING ====================
-  useEffect(() => applyFilters(), [searchTerm, filters, registrations]);
-
-  const calculateStats = (regs: types.RegistrationWithDetails[]) => {
-    const now = new Date();
-    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    const weekAgo = new Date(today);
-    weekAgo.setDate(weekAgo.getDate() - 7);
-
-    setStats({
-      total: regs.length,
-      today: regs.filter((r) => new Date(r.created_at) >= today).length,
-      thisWeek: regs.filter((r) => new Date(r.created_at) >= weekAgo).length,
-    });
-  };
-
-  const applyFilters = () => {
+  const applyFilters = useCallback(() => {
     let filtered = [...registrations];
+
     if (searchTerm) {
       const term = searchTerm.toLowerCase();
       filtered = filtered.filter(
@@ -98,12 +89,31 @@ const AdminDashboard: React.FC = () => {
           r.registration_number?.toString().includes(term)
       );
     }
+
     if (filters.session) filtered = filtered.filter((r) => r.session?.id === filters.session);
     if (filters.status) filtered = filtered.filter((r) => r.status === filters.status);
     if (filters.dateFrom) filtered = filtered.filter((r) => new Date(r.created_at) >= new Date(filters.dateFrom));
     if (filters.dateTo) filtered = filtered.filter((r) => new Date(r.created_at) <= new Date(filters.dateTo));
 
     setFilteredRegistrations(filtered);
+  }, [registrations, searchTerm, filters]);
+
+  useEffect(() => {
+    applyFilters();
+  }, [applyFilters]);
+
+  // ==================== CALCULATE STATS ====================
+  const calculateStats = (regs: types.RegistrationWithDetails[]) => {
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const weekAgo = new Date(today);
+    weekAgo.setDate(weekAgo.getDate() - 7);
+
+    setStats({
+      total: regs.length,
+      today: regs.filter((r) => new Date(r.created_at) >= today).length,
+      thisWeek: regs.filter((r) => new Date(r.created_at) >= weekAgo).length,
+    });
   };
 
   // ==================== SELECT / DESELECT ====================
@@ -145,7 +155,6 @@ const AdminDashboard: React.FC = () => {
   const downloadCertificatesAndIDs = async () => {
     setIsDownloading(true);
     try {
-      // Collect file info for all filtered registrations
       const files: Array<{
         url: string;
         type: "certificate" | "id_card";
@@ -158,22 +167,20 @@ const AdminDashboard: React.FC = () => {
         const userName = r.user?.name?.replace(/[^a-zA-Z0-9]/g, "_") || "User";
         const regNumber = r.registration_number || "0";
 
-        // Add certificate
         if (r.certificate?.download_url) {
           files.push({
             url: r.certificate.download_url,
             type: "certificate",
-            academyName: academyName,
+            academyName,
             filename: `${regNumber}_${userName}_Certificate.pdf`,
           });
         }
 
-        // Add ID card
         if (r.ticket_url) {
           files.push({
             url: r.ticket_url,
             type: "id_card",
-            academyName: academyName,
+            academyName,
             filename: `${regNumber}_${userName}_IDCard.pdf`,
           });
         }
@@ -204,29 +211,32 @@ const AdminDashboard: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <Loader2 className="animate-spin h-12 w-12 text-blue-600" />
+      <div className="min-h-screen flex items-center justify-center bg-[var(--background)] text-[var(--foreground)]">
+        <Loader2 className="animate-spin h-12 w-12 text-blue-500" />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
+    <div className="min-h-screen bg-[var(--background)] text-[var(--foreground)] p-6">
       <div className="max-w-7xl mx-auto">
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">Admin Dashboard</h1>
-        <p className="text-gray-600 mb-6">Manage registrations, certificates, and ID cards</p>
+        <h1 className="text-3xl font-bold mb-2">Admin Dashboard</h1>
+        <p className="text-gray-400 mb-6">Manage registrations, certificates, and ID cards</p>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-          <StatsCard title="Total Registrations" value={stats.total} icon={<Users className="w-12 h-12 text-blue-600" />} color="text-gray-900" />
-          <StatsCard title="Today" value={stats.today} icon={<Calendar className="w-12 h-12 text-green-600" />} color="text-green-600" />
-          <StatsCard title="This Week" value={stats.thisWeek} icon={<Building2 className="w-12 h-12 text-purple-600" />} color="text-purple-600" />
+          <StatsCard title="Total Registrations" value={stats.total} icon={<Users className="w-12 h-12 text-blue-400" />} color="text-[var(--foreground)]" />
+          <StatsCard title="Today" value={stats.today} icon={<Calendar className="w-12 h-12 text-green-400" />} color="text-green-400" />
+          <StatsCard title="This Week" value={stats.thisWeek} icon={<Building2 className="w-12 h-12 text-purple-400" />} color="text-purple-400" />
         </div>
 
-        <div className="bg-white rounded-lg shadow mb-6 p-4">
+        <div className="bg-[var(--background)] rounded-lg shadow mb-6 p-4 border border-gray-700">
           <div className="flex flex-wrap gap-3 items-center justify-between">
             <div className="flex gap-3 flex-1 min-w-0">
               <SearchBar searchTerm={searchTerm} onSearchChange={setSearchTerm} />
-              <button onClick={() => setShowFilters(!showFilters)} className="flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50">
+              <button
+                onClick={() => setShowFilters(!showFilters)}
+                className="flex items-center gap-2 px-4 py-2 border border-gray-600 rounded-lg hover:bg-gray-800"
+              >
                 <Filter className="w-4 h-4" /> Filters
               </button>
             </div>
@@ -239,7 +249,9 @@ const AdminDashboard: React.FC = () => {
             />
           </div>
 
-          {showFilters && <FiltersPanel filters={filters} onFilterChange={setFilters} uniqueSessions={uniqueSessions} onClearFilters={clearFilters} />}
+          {showFilters && (
+            <FiltersPanel filters={filters} onFilterChange={setFilters} uniqueSessions={uniqueSessions} onClearFilters={clearFilters} />
+          )}
         </div>
 
         <RegistrationsTable
@@ -249,7 +261,7 @@ const AdminDashboard: React.FC = () => {
           onToggleSelect={toggleSelect}
         />
 
-        <div className="mt-4 text-sm text-gray-600">
+        <div className="mt-4 text-sm text-gray-400">
           Showing {filteredRegistrations.length} of {registrations.length} registrations
           {selectedIds.size > 0 && ` • ${selectedIds.size} selected`}
         </div>

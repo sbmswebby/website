@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState, useCallback } from "react";
 
 /**
  * BasicCard - Tailwind version with 3D tilt on hover and glow that tracks the cursor only inside the card.
@@ -13,55 +13,55 @@ const BasicCard: React.FC = () => {
   const [isHovered, setIsHovered] = useState(false);
 
   /** Handle mouse movement (only while hovered) */
-  const handleMouseMove = (event: MouseEvent): void => {
-    if (!isHovered) return;
+  const handleMouseMove = useCallback(
+    (event: MouseEvent): void => {
+      if (!isHovered) return;
 
-    const wrapper = wrapperRef.current;
-    const card = cardRef.current;
-    const glow = glowRef.current;
-    if (!wrapper || !card || !glow) return;
+      const wrapper = wrapperRef.current;
+      const card = cardRef.current;
+      const glow = glowRef.current;
+      if (!wrapper || !card || !glow) return;
 
-    const rect = wrapper.getBoundingClientRect();
-    const x = event.clientX - rect.left;
-    const y = event.clientY - rect.top;
+      const rect = wrapper.getBoundingClientRect();
+      const x = event.clientX - rect.left;
+      const y = event.clientY - rect.top;
 
-    // Clamp x/y so glow doesn't go outside
-    const clampedX = Math.min(Math.max(x, 0), rect.width);
-    const clampedY = Math.min(Math.max(y, 0), rect.height);
+      // Clamp x/y so glow doesn't go outside
+      const clampedX = Math.min(Math.max(x, 0), rect.width);
+      const clampedY = Math.min(Math.max(y, 0), rect.height);
 
-    const rotX = ((clampedY - rect.height / 2) / rect.height) * -15;
-    const rotY = ((clampedX - rect.width / 2) / rect.width) * 15;
+      const rotX = ((clampedY - rect.height / 2) / rect.height) * -15;
+      const rotY = ((clampedX - rect.width / 2) / rect.width) * 15;
 
-    // Apply tilt
-    card.style.transform = `rotateX(${rotX}deg) rotateY(${rotY}deg)`;
+      // Apply tilt
+      card.style.transform = `rotateX(${rotX}deg) rotateY(${rotY}deg)`;
 
-    // Move glow within bounds
-    glow.style.backgroundImage = `
-      radial-gradient(circle at ${clampedX}px ${clampedY}px, rgba(255,255,255,0.9) 0%, rgba(255,255,255,0.4) 10%, transparent 25%)
-    `;
-  };
+      // Move glow within bounds
+      glow.style.backgroundImage = `
+        radial-gradient(circle at ${clampedX}px ${clampedY}px, rgba(255,255,255,0.9) 0%, rgba(255,255,255,0.4) 10%, transparent 25%)
+      `;
+    },
+    [isHovered]
+  );
 
   /** Reset tilt & glow when mouse leaves */
-  const handleMouseLeave = (): void => {
+  const handleMouseLeave = useCallback((): void => {
     const card = cardRef.current;
     const glow = glowRef.current;
     if (!card || !glow) return;
 
     setIsHovered(false);
-
     card.style.transform = "rotateX(0deg) rotateY(0deg)";
     glow.style.opacity = "0"; // fade out glow
-  };
+  }, []);
 
   /** Activate hover state */
-  const handleMouseEnter = (): void => {
+  const handleMouseEnter = useCallback((): void => {
     setIsHovered(true);
 
     const glow = glowRef.current;
-    if (glow) {
-      glow.style.opacity = "1"; // fade in glow
-    }
-  };
+    if (glow) glow.style.opacity = "1"; // fade in glow
+  }, []);
 
   /** Attach mouse listeners */
   useEffect(() => {
@@ -77,21 +77,18 @@ const BasicCard: React.FC = () => {
       wrapper.removeEventListener("mouseenter", handleMouseEnter);
       wrapper.removeEventListener("mouseleave", handleMouseLeave);
     };
-  }, [isHovered]);
+  }, [handleMouseMove, handleMouseEnter, handleMouseLeave]);
 
   return (
     <div
       ref={wrapperRef}
       className="relative mx-auto my-20 flex items-center justify-center"
-      style={{
-        perspective: "1000px", // Enables 3D depth for tilt
-      }}
+      style={{ perspective: "1000px" }}
     >
       {/* === Subtle Edge Glow (Behind card) === */}
       <div
         ref={glowRef}
-        className="absolute inset-0 pointer-events-none z-0 rounded-2xl opacity-0 blur-[20px]
-        mix-blend-screen transition-opacity duration-500 ease-out"
+        className="absolute inset-0 pointer-events-none z-0 rounded-2xl opacity-0 blur-[20px] mix-blend-screen transition-opacity duration-500 ease-out"
         style={{
           backgroundImage:
             "radial-gradient(circle at 50% 50%, rgba(255,255,255,0.7) 0%, rgba(255,255,255,0.4) 10%, transparent 25%)",
@@ -105,9 +102,7 @@ const BasicCard: React.FC = () => {
         bg-[rgba(10,10,10,0.9)] border border-[rgba(255,255,255,0.25)]
         shadow-[0_10px_40px_rgba(0,0,0,0.8)] 
         backdrop-blur-2xl transform-gpu transition-transform duration-300 ease-[cubic-bezier(0.25,0.46,0.45,0.94)]"
-        style={{
-          transformStyle: "preserve-3d", // Required for 3D rotation
-        }}
+        style={{ transformStyle: "preserve-3d" }}
       >
         {/* === Animated Grain Overlay === */}
         <div
@@ -143,12 +138,7 @@ const BasicCard: React.FC = () => {
       {/* === Grainy Noise Filter === */}
       <svg width="0" height="0">
         <filter id="grainy-noise">
-          <feTurbulence
-            type="fractalNoise"
-            baseFrequency="0.8"
-            numOctaves="4"
-            stitchTiles="stitch"
-          />
+          <feTurbulence type="fractalNoise" baseFrequency="0.8" numOctaves="4" stitchTiles="stitch" />
           <feColorMatrix type="saturate" values="0" />
         </filter>
       </svg>

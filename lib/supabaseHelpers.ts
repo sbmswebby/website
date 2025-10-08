@@ -2,6 +2,7 @@
 import { supabase } from "@/lib/supabaseClient"
 import * as types from "@/lib/certificate_and_id/types"
 
+
 // ==================== USER PROFILE FUNCTIONS ====================
 
 export const getUserProfile = async () => {

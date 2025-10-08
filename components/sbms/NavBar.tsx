@@ -99,14 +99,14 @@ const Navbar = () => {
                         <div className="flex flex-col items-center mb-4">
                           <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-full flex items-center justify-center bg-gray-800">
                             <p className="text-white text-xl sm:text-3xl font-bold">
-                              {profile.full_name ? profile.full_name[0] : "U"}
+                              {profile.name ? profile.name[0] : "U"}
                             </p>
                           </div>
                           <span className="mt-2 text-base sm:text-lg font-bold text-white text-center">
-                            {profile.full_name}
+                            {profile.name}
                           </span>
                           <span className="text-xs sm:text-sm text-gray-400 text-center break-all">
-                            {profile.email}
+                            {profile.whatsapp_number}
                           </span>
                         </div>
                         <hr className="my-2 border-gray-700" />

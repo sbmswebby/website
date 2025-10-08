@@ -3,8 +3,8 @@
 import { createContext, useContext, useEffect, useState, useCallback } from 'react'
 import type { User } from '@supabase/supabase-js'
 import { supabase } from '@/lib/supabaseClient'
-import { getUserProfile, UserProfile } from '@/lib/supabaseHelpers'
-
+import { getUserProfile } from '@/lib/supabaseHelpers'
+import {UserProfile} from "@/lib/certificate_and_id/types"
 // --------------------
 // Types
 // --------------------
