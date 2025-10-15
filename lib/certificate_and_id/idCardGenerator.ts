@@ -6,9 +6,7 @@ import { IDCardDetails, GenerationData } from './types';
 import {
   loadImage,
   loadImageFromBlob,
-  drawWrappedText,
   getAlignedX,
-  replacePlaceholders,
 } from './canvasUtils';
 
 export class IDCardGenerator {
@@ -65,10 +63,10 @@ export class IDCardGenerator {
       console.log('[IDCardGenerator] ⚠️ No user photo found — skipping user photo step');
     }
 
-    // Step 5: Draw text box content
-    console.log('[IDCardGenerator] ⏳ Drawing text content...');
-    this.drawTextBox(ctx, data);
-    console.log('[IDCardGenerator] ✅ Text content drawn successfully');
+    // Step 5: Draw user information text
+    console.log('[IDCardGenerator] ⏳ Drawing user information text...');
+    this.drawUserInfoText(ctx, data);
+    console.log('[IDCardGenerator] ✅ User information text drawn successfully');
 
     console.log('[IDCardGenerator] 🟩 ID card generation complete');
     return canvas;
@@ -165,80 +163,125 @@ export class IDCardGenerator {
     }
   }
 
-  /**
-   * Draws the text box with dynamic content
+/**
+   * Draws user information text (Name, City, Profession, Organisation)
    */
-  private drawTextBox(
+/**
+   * Draws user information text (Name, City, Profession, Organisation)
+   */
+  private drawUserInfoText(
     ctx: CanvasRenderingContext2D,
     data: GenerationData
   ): void {
-    if (
-      !this.details.text_content ||
-      this.details.text_box_font_size == null ||
-      this.details.text_box_width == null ||
-      this.details.text_box_height == null
-    ) {
-      console.warn('[IDCardGenerator] ⚠️ Text box not fully configured — skipping text drawing');
+    console.log('[IDCardGenerator] 📝 ========== TEXT DRAWING START ==========');
+    console.log('[IDCardGenerator] 👤 User profile data received:', {
+      name: data.userProfile.name,
+      city: data.userProfile.city,
+      profession: data.userProfile.profession,
+      organisation_name: data.userProfile.organisation_name,
+      image_url: data.userProfile.image_url ? 'Present' : 'Missing',
+    });
+    
+    console.log('[IDCardGenerator] ⚙️ Text box raw configuration from details:', {
+      text_box_font_size: this.details.text_box_font_size,
+      text_box_font: this.details.text_box_font,
+      text_box_color: this.details.text_box_color,
+      text_box_x: this.details.text_box_x,
+      text_box_y: this.details.text_box_y,
+      text_box_width: this.details.text_box_width,
+      text_box_height: this.details.text_box_height,
+      text_box_alignment: this.details.text_box_alignment,
+      text_box_line_height: this.details.text_box_line_height,
+    });
+
+    console.log('[IDCardGenerator] 🔧 Custom text data:', data.customText);
+
+    // Build the text content from user profile
+    const textLines: string[] = [];
+    
+    if (data.userProfile.name) {
+      const line = `Name: ${data.userProfile.name}`;
+      textLines.push(line);
+      console.log('[IDCardGenerator] ✅ Added line:', line);
+    } else {
+      console.log('[IDCardGenerator] ⚠️ No name found in user profile');
+    }
+    
+    if (data.userProfile.city || data.customText?.city) {
+      const cityValue = data.customText?.city || data.userProfile.city;
+      const line = `City: ${cityValue}`;
+      textLines.push(line);
+      console.log('[IDCardGenerator] ✅ Added line:', line);
+    } else {
+      console.log('[IDCardGenerator] ⚠️ No city found in user profile or custom text');
+    }
+    
+    if (data.userProfile.profession) {
+      const line = `Profession: ${data.userProfile.profession}`;
+      textLines.push(line);
+      console.log('[IDCardGenerator] ✅ Added line:', line);
+    } else {
+      console.log('[IDCardGenerator] ⚠️ No profession found in user profile');
+    }
+    
+    if (data.userProfile.organisation_name) {
+      const line = `Organisation: ${data.userProfile.organisation_name}`;
+      textLines.push(line);
+      console.log('[IDCardGenerator] ✅ Added line:', line);
+    } else {
+      console.log('[IDCardGenerator] ⚠️ No organisation_name found in user profile');
+    }
+
+    console.log('[IDCardGenerator] 📋 Total text lines prepared:', textLines.length);
+    console.log('[IDCardGenerator] 📋 Text lines array:', textLines);
+
+    // If no text lines, skip drawing
+    if (textLines.length === 0) {
+      console.error('[IDCardGenerator] ❌ No user information available to display - SKIPPING TEXT DRAWING');
       return;
     }
 
-    console.log('[IDCardGenerator] Preparing dynamic text replacements...');
-    const replacements: Record<string, string> = {
-      name: data.userProfile.name || '',
-      whatsapp: data.userProfile.whatsapp_number || '',
-      profession: data.userProfile.profession || '',
-      organisation: data.userProfile.organisation_name || '',
-      city: data.userProfile.city || '',
-      registration_number: String(data.registrationNumber || ''),
-      ...data.customText,
-    };
+    // Use defaults if text box properties are not configured
+    const fontSize = this.details.text_box_font_size ?? 48;
+    const font = this.details.text_box_font ?? 'Arial';
+    const color = this.details.text_box_color ?? '#000000';
+    const textX = this.details.text_box_x ?? 50;
+    const textY = this.details.text_box_y ?? 50;
+    const textWidth = this.details.text_box_width ?? 200;
+    const lineHeight = fontSize * (this.details.text_box_line_height ?? 1.5);
+    const alignment = this.details.text_box_alignment ?? 'left';
 
-    const processedText = replacePlaceholders(this.details.text_content, replacements);
-    console.log('[IDCardGenerator] Processed text after replacements:', processedText);
+    console.log('[IDCardGenerator] 🎨 Final computed text styling:', {
+      fontSize: fontSize,
+      font: font,
+      color: color,
+      textX: textX,
+      textY: textY,
+      textWidth: textWidth,
+      lineHeight: lineHeight,
+      alignment: alignment,
+      fullFont: `${fontSize}px ${font}`,
+    });
 
     // Set up text styling
-    ctx.font = `${this.details.text_box_font_size}px ${this.details.text_box_font}`;
-    ctx.fillStyle = this.details.text_box_color;
+    ctx.font = `${fontSize}px ${font}`;
+    ctx.fillStyle = color;
+    console.log('[IDCardGenerator] ✅ Canvas context font set to:', ctx.font);
+    console.log('[IDCardGenerator] ✅ Canvas context fillStyle set to:', ctx.fillStyle);
 
-    const lineHeight = this.details.text_box_font_size * this.details.text_box_line_height;
+    let y = textY;
 
-    if (this.details.text_box_warp) {
-      console.log('[IDCardGenerator] Drawing wrapped text...');
-      const startX =
-        this.details.text_box_alignment === 'left'
-          ? this.details.text_box_x
-          : this.details.text_box_alignment === 'center'
-          ? this.details.text_box_x + this.details.text_box_width / 2
-          : this.details.text_box_x + this.details.text_box_width;
-
-      ctx.textAlign = this.details.text_box_alignment as CanvasTextAlign;
-
-      drawWrappedText(
-        ctx,
-        processedText,
-        startX,
-        this.details.text_box_y,
-        this.details.text_box_width,
-        lineHeight
-      );
-    } else {
-      console.log('[IDCardGenerator] Drawing non-wrapped text lines...');
-      const lines = processedText.split('\n');
-      let y = this.details.text_box_y;
-
-      for (const line of lines) {
-        const x = getAlignedX(
-          ctx,
-          line,
-          this.details.text_box_x,
-          this.details.text_box_width,
-          this.details.text_box_alignment as 'left' | 'center' | 'right'
-        );
-        ctx.fillText(line, x, y);
-        y += lineHeight;
-      }
+    // Draw each line
+    console.log('[IDCardGenerator] 🖊️ Starting to draw lines...');
+    for (let i = 0; i < textLines.length; i++) {
+      const line = textLines[i];
+      const x = getAlignedX(ctx, line, textX, textWidth, "left");
+      ctx.fillText(line, x, y);
+      console.log(`[IDCardGenerator] ✏️ Line ${i + 1}/${textLines.length}: "${line}" drawn at position (x: ${x}, y: ${y})`);
+      y += lineHeight;
     }
 
-    console.log('[IDCardGenerator] ✅ Text box drawing complete');
+    console.log('[IDCardGenerator] ✅ User information text drawing complete');
+    console.log('[IDCardGenerator] 📝 ========== TEXT DRAWING END ==========');
   }
 }

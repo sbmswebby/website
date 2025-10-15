@@ -204,23 +204,50 @@ export default function useEventRegistration(eventId: string, sessionId: string)
         }
       );
 
-      if (!result.success || !result.certificateUrl || !result.idCardUrl) {
-        throw new Error(result.error || "Failed to generate certificate and ID card");
+      // Handle the result - DON'T throw error for "Certificate skipped"
+      if (result.error) {
+        if (result.error.includes('Certificate skipped')) {
+          // This is expected when certificate template doesn't exist
+          console.warn(`ℹ️ [handleManualSubmit] ${result.error}`);
+          
+          // Return partial success with just ID card
+          if (result.idCardUrl) {
+            console.log(
+              `Guest registration successful (ID card only)!\nTicket URL: ${result.idCardUrl}`
+            );
+            
+            return {
+              idUrl: result.idCardUrl,
+              certUrl: '', // Empty string instead of throwing error
+              registrationId: finalRegistrationId,
+            };
+          }
+        } else {
+          // This is an actual error - throw it
+          console.error(`❌ [handleManualSubmit] Generation error: ${result.error}`);
+          throw new Error(result.error || "Failed to generate certificate and ID card");
+        }
       }
 
-      console.log(
-        `Guest registration successful!\nTicket URL: ${result.idCardUrl}\nCertificate URL: ${result.certificateUrl}`
-      );
+      // Success case - both certificate and ID card generated
+      if (result.success && result.certificateUrl && result.idCardUrl) {
+        console.log(
+          `Guest registration successful!\nTicket URL: ${result.idCardUrl}\nCertificate URL: ${result.certificateUrl}`
+        );
 
-      return {
-        idUrl: result.idCardUrl,
-        certUrl: result.certificateUrl,
-        registrationId: finalRegistrationId,
-      };
+        return {
+          idUrl: result.idCardUrl,
+          certUrl: result.certificateUrl,
+          registrationId: finalRegistrationId,
+        };
+      }
+
+      // Fallback - if we get here, something unexpected happened
+      throw new Error("Unexpected result from generation orchestrator");
+
     } catch (err) {
-      console.error("[handleManualSubmit]", err);
-      console.log(err instanceof Error ? err.message : "Manual registration failed.");
-      return null;
+      console.error("❌ [handleManualSubmit] Error:", err);
+      throw err; // Re-throw to be handled by the calling component
     } finally {
       setIsProcessing(false);
     }

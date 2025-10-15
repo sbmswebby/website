@@ -89,13 +89,7 @@ export default function EventDetailPage({
             />
           </div>
         )}
-        <h1 className="text-3xl font-bold mt-4">{event.name}</h1>
-        {event.description && (
-          <p className="text-gray-700 mt-2">{event.description}</p>
-        )}
-        <p className="text-gray-500 mt-1">
-          Date: {new Date(event.date).toLocaleDateString()}
-        </p>
+  
       </div>
 
       {/* Sessions */}

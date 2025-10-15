@@ -38,7 +38,7 @@ export const EventSessionCard: FC<EventSessionCardProps> = ({
           <h3 className="event-card-title">{title}</h3>
           <p className="event-card-description">{description}</p>
           <p className="event-card-meta">
-            {cost > 0 ? `₹${cost}` : 'Free'}
+            {cost > 0 ? `₹${cost}` : ' '}
           </p>
         </div>
 

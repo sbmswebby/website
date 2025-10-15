@@ -220,41 +220,77 @@ static async generateCertificatesForSession(
   /**
    * Generates both certificate and ID card
    */
-  static async generateBoth(
-    registrationId: string,
-    downloadAfter: boolean = true,
-    customText?: Record<string, string>
-  ): Promise<GenerationResult> {
-    console.log(`⚙️ [Batch] Starting combined generation for registration: ${registrationId}`);
+/**
+ * Generates both certificate and ID card
+ * If certificate generation fails (e.g., no template found),
+ * it continues with the ID card instead of throwing an error.
+ */
+static async generateBoth(
+  registrationId: string,
+  downloadAfter: boolean = true,
+  customText?: Record<string, string>
+): Promise<GenerationResult> {
+  console.log(`⚙️ [Batch] Starting combined generation for registration: ${registrationId}`);
 
+  try {
+    // Step 1: Get registration info
+    const registration = await DatabaseService.getRegistration(registrationId);
+    if (!registration) throw new Error('Registration not found');
+
+    let certificateUrl: string | undefined;
+    let idCardUrl: string | undefined;
+    let certError: string | undefined;
+
+    // Step 2: Try generating certificate first
     try {
-      const registration = await DatabaseService.getRegistration(registrationId);
-      if (!registration) throw new Error('Registration not found');
+      console.log('🎓 Attempting certificate generation...');
+      const certResult = await this.generateCertificate(
+        registration.session_id,
+        registration.user_profile_id,
+        customText,
+        downloadAfter
+      );
 
-      const [certResult, idResult] = await Promise.all([
-        this.generateCertificate(registration.session_id, registration.user_profile_id, customText, downloadAfter),
-        this.generateIDCard(registrationId, customText, downloadAfter),
-      ]);
-
-      if (!certResult.success || !idResult.success) {
-        throw new Error(certResult.error || idResult.error || 'Generation failed');
+      if (certResult.success) {
+        certificateUrl = certResult.certificateUrl;
+        console.log('✅ Certificate generated successfully.');
+      } else {
+        certError = certResult.error;
+        console.warn(`⚠️ Certificate generation failed: ${certError}`);
       }
-
-      // Combined download is handled by individual downloads
-      console.log(`🎉 [Batch] All generation processes completed successfully for ${registrationId}`);
-      return {
-        certificateUrl: certResult.certificateUrl,
-        idCardUrl: idResult.idCardUrl,
-        success: true,
-      };
-    } catch (error) {
-      console.error('❌ Batch generation failed:', error);
-      return {
-        success: false,
-        error: error instanceof Error ? error.message : 'Unknown error',
-      };
+    } catch (certErr: unknown) {
+      certError = certErr instanceof Error ? certErr.message : 'Unknown certificate generation error';
+      console.warn(`⚠️ Skipping certificate generation due to error: ${certError}`);
     }
+
+    // Step 3: Always attempt ID card generation
+    console.log('🪪 Starting ID card generation...');
+    const idResult = await this.generateIDCard(registrationId, customText, downloadAfter);
+
+    if (idResult.success) {
+      idCardUrl = idResult.idCardUrl;
+      console.log('✅ ID card generated successfully.');
+    } else {
+      throw new Error(idResult.error || 'ID card generation failed');
+    }
+
+    // Step 4: Return results
+    console.log(`🎉 [Batch] Completed generation for ${registrationId}`);
+    return {
+      certificateUrl,
+      idCardUrl,
+      success: true,
+      error: certError ? `Certificate skipped: ${certError}` : undefined,
+    };
+  } catch (error: unknown) {
+    console.error('❌ Batch generation failed:', error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Unknown error',
+    };
   }
+}
+
 
   /**
    * Bulk generates certificates for multiple users in a session

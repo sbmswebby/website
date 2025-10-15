@@ -162,7 +162,7 @@ useEffect(() => {
                 </p>
                 <div className="flex justify-between items-center">
                   <p className="text-lg font-semibold text-green-600">
-                    {eventData.cost > 0 ? `₹${eventData.cost}` : 'Free'}
+                    {eventData.cost > 0 ? `₹${eventData.cost}` : ' '}
                   </p>
                   {/* Pass tick as key to force re-render */}
                   <RegisterButton
