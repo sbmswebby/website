@@ -65,7 +65,7 @@ export default function RootLayout({
           <Navbar />
           
           {/* Main content with padding */}
-          <main className="pt-16 lg:pt-20 p-4 sm:p-6 lg:p-10">
+          <main className="pt-16 lg:pt-20 ">
             <EventPopup/>
             {children}
           </main>

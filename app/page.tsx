@@ -16,12 +16,11 @@ import Seminars from "@/components/sbms/Seminars";
 export default function HomePage() {
   return ( 
     <>
-
-    <div className="flex  flex-col p-12">
+    <div >
       <FairyCursor/>
       <LoadingScreen />
 
-      <div className="h-11"></div>  
+      
       <Hero />
       <AboutUs />
       <Competitions />

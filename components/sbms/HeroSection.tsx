@@ -5,6 +5,8 @@ import Image from "next/image"
 const Hero = () => {
   return (
     <section className="hero " id="home" >
+      <div className="h-11"></div>
+    
       {/* Background Particles */}
       <div className="hero-particles">
         <div className="particle"></div>
