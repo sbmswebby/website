@@ -1,49 +1,82 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { supabase } from '@/lib/supabaseClient';
 import { EventSessionCard } from '@/components/shared/EventSessionCard';
 
 /**
- * Matches the schema of `events` table
+ * ✅ Matches the updated `events` table schema
  */
 type Event = {
   id: string;
   name: string;
   description: string | null;
-  start_time: string;       // ✅ use start_time from schema
-  end_time: string;         // optional if you need it later
-  image_url: string | null; // ✅ matches schema
+  start_time: string;
+  end_time: string;
+  image_url: string | null;
+  location: string | null;
+  type: string | null;
 };
 
 export default function EventsPage() {
   const [events, setEvents] = useState<Event[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
-  const router = useRouter();
 
+  const router = useRouter();
+  const searchParams = useSearchParams();
+
+  // ✅ Extract query parameters from the URL
+  const locationParam = searchParams.get('location');
+  const typeParam = searchParams.get('type');
+
+  /**
+   * ✅ Fetch events from Supabase
+   *    - Filters by `location` or `type` if provided via URL query params
+   *    - Orders by start_time ascending
+   */
   useEffect(() => {
     const fetchEvents = async () => {
       setIsLoading(true);
 
-      const { data, error } = await supabase
-        .from('events')
-        .select('id, name, description, start_time, end_time, image_url')
-        .order('start_time', { ascending: true }); // ✅ fixed
+      try {
+        // Base query
+        let query = supabase
+          .from('events')
+          .select('id, name, description, start_time, end_time, image_url, location, type')
+          .order('start_time', { ascending: true });
 
-      if (error) {
-        console.error('[EventsPage] Error fetching events:', error);
-        setError('Failed to load events. Please try again.');
-      } else {
-        setEvents(data as Event[]);
+        // ✅ Apply filters dynamically
+        if (locationParam) {
+          query = query.eq('location', locationParam);
+        }
+
+        if (typeParam) {
+          query = query.eq('type', typeParam);
+        }
+
+        const { data, error: fetchError } = await query;
+
+        if (fetchError) {
+          console.error('[EventsPage] Error fetching events:', fetchError);
+          setError('Failed to load events. Please try again.');
+          return;
+        }
+
+        setEvents(data ?? []);
+      } catch (err) {
+        console.error('[EventsPage] Unexpected error:', err);
+        setError('Something went wrong while fetching events.');
+      } finally {
+        setIsLoading(false);
       }
-
-      setIsLoading(false);
     };
 
     fetchEvents();
-  }, []);
+  }, [locationParam, typeParam]);
+
+  // ================== UI Rendering ==================
 
   if (isLoading) {
     return (
@@ -63,7 +96,16 @@ export default function EventsPage() {
 
   return (
     <div className="container mx-auto p-4">
-      <h1 className="text-3xl font-bold mb-6">Upcoming Events</h1>
+      {/* ✅ Dynamic heading based on filters */}
+      <h1 className="text-3xl font-bold mb-6">
+        {locationParam || typeParam
+          ? `Events ${locationParam ? `in ${locationParam}` : ''} ${
+              typeParam ? `(${typeParam})` : ''
+            }`
+          : 'Upcoming Events'}
+      </h1>
+
+      {/* ✅ Grid of event cards */}
       <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
         {events.length > 0 ? (
           events.map((event) => {
@@ -81,10 +123,10 @@ export default function EventsPage() {
                 <EventSessionCard
                   id={event.id}
                   title={event.name}
-                  description={event.description || 'No description'}
+                  description={event.description || 'No description available.'}
                   imageUrl={safeImageUrl}
                   eventId={event.id}
-                  sessionId={''} // not needed here
+                  sessionId={''}
                   cost={0}
                   isRegistered={false}
                   paymentStatus={''}
@@ -93,7 +135,7 @@ export default function EventsPage() {
             );
           })
         ) : (
-          <p>No upcoming events found.</p>
+          <p>No events found matching your filters.</p>
         )}
       </div>
     </div>
