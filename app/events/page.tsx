@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { supabase } from '@/lib/supabaseClient';
 import { EventSessionCard } from '@/components/shared/EventSessionCard';
@@ -20,6 +20,12 @@ type Event = {
 };
 
 export default function EventsPage() {
+  <Suspense>
+    <EventsPageStuff/>
+  </Suspense>
+}
+
+export  function EventsPageStuff() {
   const [events, setEvents] = useState<Event[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
