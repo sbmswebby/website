@@ -4,153 +4,165 @@ import React from "react";
 export default function Academy() {
   return (
     <>
-      {/* Academy Section */}
-      <section className="section fade-in" id="academy">
-        <h2 className="section-title">SBMS Academy</h2>
-        <p className="section-subtitle">
-          Carefully crafted courses designed to prepare you for a successful and
-          fulfilling career in bridal makeup.
-        </p>
 
-        <div className="academy-grid">
-          <div className="course-card">
-            <div className="course-number">1</div>
-            <h4>Bridal Makeup Basics</h4>
-            <p>
-              This foundational course is perfect for beginners who want to
-              learn the essentials of bridal makeup. Covering everything from
-              skin preparation and colour theory to application techniques,
-              you`ll build a strong foundation in bridal looks with confidence.
-            </p>
-          </div>
+{/* =====================================================
+     SBMS MAKEUP ACADEMY SECTION
+===================================================== */}
+<section className="section fade-in" id="academy">
+  {/* Section Title */}
+  <h2 className="section-title">SBMS MAKEUP ACADEMY</h2>
+  <p className="section-subtitle">
+    SBMS MAKEUP ACADEMY is an institution that offers specialized training and education 
+    for aspiring <strong>Professional Makeup Artists</strong>, teaching a wide range of 
+    techniques, skills, and industry knowledge to prepare students for a successful career 
+    in the beauty industry.
+  </p>
 
-          <div className="course-card">
-            <div className="course-number">2</div>
-            <h4>Advanced Bridal Makeup Techniques</h4>
-            <p>
-              For makeup artists looking to take their skills to the next level,
-              our Advanced Bridal Makeup Techniques course delves into more
-              complex aspects of bridal makeup. You`ll explore intricate bridal
-              looks, airbrushing, and specialized techniques for different skin
-              types and tones.
-            </p>
-          </div>
+  {/* About Description */}
+  <p className="mt-4 text-center max-w-3xl mx-auto">
+    SBMS MAKEUP ACADEMY provides <strong>hands-on experience</strong> and practical training 
+    in Bridal, Fashion, and Special Effects Makeup, often including curriculum on skincare, 
+    color theory, and portfolio building. SBMS ensures that students receive the 
+    <strong>best education and industry knowledge</strong> directly from seasoned experts.
+  </p>
 
-          <div className="course-card">
-            <div className="course-number">3</div>
-            <h4>Bridal Makeup Business Essentials</h4>
-            <p>
-              Being a successful makeup artist isn`t just about applying makeup,
-              it is also about building a thriving business. Our course covers
-              marketing, client management, pricing, and the business aspects of
-              the bridal makeup industry.
-            </p>
-          </div>
+  {/* Offered Courses / Categories */}
+  <div className="academy-grid mt-10">
+    <div className="course-card">
+      <div className="course-number">1</div>
+      <h4>Professional Bridal Makeup</h4>
+      <p>
+        Master the art of flawless bridal makeup — from skin prep, colour theory, 
+        and product knowledge to real-world bridal looks and cultural variations.
+      </p>
+    </div>
 
-          <div className="course-card">
-            <div className="course-number">4</div>
-            <h4>Bridal Makeup Trends and Innovations</h4>
-            <p>
-              Bridal makeup trends are ever evolving, and staying updated is
-              crucial for your career. In this course, you`ll explore the latest
-              trends, innovations, and techniques in bridal makeup. From vintage
-              to contemporary looks.
-            </p>
-          </div>
+    <div className="course-card">
+      <div className="course-number">2</div>
+      <h4>Fashion & Editorial Makeup</h4>
+      <p>
+        Explore fashion and editorial makeup styles used in runway shows and 
+        magazine shoots. Learn how to express creativity through modern makeup design.
+      </p>
+    </div>
 
-          <div className="course-card">
-            <div className="course-number">5</div>
-            <h4>Special Effects Bridal Makeup</h4>
-            <p>
-              Take bridal makeup to the next level with our Special Effects
-              Bridal Makeup course. Ideal for artists looking to offer unique and
-              avant-garde bridal looks, this course covers fantasy makeup, theme
-              weddings, and out-of-the-box bridal styles.
-            </p>
-          </div>
+    <div className="course-card">
+      <div className="course-number">3</div>
+      <h4>Special Effects Makeup</h4>
+      <p>
+        Dive into fantasy, stage, and film makeup using prosthetics, textures, and 
+        advanced transformation techniques for creative visual effects.
+      </p>
+    </div>
 
-          <div className="course-card">
-            <div className="course-number">6</div>
-            <h4>Personalized Makeup Consultations</h4>
-            <p>
-              This course focuses on providing personalized makeup consultations
-              for brides. Learn how to understand each bride`s unique style and
-              needs, and tailor makeup to enhance their individual beauty.
-            </p>
-          </div>
+    <div className="course-card">
+      <div className="course-number">4</div>
+      <h4>Hair Styling & Care</h4>
+      <p>
+        Comprehensive training on <strong>Hair Cuts, Hair Styles, Hair Care, 
+        and Hair Treatments</strong> — ensuring students master both creative 
+        and professional techniques.
+      </p>
+    </div>
 
-          <div className="course-card">
-            <div className="course-number">7</div>
-            <h4>Bridal Makeup Masterclass</h4>
-            <p>
-              Our most comprehensive course, the Bridal Makeup Masterclass,
-              combines advanced techniques, business strategies, and in-depth
-              knowledge. Upon successful completion, you`ll receive advanced
-              certification, positioning you as a highly skilled and qualified
-              bridal makeup artist.
-            </p>
-          </div>
-        </div>
+    <div className="course-card">
+      <div className="course-number">5</div>
+      <h4>Nail Art & Extensions</h4>
+      <p>
+        Learn intricate nail art, gel techniques, and nail extensions — combining 
+        creativity with precision for stunning nail designs.
+      </p>
+    </div>
 
-        <div className="text-center mt-16">
-          <p className="section-subtitle">
-            Join our bridal Makeup Academy and discover the perfect course to
-            match your aspirations and career goals.
-          </p>
-          <a href="#contact" className="cta-button">
-            Enroll Now
-          </a>
-        </div>
-      </section>
+    <div className="course-card">
+      <div className="course-number">6</div>
+      <h4>Beauty & Traditional Arts</h4>
+      <p>
+        Covering <strong>Beauty, Saree Draping, Mehandi, Flower Making</strong> 
+        and many more creative skills that complete a professional beautician’s expertise.
+      </p>
+    </div>
+  </div>
 
-      {/* Academy Features */}
-      <section className="section slide-in-right" id="academy-features">
-        <div className="services-grid">
-          <div className="service-card">
-            <h3>Live Classes</h3>
-            <p>
-              Participate in interactive live classes with our expert
-              instructors, getting real-time feedback and personalized guidance
-              for your makeup techniques.
-            </p>
-          </div>
+  {/* Academy Branches */}
+  <section className="section fade-in" id="academy">
+    <h2 className="section-title">SBMS MAKEUP ACADEMY</h2>
+    <div className="academy-grid mt-10">
+    
 
-          <div className="service-card">
-            <h3>Rapid Courses</h3>
-            <p>
-              Fast-track your learning with our intensive rapid courses designed
-              for quick skill acquisition without compromising on quality
-              education.
-            </p>
-          </div>
+    <div className="course-card"><div className="course-number">1</div> SBMS MAKEUP ACADEMY – Habsiguda, Hyderabad</div>
+    <div className="course-card"><div className="course-number">2</div> SBMS ACADEMY – Vijayawada</div>
+    <div className="course-card"><div className="course-number">3</div> SBMS ACADEMY – Chittoor</div>
+    <div className="course-card"><div className="course-number">4</div> SBMS ACADEMY – Bangalore</div>
+    <div className="course-card"><div className="course-number">5</div> SBMS ACADEMY – Telangana</div>
+    <div className="course-card"><div className="course-number">6</div> SBMS ACADEMY – Andhra Pradesh</div>
 
-          <div className="service-card">
-            <h3>Live Demos</h3>
-            <p>
-              Watch master artists demonstrate advanced techniques in real-time,
-              providing you with insights into professional-level makeup
-              application.
-            </p>
-          </div>
 
-          <div className="service-card">
-            <h3>Live Stages & Fashion Shows</h3>
-            <p>
-              Get hands-on experience working on live stages and fashion shows,
-              building your portfolio with real-world professional experience.
-            </p>
-          </div>
+    <p className="section-subtitle col-span-2 mt-6">
+      Join <strong>SBMS MAKEUP ACADEMY</strong> and discover the perfect course to 
+      match your passion and career goals.
+    </p>
+    <a href="#contact" className="cta-button col-span-2">
+      Enroll Now
+    </a>
+    </div>
 
-          <div className="service-card">
-            <h3>Industry Expert Sessions</h3>
-            <p>
-              Interact with leading industry professionals who share their
-              expertise, insights, and career guidance to help shape your
-              success in the beauty industry.
-            </p>
-          </div>
-        </div>
-      </section>
+  </section>
+</section>
+
+{/* =====================================================
+     SBMS ACADEMY FEATURES SECTION
+===================================================== */}
+<section className="section slide-in-right" id="academy-features">
+  <h2 className="section-title">Why Choose SBMS?</h2>
+  <p className="section-subtitle">
+    We bring real-world industry exposure, expert mentorship, and advanced hands-on training 
+    to every aspiring artist.
+  </p>
+
+  {/* Features Grid */}
+  <div className="services-grid">
+    <div className="service-card">
+      <h3>Live Classes</h3>
+      <p>
+        Participate in interactive live sessions with our expert trainers and receive 
+        personalized feedback to improve your artistry.
+      </p>
+    </div>
+
+    <div className="service-card">
+      <h3>Rapid & Intensive Courses</h3>
+      <p>
+        Designed for fast learners, our rapid courses help you gain professional 
+        skills quickly while maintaining the highest quality standards.
+      </p>
+    </div>
+
+    <div className="service-card">
+      <h3>Hands-On Demos</h3>
+      <p>
+        Watch live demonstrations by industry professionals, learning practical 
+        application methods and product handling techniques.
+      </p>
+    </div>
+
+    <div className="service-card">
+      <h3>Fashion Shows & Live Stages</h3>
+      <p>
+        Build your confidence and portfolio by working backstage in real fashion 
+        shows, competitions, and photo shoots.
+      </p>
+    </div>
+
+    <div className="service-card">
+      <h3>Sessions with Industry Experts</h3>
+      <p>
+        Learn directly from established makeup artists and beauty professionals 
+        who bring their insider knowledge and success tips to you.
+      </p>
+    </div>
+  </div>
+</section>
     </>
   );
 }
