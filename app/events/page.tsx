@@ -20,12 +20,14 @@ type Event = {
 };
 
 export default function EventsPage() {
-  <Suspense>
-    <EventsPageStuff/>
-  </Suspense>
+  return (
+    <Suspense fallback={<div>Loading events...</div>}>
+      <EventsPageContent />
+    </Suspense>
+  );
 }
 
-export  function EventsPageStuff() {
+export  function EventsPageContent() {
   const [events, setEvents] = useState<Event[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
