@@ -1,6 +1,6 @@
 'use client';
 
-import { Suspense, useEffect, useState } from 'react';
+import { JSX, Suspense, useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { supabase } from '@/lib/supabaseClient';
 import { EventSessionCard } from '@/components/shared/EventSessionCard';
@@ -8,7 +8,7 @@ import { EventSessionCard } from '@/components/shared/EventSessionCard';
 /**
  * ✅ Matches the updated `events` table schema
  */
-type Event = {
+interface Event {
   id: string;
   name: string;
   description: string | null;
@@ -17,9 +17,13 @@ type Event = {
   image_url: string | null;
   location: string | null;
   type: string | null;
-};
+}
 
-export default function EventsPage() {
+/**
+ * ✅ Default Next.js Page component
+ * Wraps `EventsPageContent` inside a <Suspense> boundary
+ */
+export default function EventsPage(): JSX.Element {
   return (
     <Suspense fallback={<div>Loading events...</div>}>
       <EventsPageContent />
@@ -27,7 +31,10 @@ export default function EventsPage() {
   );
 }
 
-export  function EventsPageContent() {
+/**
+ * ✅ Actual page content that loads and renders events
+ */
+function EventsPageContent(): JSX.Element {
   const [events, setEvents] = useState<Event[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
@@ -45,24 +52,21 @@ export  function EventsPageContent() {
    *    - Orders by start_time ascending
    */
   useEffect(() => {
-    const fetchEvents = async () => {
+    const fetchEvents = async (): Promise<void> => {
       setIsLoading(true);
 
       try {
         // Base query
         let query = supabase
           .from('events')
-          .select('id, name, description, start_time, end_time, image_url, location, type')
+          .select(
+            'id, name, description, start_time, end_time, image_url, location, type'
+          )
           .order('start_time', { ascending: true });
 
         // ✅ Apply filters dynamically
-        if (locationParam) {
-          query = query.eq('location', locationParam);
-        }
-
-        if (typeParam) {
-          query = query.eq('type', typeParam);
-        }
+        if (locationParam) query = query.eq('location', locationParam);
+        if (typeParam) query = query.eq('type', typeParam);
 
         const { data, error: fetchError } = await query;
 
@@ -134,10 +138,10 @@ export  function EventsPageContent() {
                   description={event.description || 'No description available.'}
                   imageUrl={safeImageUrl}
                   eventId={event.id}
-                  sessionId={''}
+                  sessionId=""
                   cost={0}
                   isRegistered={false}
-                  paymentStatus={''}
+                  paymentStatus=""
                 />
               </div>
             );
