@@ -10,7 +10,7 @@ export default function Footer() {
   return (
     <footer className="bg-gray-900 text-gray-300 px-6 md:px-16 py-12">
       {/* Top Section */}
-      <div className="grid grid-cols-1 md:grid-cols-6 gap-8 mb-12">
+      <div className="grid grid-cols-1 md:grid-cols-5 gap-6 ">
         {/* Logo & Trademark */}
         <div className="flex flex-col items-center gap-4">
           <Image
@@ -54,9 +54,6 @@ export default function Footer() {
         <div>
           <h4 className="font-semibold mb-4">Contact</h4>
           <div className="flex flex-col gap-2">
-            <a href="tel:+918897955253" className="hover:text-white transition flex items-center gap-2">
-              <Phone size={18} /> +91 8897955253
-            </a>
             <a href="mailto:sbmswebby@gmail.com" className="hover:text-white transition flex items-center gap-2">
               <Mail size={18} /> sbmswebby@gmail.com
             </a>
@@ -66,6 +63,27 @@ export default function Footer() {
             <div className="flex items-center gap-2">
               <MapPin size={18} /> Hyderabad, India
             </div>
+          </div>
+        </div>
+
+        <div>
+          <h4 className="font-semibold mb-4">Phone</h4>
+          <div className="flex flex-col gap-2">
+            <a href="tel:+918897955253" className="hover:text-white transition flex items-center gap-2">
+                <Phone size={18} /> +91 8897955253
+            </a>
+            <a href="tel:+918897955253" className="hover:text-white transition flex items-center gap-2">
+                <Phone size={18} /> +91 7204531214
+            </a>
+            <a href="tel:+918897955253" className="hover:text-white transition flex items-center gap-2">
+                <Phone size={18} /> +91 7337214128
+            </a>
+            <a href="tel:+918897955253" className="hover:text-white transition flex items-center gap-2">
+                <Phone size={18} /> +91 6361030769
+            </a>
+            <a href="tel:+918897955253" className="hover:text-white transition flex items-center gap-2">
+                <Phone size={18} /> +91 7995514547
+            </a>
           </div>
         </div>
 
@@ -86,7 +104,7 @@ export default function Footer() {
         </div>
 
         {/* Google Map */}
-        <div className="flex flex-col col-span-2 h-48 rounded-lg overflow-hidden border border-white/20">
+        <div className="flex flex-col col-span-5 h-48 rounded-lg overflow-hidden border border-white/20">
             <iframe
             src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3806.921083441193!2d78.54100287516552!3d17.415574483476405!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3bcb998e2623063f%3A0xe3f1464785e4ea45!2sSBMS!5e0!3m2!1sen!2sin!4v1756804469286!5m2!1sen!2sin"
             width="100%"
