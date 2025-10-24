@@ -50,7 +50,7 @@ export default function EventDetailPage({
       try {
         const { data, error } = await supabase
           .from("events")
-          .select("*, sessions(*)")
+          .select("*, sessions:sessions!sessions_event_id_fkey(*)")
           .eq("id", id)
           .single();
 
