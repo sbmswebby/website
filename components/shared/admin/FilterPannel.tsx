@@ -46,7 +46,7 @@ const FiltersPanel: React.FC<FiltersPanelProps> = ({
   };
 
   return (
-    <div className="sticky top-0 z-10 bg-white border-b border-gray-200 shadow-sm p-10 m-10 rounded-lg">
+    <div className="sticky top-0 z-10 text-gray-800 bg-white border-b border-gray-200 shadow-sm p-10 m-10 rounded-lg">
       {(filters.session || filters.status || filters.academy) && (
         <div className="flex flex-wrap gap-2 mb-3">
           {filters.session && (

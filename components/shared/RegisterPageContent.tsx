@@ -248,7 +248,7 @@ export default function RegisterPageContent() {
   return (
     <div id="signIn">
       <div className="w-full max-w-md bg-white p-6 rounded shadow">
-        <h2 className="text-2xl font-bold text-center mb-4">Manual Registration</h2>
+        <h2 className="text-2xl font-bold text-center mb-4">Registration</h2>
 
         {message && (
           <div
