@@ -41,10 +41,11 @@ export const EventSessionCard: FC<EventSessionCardProps> = ({
             {cost > 0 ? `₹${cost}` : ' '}
           </p>
         </div>
+      </div>
 
         {/* Button Section */}
-        <div className="mt-4 md:mt-0">{children}</div>
-      </div>
+        <div className="m-4">{children}</div>
+      
     </div>
   );
 };

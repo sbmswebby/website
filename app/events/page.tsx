@@ -4,6 +4,7 @@ import { JSX, Suspense, useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { supabase } from '@/lib/supabaseClient';
 import { EventSessionCard } from '@/components/shared/EventSessionCard';
+import RegisterButton from "@/components/shared/RegisterButton";
 
 /**
  * ✅ Matches the updated `events` table schema
@@ -43,7 +44,7 @@ function EventsPageContent(): JSX.Element {
   const searchParams = useSearchParams();
 
   // ✅ Extract query parameters from the URL
-  const locationParam = searchParams.get('location');
+  const locationParam = (searchParams.get('location'));
   const typeParam = searchParams.get('type');
 
   /**
@@ -65,8 +66,8 @@ function EventsPageContent(): JSX.Element {
           .order('start_time', { ascending: true });
 
         // ✅ Apply filters dynamically
-        if (locationParam) query = query.eq('location', locationParam);
-        if (typeParam) query = query.eq('type', typeParam);
+        if (locationParam) query = query.ilike('location', locationParam);
+        if (typeParam) query = query.ilike('type', typeParam);
 
         const { data, error: fetchError } = await query;
 
@@ -142,7 +143,20 @@ function EventsPageContent(): JSX.Element {
                   cost={0}
                   isRegistered={false}
                   paymentStatus=""
-                />
+                >
+                  {/* ✅ Two action buttons */}
+                  <div className="flex justify-between">
+                    <button
+                      className='register-btn'
+                      onClick={() => router.push(`/events/${event.id}`)}
+                    >
+                      View Sessions
+                    </button>
+
+                  <RegisterButton eventId={event.id} sessionId={"."} />
+
+                  </div>
+                </EventSessionCard>
               </div>
             );
           })
