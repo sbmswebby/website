@@ -128,36 +128,47 @@ function EventsPageContent(): JSX.Element {
                 : '/images/placeholder.png';
 
             return (
-              <div
-                key={event.id}
-                className="cursor-pointer"
-                onClick={() => router.push(`/events/${event.id}`)}
-              >
-                <EventSessionCard
-                  id={event.id}
-                  title={event.name}
-                  description={event.description || 'No description available.'}
-                  imageUrl={safeImageUrl}
-                  eventId={event.id}
-                  sessionId=""
-                  cost={0}
-                  isRegistered={false}
-                  paymentStatus=""
-                >
-                  {/* ✅ Two action buttons */}
-                  <div className="flex justify-between">
-                    <button
-                      className='register-btn'
-                      onClick={() => router.push(`/events/${event.id}`)}
-                    >
-                      View Sessions
-                    </button>
+<div
+  key={event.id}
+  className="cursor-pointer"
+  onClick={() => router.push(`/events/${event.id}`)} // ✅ parent click
+>
+  <EventSessionCard
+    id={event.id}
+    title={event.name}
+    description={event.description || 'No description available.'}
+    imageUrl={safeImageUrl}
+    eventId={event.id}
+    sessionId=""
+    cost={0}
+    isRegistered={false}
+    paymentStatus=""
+  >
+    {/* ✅ Buttons row inside card */}
+    <div className="flex justify-between mt-4">
+      {/* View Sessions button */}
+      <button
+        className="register-btn"
+        onClick={(e) => {
+          e.stopPropagation(); // ✅ Prevent parent onClick
+          router.push(`/events/${event.id}`);
+        }}
+      >
+        View Sessions
+      </button>
 
-                  <RegisterButton eventId={event.id} sessionId={"."} />
+      {/* Register button */}
+      <div
+        onClick={(e) => {
+          e.stopPropagation(); // ✅ Prevent parent onClick
+        }}
+      >
+        <RegisterButton eventId={event.id} sessionId="." />
+      </div>
+    </div>
+  </EventSessionCard>
+</div>
 
-                  </div>
-                </EventSessionCard>
-              </div>
             );
           })
         ) : (
