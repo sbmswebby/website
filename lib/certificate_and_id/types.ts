@@ -107,9 +107,12 @@ export interface RegistrationWithDetails extends Registration {
   event: Event | null;        // ✅ Nullable
   certificate: Certificate | null;
   transaction: Transaction | null;
+  certificate_url: string;
+  id_card_url: string;
 }
 
 export interface FilterState {
+  event: Event;
   academy: string;
   session: string;
   status: string;

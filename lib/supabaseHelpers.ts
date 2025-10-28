@@ -86,82 +86,135 @@ export const getAllRegistrations = async () => {
   return data as types.Registration[]
 }
 
-export const getAllRegistrationsWithDetails = async (): Promise<types.RegistrationWithDetails[]> => {
+export const getAllRegistrationsWithDetails = async (): Promise<
+  Array<
+    types.RegistrationWithDetails & {
+      certificate_url?: string | null;
+      id_card_url?: string | null;
+      organisation?: string | null;
+    }
+  >
+> => {
   console.log("[getAllRegistrationsWithDetails] Fetching registrations with details...");
   try {
+    // Fetch registrations
     const { data: registrations, error: regError } = await supabase
       .from("registrations")
       .select("*")
       .order("created_at", { ascending: false });
 
-    if (regError) throw regError;
-    console.log("[getAllRegistrationsWithDetails] Registrations fetched:", registrations?.length);
+    if (regError) {
+      throw regError;
+    }
 
-    const userIds = [...new Set(registrations.map(r => r.user_profile_id))];
-    const sessionIds = [...new Set(registrations.map(r => r.session_id))];
+    if (!registrations || registrations.length === 0) {
+      console.log("[getAllRegistrationsWithDetails] No registrations found");
+      return [];
+    }
+
+    console.log("[getAllRegistrationsWithDetails] Registrations fetched:", registrations.length);
+
+    // Collect IDs for batch fetches
+    const userIds = Array.from(new Set(registrations.map((r) => r.user_profile_id)));
+    const sessionIds = Array.from(new Set(registrations.map((r) => r.session_id)));
     const transactionIds = registrations
-      .map(r => r.transaction_id)
-      .filter(id => id !== null) as string[];
+      .map((r) => r.transaction_id)
+      .filter((id): id is string => id !== null);
 
     console.log("[getAllRegistrationsWithDetails] userIds:", userIds);
     console.log("[getAllRegistrationsWithDetails] sessionIds:", sessionIds);
     console.log("[getAllRegistrationsWithDetails] transactionIds:", transactionIds);
 
+    // Fetch related rows in parallel (typed)
     const [
-      { data: users },
-      { data: sessions },
-      { data: certificates },
-      { data: transactions }
+      { data: users, error: usersError },
+      { data: sessions, error: sessionsError },
+      { data: certificates, error: certificatesError },
+      { data: transactions, error: transactionsError },
     ] = await Promise.all([
       supabase.from("user_profiles").select("*").in("id", userIds),
       supabase.from("sessions").select("*").in("id", sessionIds),
       supabase.from("certificates").select("*").in("session_id", sessionIds),
       transactionIds.length > 0
         ? supabase.from("transactions").select("*").in("id", transactionIds)
-        : Promise.resolve({ data: [] })
+        : Promise.resolve({ data: [] as types.Transaction[], error: null }),
     ]);
 
-    console.log("[getAllRegistrationsWithDetails] Users:", users?.length);
-    console.log("[getAllRegistrationsWithDetails] Sessions:", sessions?.length);
-    console.log("[getAllRegistrationsWithDetails] Certificates:", certificates?.length);
-    console.log("[getAllRegistrationsWithDetails] Transactions:", transactions?.length);
+    if (usersError) throw usersError;
+    if (sessionsError) throw sessionsError;
+    if (certificatesError) throw certificatesError;
+    if (transactionsError) throw transactionsError;
 
-    const eventIds = [...new Set(sessions?.map(s => s.event_id) || [])];
-    const { data: events } = await supabase
+    console.log("[getAllRegistrationsWithDetails] Users:", users?.length ?? 0);
+    console.log("[getAllRegistrationsWithDetails] Sessions:", sessions?.length ?? 0);
+    console.log("[getAllRegistrationsWithDetails] Certificates:", certificates?.length ?? 0);
+    console.log("[getAllRegistrationsWithDetails] Transactions:", transactions?.length ?? 0);
+
+    // Fetch events corresponding to sessions
+    const eventIds = Array.from(new Set((sessions || []).map((s) => s.event_id)));
+    const { data: events, error: eventsError } = await supabase
       .from("events")
       .select("*")
       .in("id", eventIds);
-    console.log("[getAllRegistrationsWithDetails] Events:", events?.length);
 
-    const userMap = new Map(users?.map(u => [u.id, u]) || []);
-    const sessionMap = new Map(sessions?.map(s => [s.id, s]) || []);
-    const eventMap = new Map(events?.map(e => [e.id, e]) || []);
-    const certMap = new Map(certificates?.map(c => [`${c.user_profile_id}-${c.session_id}`, c]) || []);
-    const transactionMap = new Map(transactions?.map(t => [t.id, t]) || []);
+    if (eventsError) throw eventsError;
+    console.log("[getAllRegistrationsWithDetails] Events:", events?.length ?? 0);
 
-    return registrations.map(reg => {
-      const user = userMap.get(reg.user_profile_id) || null;
-      const session = sessionMap.get(reg.session_id) || null;
-      const event = session ? eventMap.get(session.event_id) || null : null;
-      const certificate = certMap.get(`${reg.user_profile_id}-${reg.session_id}`) || null;
-      const transaction = reg.transaction_id ? transactionMap.get(reg.transaction_id) || null : null;
+    // Build typed lookup maps (no any)
+    const userMap = new Map<string, types.UserProfile>((users || []).map((u) => [u.id, u]));
+    const sessionMap = new Map<string, types.Session>((sessions || []).map((s) => [s.id, s]));
+    const eventMap = new Map<string, types.Event>((events || []).map((e) => [e.id, e]));
+    const transactionMap = new Map<string, types.Transaction>(((transactions as types.Transaction[]) || []).map((t) => [t.id, t]));
+    // Map certificates by composite key user_session
+    const certificateMap = new Map<string, types.Certificate>(((certificates as types.Certificate[]) || []).map((c) => [`${c.user_profile_id}-${c.session_id}`, c]));
 
-      const regWithDetails = {
+    // Assemble enriched registration objects
+    const enriched: Array<
+      types.RegistrationWithDetails & {
+        certificate_url?: string | null;
+        id_card_url?: string | null;
+        organisation?: string | null;
+      }
+    > = registrations.map((reg) => {
+      const user = userMap.get(reg.user_profile_id) ?? null;
+      const session = sessionMap.get(reg.session_id) ?? null;
+      const event = session ? eventMap.get(session.event_id) ?? null : null;
+      const transaction = reg.transaction_id ? transactionMap.get(reg.transaction_id) ?? null : null;
+      const certificate = certificateMap.get(`${reg.user_profile_id}-${reg.session_id}`) ?? null;
+
+      // certificate_url comes from certificates.download_url (nullable)
+      const certificate_url = certificate?.download_url ?? null;
+      // id_card_url is stored on the registration row as ticket_url per your schema
+      const id_card_url = reg.ticket_url ?? null;
+
+      // Build the RegistrationWithDetails-shaped object
+      const regWithDetails: types.RegistrationWithDetails & {
+        certificate_url?: string | null;
+        id_card_url?: string | null;
+        organisation?: string | null;
+      } = {
         ...reg,
         user,
         session,
         event,
-        certificate,
-        transaction,
-        // Added organisation from user profile
-        organisation: user?.organisation || null
+        certificate: certificate ?? null,
+        transaction: transaction ?? null,
+        // convenience fields used elsewhere
+        certificate_url,
+        id_card_url,
+        organisation: user?.organisation_name ?? null,
       };
 
-      console.log("[getAllRegistrationsWithDetails] Registration with details:", regWithDetails);
+      // optional per-row debug:
+      // console.debug("[getAllRegistrationsWithDetails] regWithDetails:", regWithDetails);
+
       return regWithDetails;
     });
-  } catch (error) {
-    console.error("[getAllRegistrationsWithDetails] Error fetching registrations with details:", error);
+
+    console.log("[getAllRegistrationsWithDetails] Completed. Total:", enriched.length);
+    return enriched;
+  } catch (err) {
+    console.error("[getAllRegistrationsWithDetails] Error fetching registrations with details:", err);
     return [];
   }
 };

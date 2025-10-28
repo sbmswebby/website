@@ -3,70 +3,89 @@ import JSZip from "jszip";
 import { saveAs } from "file-saver";
 
 /**
- * File info for organizing downloads
+ * Information about a downloadable file (certificate or ID card)
  */
 export interface FileInfo {
   url: string;
   type: "certificate" | "id_card";
   academyName: string;
-  filename: string; // filename should include correct image extension, e.g., .jpg
+  filename: string; // Must include correct extension (e.g., .jpg, .png)
 }
 
 /**
- * Downloads multiple files organized by type and academy
+ * Downloads multiple files and saves them as a single ZIP archive.
+ *
+ * The files are organized by type (Certificates / ID_Cards) and then by academy name.
+ *
+ * Example structure:
+ *  - Certificates/ABC Academy/user1.jpg
+ *  - ID_Cards/ABC Academy/user1.png
+ *
  * @param files Array of file info objects
- * @param zipName Name of the ZIP file to save
+ * @param zipName Name of the ZIP file to save (e.g., "Academy_Files.zip")
  */
-export async function downloadFilesAsZip(files: FileInfo[], zipName: string) {
+export async function downloadFilesAsZip(files: FileInfo[], zipName: string): Promise<void> {
   console.log("[downloadFilesAsZip] Starting download. Total files:", files.length);
-  if (files.length === 0) return;
+
+  if (!Array.isArray(files) || files.length === 0) {
+    console.warn("[downloadFilesAsZip] No files to download.");
+    return;
+  }
 
   const zip = new JSZip();
 
+  // Process each file one by one
   for (const file of files) {
-    console.log("[downloadFilesAsZip] Fetching file:", file.filename, "from URL:", file.url);
-
     try {
+      console.log("[downloadFilesAsZip] Fetching:", file.filename, "from:", file.url);
+
       const response = await fetch(file.url);
-      console.log("[downloadFilesAsZip] Response status:", response.status, response.statusText);
 
-      if (!response.ok) throw new Error(`Failed to fetch ${file.url}`);
-
-      const contentType = response.headers.get("Content-Type");
-      console.log("[downloadFilesAsZip] Content-Type:", contentType);
+      if (!response.ok) {
+        console.error(`[downloadFilesAsZip] Failed to fetch ${file.url}:`, response.statusText);
+        continue;
+      }
 
       const blob = await response.blob();
-      console.log("[downloadFilesAsZip] Blob created:", blob);
-      console.log("[downloadFilesAsZip] Blob size (bytes):", blob.size);
-      console.log("[downloadFilesAsZip] Blob type:", blob.type);
+      const contentType = response.headers.get("Content-Type") ?? "";
 
-      // Ensure file is stored as an image (filename should have correct extension)
+      console.log("[downloadFilesAsZip] File fetched:", {
+        filename: file.filename,
+        contentType,
+        size: blob.size,
+      });
+
+      // ✅ Ensure filename has correct extension based on MIME type
       let filename = file.filename;
-      if (contentType?.includes("image/jpeg") && !filename.endsWith(".jpg")) {
+      if (contentType.includes("jpeg") && !filename.endsWith(".jpg")) {
         filename = filename.replace(/\.[^/.]+$/, "") + ".jpg";
-      } else if (contentType?.includes("image/png") && !filename.endsWith(".png")) {
+      } else if (contentType.includes("png") && !filename.endsWith(".png")) {
         filename = filename.replace(/\.[^/.]+$/, "") + ".png";
       }
 
-      // Organize: Type/Academy/Filename
-      const folderPath = `${file.type === "certificate" ? "Certificates" : "ID_Cards"}/${file.academyName}`;
+      // ✅ Organize by Type → Academy → Filename
+      const folderPath =
+        file.type === "certificate"
+          ? `Certificates/${file.academyName}`
+          : `ID_Cards/${file.academyName}`;
+
       console.log("[downloadFilesAsZip] Adding to ZIP at path:", `${folderPath}/${filename}`);
-
       zip.file(`${folderPath}/${filename}`, blob);
-
     } catch (err) {
-      console.error(`[downloadFilesAsZip] Failed to fetch ${file.url}:`, err);
+      console.error(`[downloadFilesAsZip] Error fetching file ${file.url}:`, err);
     }
   }
 
   try {
     console.log("[downloadFilesAsZip] Generating ZIP...");
-    const content = await zip.generateAsync({ type: "blob" });
-    console.log("[downloadFilesAsZip] ZIP blob generated. Size:", content.size);
+    const zipBlob = await zip.generateAsync({ type: "blob" });
 
-    saveAs(content, zipName);
+    console.log("[downloadFilesAsZip] ZIP generated successfully. Size (bytes):", zipBlob.size);
+    saveAs(zipBlob, zipName);
+
     console.log("[downloadFilesAsZip] ZIP saved as:", zipName);
   } catch (err) {
     console.error("[downloadFilesAsZip] Failed to generate ZIP:", err);
   }
 }
+

@@ -1,7 +1,15 @@
 "use client";
 
 import React, { useState, useEffect, useCallback } from "react";
-import { Filter, Users, Calendar, Building2, Loader2, FileSpreadsheet, Download } from "lucide-react";
+import {
+  Filter,
+  Users,
+  Calendar,
+  Building2,
+  Loader2,
+  FileSpreadsheet,
+  Download,
+} from "lucide-react";
 import * as types from "@/lib/certificate_and_id/types";
 import FiltersPanel from "@/components/shared/admin/FilterPannel";
 import RegistrationsTable from "@/components/shared/admin/RegistrationTables";
@@ -9,7 +17,10 @@ import StatsCard from "@/components/shared/admin/StatsCard";
 import SearchBar from "@/components/shared/admin/Searchbar";
 import { getAllRegistrationsWithDetails } from "@/lib/supabaseHelpers";
 import { downloadExcel } from "@/components/shared/admin/utils/downloadExcel";
-import { downloadFilesAsZip } from "@/components/shared/admin/utils/downloadcertandid";
+import {
+  downloadFilesAsZip,
+  FileInfo,
+} from "@/components/shared/admin/utils/downloadcertandid";
 
 // ==================== DOWNLOAD BUTTONS COMPONENT ====================
 const DownloadButtons: React.FC<{
@@ -17,45 +28,85 @@ const DownloadButtons: React.FC<{
   onDownloadXLSX: () => void;
   onDownloadCertsAndIDs: () => void;
   isDownloading: boolean;
-}> = ({ selectedCount, onDownloadXLSX, onDownloadCertsAndIDs, isDownloading }) => (
+}> = ({
+  selectedCount,
+  onDownloadXLSX,
+  onDownloadCertsAndIDs,
+  isDownloading,
+}) => (
   <div className="flex gap-3">
+    {/* Excel Download */}
     <button
       onClick={onDownloadXLSX}
       disabled={isDownloading}
       className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
     >
-      {isDownloading ? <Loader2 className="w-4 h-4 animate-spin" /> : <FileSpreadsheet className="w-4 h-4" />}
+      {isDownloading ? (
+        <Loader2 className="w-4 h-4 animate-spin" />
+      ) : (
+        <FileSpreadsheet className="w-4 h-4" />
+      )}
       Download XLSX
     </button>
 
+    {/* Certificates + IDs Download */}
     <button
       onClick={onDownloadCertsAndIDs}
-      disabled={selectedCount === 0 || isDownloading}
+      disabled={isDownloading}
       className="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed"
     >
-      {isDownloading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
-      Download Certs & IDs ({selectedCount})
+      {isDownloading ? (
+        <Loader2 className="w-4 h-4 animate-spin" />
+      ) : (
+        <Download className="w-4 h-4" />
+      )}
+      Download Certs & IDs
+      {selectedCount > 0 && ` (${selectedCount})`}
     </button>
   </div>
 );
 
 // ==================== ADMIN DASHBOARD ====================
 const AdminDashboard: React.FC = () => {
-  const [registrations, setRegistrations] = useState<types.RegistrationWithDetails[]>([]);
-  const [filteredRegistrations, setFilteredRegistrations] = useState<types.RegistrationWithDetails[]>([]);
+  const [registrations, setRegistrations] = useState<
+    types.RegistrationWithDetails[]
+  >([]);
+  const [filteredRegistrations, setFilteredRegistrations] = useState<
+    types.RegistrationWithDetails[]
+  >([]);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState<boolean>(true);
   const [isDownloading, setIsDownloading] = useState<boolean>(false);
   const [searchTerm, setSearchTerm] = useState<string>("");
+
+  // ==================== FILTER STATE ====================
   const [filters, setFilters] = useState<types.FilterState>({
+    event: {
+      id: "",
+      name: "",
+      description: null,
+      slug: null,
+      image_public_id: null,
+      image_url: null,
+      venue: "",
+      start_time: "",
+      end_time: "",
+      created_at: "",
+      updated_at: "",
+    },
     session: "",
     status: "",
     dateFrom: "",
     dateTo: "",
     academy: "",
   });
+
   const [showFilters, setShowFilters] = useState<boolean>(false);
-  const [stats, setStats] = useState<types.StatsData>({ total: 0, today: 0, thisWeek: 0 });
+  const [stats, setStats] = useState<types.StatsData>({
+    total: 0,
+    today: 0,
+    thisWeek: 0,
+  });
 
   // ==================== FETCH REGISTRATIONS ====================
   useEffect(() => {
@@ -66,7 +117,7 @@ const AdminDashboard: React.FC = () => {
         setRegistrations(data);
         calculateStats(data);
       } catch (error) {
-        console.error(error);
+        console.error("Error fetching registrations:", error);
       } finally {
         setLoading(false);
       }
@@ -78,6 +129,7 @@ const AdminDashboard: React.FC = () => {
   const applyFilters = useCallback(() => {
     let filtered = [...registrations];
 
+    // Search term filter
     if (searchTerm) {
       const term = searchTerm.toLowerCase();
       filtered = filtered.filter(
@@ -90,10 +142,35 @@ const AdminDashboard: React.FC = () => {
       );
     }
 
-    if (filters.session) filtered = filtered.filter((r) => r.session?.id === filters.session);
-    if (filters.status) filtered = filtered.filter((r) => r.status === filters.status);
-    if (filters.dateFrom) filtered = filtered.filter((r) => new Date(r.created_at) >= new Date(filters.dateFrom));
-    if (filters.dateTo) filtered = filtered.filter((r) => new Date(r.created_at) <= new Date(filters.dateTo));
+    // Event filter
+    if (filters.event.id)
+      filtered = filtered.filter((r) => r.event?.id === filters.event.id);
+
+    // Session filter
+    if (filters.session)
+      filtered = filtered.filter((r) => r.session?.id === filters.session);
+
+    // Status filter
+    if (filters.status)
+      filtered = filtered.filter((r) => r.status === filters.status);
+
+    // Date range filters
+    if (filters.dateFrom)
+      filtered = filtered.filter(
+        (r) => new Date(r.created_at) >= new Date(filters.dateFrom)
+      );
+    if (filters.dateTo)
+      filtered = filtered.filter(
+        (r) => new Date(r.created_at) <= new Date(filters.dateTo)
+      );
+
+    // Academy filter
+    if (filters.academy)
+      filtered = filtered.filter(
+        (r) =>
+          r.user?.organisation_name?.toLowerCase() ===
+          filters.academy.toLowerCase()
+      );
 
     setFilteredRegistrations(filtered);
   }, [registrations, searchTerm, filters]);
@@ -103,7 +180,7 @@ const AdminDashboard: React.FC = () => {
   }, [applyFilters]);
 
   // ==================== CALCULATE STATS ====================
-  const calculateStats = (regs: types.RegistrationWithDetails[]) => {
+  const calculateStats = (regs: types.RegistrationWithDetails[]): void => {
     const now = new Date();
     const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
     const weekAgo = new Date(today);
@@ -116,99 +193,120 @@ const AdminDashboard: React.FC = () => {
     });
   };
 
-  // ==================== SELECT / DESELECT ====================
-  const toggleSelectAll = () =>
-    selectedIds.size === filteredRegistrations.length
-      ? setSelectedIds(new Set())
-      : setSelectedIds(new Set(filteredRegistrations.map((r) => r.id)));
-
-  const toggleSelect = (id: string) => {
-    const newSelected = new Set(selectedIds);
-    newSelected.has(id) ? newSelected.delete(id) : newSelected.add(id);
-    setSelectedIds(newSelected);
-  };
-
-  // ==================== DOWNLOAD XLSX ====================
-  const downloadAsXLSX = (regsToDownload: types.RegistrationWithDetails[]) => {
-    if (regsToDownload.length === 0) return;
-    setIsDownloading(true);
-    try {
-      const dataForExcel = regsToDownload.map((r) => ({
-        RegistrationID: r.registration_number,
-        Name: r.user?.name ?? "",
-        WhatsApp: r.user?.whatsapp_number ?? "",
-        Organisation: r.user?.organisation_name ?? "",
-        Session: r.session?.name ?? "",
-        Event: r.event?.name ?? "",
-        Status: r.status ?? "",
-        CreatedAt: new Date(r.created_at).toLocaleString(),
-      }));
-      downloadExcel(dataForExcel, "Registrations.xlsx");
-    } catch (error) {
-      console.error(error);
-    } finally {
-      setIsDownloading(false);
-    }
-  };
-
-  // ==================== DOWNLOAD CERTIFICATES & IDs ====================
-  const downloadCertificatesAndIDs = async () => {
-    setIsDownloading(true);
-    try {
-      const files: Array<{
-        url: string;
-        type: "certificate" | "id_card";
-        academyName: string;
-        filename: string;
-      }> = [];
-
-      filteredRegistrations.forEach((r) => {
-        const academyName = r.user?.organisation_name || "Unknown_Academy";
-        const userName = r.user?.name?.replace(/[^a-zA-Z0-9]/g, "_") || "User";
-        const regNumber = r.registration_number || "0";
-
-        if (r.certificate?.download_url) {
-          files.push({
-            url: r.certificate.download_url,
-            type: "certificate",
-            academyName,
-            filename: `${regNumber}_${userName}_Certificate.pdf`,
-          });
-        }
-
-        if (r.ticket_url) {
-          files.push({
-            url: r.ticket_url,
-            type: "id_card",
-            academyName,
-            filename: `${regNumber}_${userName}_IDCard.pdf`,
-          });
-        }
-      });
-
-      if (files.length === 0) {
-        alert("No certificates or IDs found.");
-        return;
-      }
-
-      await downloadFilesAsZip(files, "All_Certificates_and_IDs.zip");
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setIsDownloading(false);
-    }
-  };
-
-  const clearFilters = () => {
-    setFilters({ session: "", status: "", dateFrom: "", dateTo: "", academy: "" });
+  // ==================== CLEAR FILTERS ====================
+  const clearFilters = (): void => {
+    setFilters({
+      event: {
+        id: "",
+        name: "",
+        description: null,
+        slug: null,
+        image_public_id: null,
+        image_url: null,
+        venue: "",
+        start_time: "",
+        end_time: "",
+        created_at: "",
+        updated_at: "",
+      },
+      session: "",
+      status: "",
+      dateFrom: "",
+      dateTo: "",
+      academy: "",
+    });
     setSearchTerm("");
   };
 
+  // ==================== UNIQUE VALUE LISTS ====================
   const uniqueSessions = registrations
     .map((r) => r.session)
     .filter((s): s is types.Session => !!s)
-    .filter((s, idx, self) => self.findIndex((x) => x.id === s.id) === idx);
+    .filter((s, i, arr) => arr.findIndex((x) => x.id === s.id) === i);
 
+  const uniqueEvents = registrations
+    .map((r) => r.event)
+    .filter((e): e is types.Event => !!e)
+    .filter((e, i, arr) => arr.findIndex((x) => x.id === e.id) === i);
+
+  const uniqueAcademies = Array.from(
+    new Set(
+      registrations.map((r) => r.user?.organisation_name).filter(Boolean)
+    )
+  ) as string[];
+
+  // ==================== DOWNLOAD HANDLERS ====================
+
+  /** Handles downloading the Excel file (only selected or all filtered). */
+  const handleDownloadExcel = (): void => {
+    const regsToDownload =
+      selectedIds.size > 0
+        ? filteredRegistrations.filter((r) => selectedIds.has(r.id))
+        : filteredRegistrations;
+
+    if (regsToDownload.length === 0) {
+      alert("No registrations found to export.");
+      return;
+    }
+
+    downloadExcel(regsToDownload);
+  };
+
+  /** Handles downloading certificates + ID cards as ZIP (only selected or all filtered). */
+  const handleDownloadCertsAndIDs = async (): Promise<void> => {
+    setIsDownloading(true);
+    try {
+      const regsToDownload =
+        selectedIds.size > 0
+          ? filteredRegistrations.filter((r) => selectedIds.has(r.id))
+          : filteredRegistrations;
+
+      // Prepare file info
+      const files: FileInfo[] = regsToDownload.flatMap((reg) => {
+        const academyName: string =
+          reg.user?.organisation_name || "Unknown_Academy";
+        const userName: string =
+          reg.user?.name?.replace(/[^\w\s-]/g, "").trim() || "Unknown";
+
+        const list: FileInfo[] = [];
+
+        // Add certificate if exists
+        if (reg.certificate_url && reg.certificate_url.trim() !== "") {
+          list.push({
+            url: reg.certificate_url,
+            type: "certificate",
+            academyName,
+            filename: `${userName}_certificate.jpg`,
+          });
+        }
+
+        // Add ID card if exists
+        if (reg.id_card_url && reg.id_card_url.trim() !== "") {
+          list.push({
+            url: reg.id_card_url,
+            type: "id_card",
+            academyName,
+            filename: `${userName}_idcard.jpg`,
+          });
+        }
+
+        return list;
+      });
+
+      if (files.length === 0) {
+        alert("No valid certificate or ID links found for the selected users.");
+        return;
+      }
+
+      await downloadFilesAsZip(files, "Certificates_and_IDCards.zip");
+    } catch (err) {
+      console.error("Download error:", err);
+    } finally {
+      setIsDownloading(false);
+    }
+  };
+
+  // ==================== RENDER ====================
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-[var(--background)] text-[var(--foreground)]">
@@ -221,14 +319,33 @@ const AdminDashboard: React.FC = () => {
     <div className="min-h-screen bg-[var(--background)] text-[var(--foreground)] p-6">
       <div className="max-w-7xl mx-auto">
         <h1 className="text-3xl font-bold mb-2">Admin Dashboard</h1>
-        <p className="text-gray-400 mb-6">Manage registrations, certificates, and ID cards</p>
+        <p className="text-gray-400 mb-6">
+          Manage registrations, certificates, and ID cards
+        </p>
 
+        {/* STATS CARDS */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-          <StatsCard title="Total Registrations" value={stats.total} icon={<Users className="w-12 h-12 text-blue-400" />} color="text-[var(--foreground)]" />
-          <StatsCard title="Today" value={stats.today} icon={<Calendar className="w-12 h-12 text-green-400" />} color="text-green-400" />
-          <StatsCard title="This Week" value={stats.thisWeek} icon={<Building2 className="w-12 h-12 text-purple-400" />} color="text-purple-400" />
+          <StatsCard
+            title="Total Registrations"
+            value={stats.total}
+            icon={<Users className="w-12 h-12 text-blue-400" />}
+            color="text-[var(--foreground)]"
+          />
+          <StatsCard
+            title="Today"
+            value={stats.today}
+            icon={<Calendar className="w-12 h-12 text-green-400" />}
+            color="text-green-400"
+          />
+          <StatsCard
+            title="This Week"
+            value={stats.thisWeek}
+            icon={<Building2 className="w-12 h-12 text-purple-400" />}
+            color="text-purple-400"
+          />
         </div>
 
+        {/* SEARCH + FILTER + DOWNLOAD BUTTONS */}
         <div className="bg-[var(--background)] rounded-lg shadow mb-6 p-4 border border-gray-700">
           <div className="flex flex-wrap gap-3 items-center justify-between">
             <div className="flex gap-3 flex-1 min-w-0">
@@ -242,27 +359,45 @@ const AdminDashboard: React.FC = () => {
             </div>
 
             <DownloadButtons
-              selectedCount={filteredRegistrations.length}
-              onDownloadXLSX={() => downloadAsXLSX(filteredRegistrations)}
-              onDownloadCertsAndIDs={downloadCertificatesAndIDs}
+              selectedCount={selectedIds.size}
+              onDownloadXLSX={handleDownloadExcel}
+              onDownloadCertsAndIDs={handleDownloadCertsAndIDs}
               isDownloading={isDownloading}
             />
           </div>
 
           {showFilters && (
-            <FiltersPanel filters={filters} onFilterChange={setFilters} uniqueSessions={uniqueSessions} onClearFilters={clearFilters} />
+            <FiltersPanel
+              filters={filters}
+              onFilterChange={setFilters}
+              uniqueSessions={uniqueSessions}
+              uniqueEvents={uniqueEvents}
+              uniqueAcademies={uniqueAcademies}
+              onClearFilters={clearFilters}
+            />
           )}
         </div>
 
+        {/* REGISTRATIONS TABLE */}
         <RegistrationsTable
           registrations={filteredRegistrations}
           selectedIds={selectedIds}
-          onToggleSelectAll={toggleSelectAll}
-          onToggleSelect={toggleSelect}
+          onToggleSelectAll={() =>
+            selectedIds.size === filteredRegistrations.length
+              ? setSelectedIds(new Set())
+              : setSelectedIds(new Set(filteredRegistrations.map((r) => r.id)))
+          }
+          onToggleSelect={(id: string) => {
+            const newSelected = new Set(selectedIds);
+            newSelected.has(id) ? newSelected.delete(id) : newSelected.add(id);
+            setSelectedIds(newSelected);
+          }}
+          tableName="Registrations"
         />
 
         <div className="mt-4 text-sm text-gray-400">
-          Showing {filteredRegistrations.length} of {registrations.length} registrations
+          Showing {filteredRegistrations.length} of {registrations.length}{" "}
+          registrations
           {selectedIds.size > 0 && ` • ${selectedIds.size} selected`}
         </div>
       </div>
