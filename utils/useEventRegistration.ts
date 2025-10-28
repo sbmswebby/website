@@ -163,15 +163,21 @@ export default function useEventRegistration(eventId: string, sessionId: string)
         setIsRegistered(true);
         setRegistrationId(finalRegistrationId);
       } else {
-        const { data: registrationData, error: registrationError } = await supabase
-          .from("registrations")
-          .insert({
-            user_profile_id: userProfile.id,
-            session_id: form.user_selected_session_id,
-            status: "registered",
-          })
-          .select()
-          .maybeSingle();
+        const targetSessionId = form.user_selected_session_id || sessionId;
+
+if (!targetSessionId || !isValidUuid(targetSessionId)) {
+  console.log("Invalid session ID. Cannot create registration sesssion id you passed is " + targetSessionId +  ".");
+}
+
+const { data: registrationData, error: registrationError } = await supabase
+  .from("registrations")
+  .insert({
+    user_profile_id: userProfile.id,
+    session_id: targetSessionId,
+    status: "registered",
+  })
+  .select()
+  .maybeSingle();
 
         if (registrationError?.code === "23505") {
           throw new Error("Already registered for this session.");

@@ -57,7 +57,7 @@ if (data) {
     description: data.description || '',
     imageUrl,
     eventId: data.id,
-    sessionId: data.id,
+    sessionId: data.default_session_id || '',
     cost: data.cost || 0,
   });
 

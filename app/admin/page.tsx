@@ -377,23 +377,33 @@ const AdminDashboard: React.FC = () => {
             />
           )}
         </div>
+{/* REGISTRATIONS TABLE */}
+<RegistrationsTable
+  tableName="Registrations"
+  registrations={filteredRegistrations}
+  selectedIds={selectedIds}
+  // Toggle all rows: select all or clear all
+  onToggleSelectAll={() => {
+    if (selectedIds.size === filteredRegistrations.length) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(filteredRegistrations.map((r) => r.id)));
+    }
+  }}
+  // Toggle a single row
+  onToggleSelect={(id: string) => {
+    const newSelected = new Set(selectedIds);
+    if (newSelected.has(id)) {
+      newSelected.delete(id);
+    } else {
+      newSelected.add(id);
+    }
+    setSelectedIds(newSelected);
+  }}
+  // ✅ New handler for Deselect button
+  onDeselectAll={() => setSelectedIds(new Set())}
+/>
 
-        {/* REGISTRATIONS TABLE */}
-        <RegistrationsTable
-          registrations={filteredRegistrations}
-          selectedIds={selectedIds}
-          onToggleSelectAll={() =>
-            selectedIds.size === filteredRegistrations.length
-              ? setSelectedIds(new Set())
-              : setSelectedIds(new Set(filteredRegistrations.map((r) => r.id)))
-          }
-          onToggleSelect={(id: string) => {
-            const newSelected = new Set(selectedIds);
-            newSelected.has(id) ? newSelected.delete(id) : newSelected.add(id);
-            setSelectedIds(newSelected);
-          }}
-          tableName="Registrations"
-        />
 
         <div className="mt-4 text-sm text-gray-400">
           Showing {filteredRegistrations.length} of {registrations.length}{" "}
