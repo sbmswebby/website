@@ -9,9 +9,9 @@ import { DownloadService } from "@/lib/certificate_and_id/downloadService";
 import { createPortal } from "react-dom";
 import Image from "next/image";
 
-// --------------------------
+// ------------------------------------------------------
 // Type Definitions
-// --------------------------
+// ------------------------------------------------------
 interface Session {
   id: string;
   name: string;
@@ -23,14 +23,14 @@ interface DownloadItem {
   filename: string;
 }
 
-export default function RegisterPageContent() {
+export default function RegisterPageContent(): JSX.Element {
   const searchParams = useSearchParams();
-  const eventId = searchParams.get("eventId") || "";
-  const urlSessionId = searchParams.get("sessionId");
+  const eventId: string = searchParams.get("eventId") || "";
+  const urlSessionId: string | null = searchParams.get("sessionId");
 
-  // --------------------------
+  // ------------------------------------------------------
   // Form State
-  // --------------------------
+  // ------------------------------------------------------
   const [sessionId, setSessionId] = useState<string>("");
   const { handleManualSubmit, isProcessing } = useEventRegistration(eventId, sessionId);
 
@@ -46,18 +46,16 @@ export default function RegisterPageContent() {
   const [modalOpen, setModalOpen] = useState<boolean>(false);
   const [downloads, setDownloads] = useState<DownloadItem[]>([]);
 
-  // --------------------------
-  // Pre-select session if passed in URL
-  // --------------------------
+  // ------------------------------------------------------
+  // Preselect session from URL (if provided)
+  // ------------------------------------------------------
   useEffect(() => {
-    if (urlSessionId) {
-      setSessionId(urlSessionId);
-    }
+    if (urlSessionId) setSessionId(urlSessionId);
   }, [urlSessionId]);
 
-  // --------------------------
-  // Fetch sessions for the event
-  // --------------------------
+  // ------------------------------------------------------
+  // Fetch sessions for the given event
+  // ------------------------------------------------------
   useEffect(() => {
     const fetchSessions = async (): Promise<void> => {
       if (!eventId) return;
@@ -65,31 +63,45 @@ export default function RegisterPageContent() {
         .from("sessions")
         .select("id, name")
         .eq("event_id", eventId);
-      if (error) console.error("Error fetching sessions:", error.message);
-      else setSessions(data || []);
+
+      if (error) {
+        console.error("Error fetching sessions:", error.message);
+      } else {
+        setSessions(data || []);
+      }
     };
+
     fetchSessions();
   }, [eventId]);
 
-  // --------------------------
-  // Handle registration form submit
-  // --------------------------
+  // ------------------------------------------------------
+  // Form Submission Handler
+  // ------------------------------------------------------
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>): Promise<void> => {
     e.preventDefault();
     setMessage(null);
+
+    // Validate required fields (except session)
+    if (!name.trim() || !whatsapp.trim() || !parlor.trim() || !city.trim() || !photo) {
+      setMessage({
+        type: "error",
+        text: "Please fill in all required fields and upload a photo.",
+      });
+      return;
+    }
 
     try {
       const registration = await handleManualSubmit({
         name,
         whatsapp,
         organisation: parlor,
-        user_selected_session_id: sessionId,
+        user_selected_session_id: sessionId ,
         profession: profession || undefined,
         photo,
-        city: city || "",
+        city,
       });
 
-      // Generate certificate & ID
+      // Generate certificate & ID after successful registration
       if (registration?.registrationId) {
         const result = await GenerationOrchestrator.generateBoth(
           registration.registrationId,
@@ -119,15 +131,10 @@ export default function RegisterPageContent() {
           setDownloads(newDownloads);
           setModalOpen(true);
 
-          if (result.error?.includes("Certificate skipped")) {
-            console.warn(`ℹ️ ${result.error}`);
-            setMessage({
-              type: "success",
-              text: "Registered successfully! (ID card generated.)",
-            });
-          } else {
-            setMessage({ type: "success", text: "Registered successfully!" });
-          }
+          setMessage({
+            type: "success",
+            text: "Registered successfully!",
+          });
         } else {
           console.error("❌ Generation failed:", result.error);
           setMessage({
@@ -139,26 +146,19 @@ export default function RegisterPageContent() {
         setMessage({ type: "success", text: "Registered successfully!" });
       }
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : "Unknown error";
-      if (errorMessage.includes("Certificate skipped")) {
-        console.warn(`ℹ️ ${errorMessage}`);
-        setMessage({
-          type: "success",
-          text: "Registered successfully! (Certificate not available for this session)",
-        });
-      } else {
-        console.error("❌ Registration failed:", error);
-        setMessage({
-          type: "error",
-          text: `Registration failed: ${errorMessage}`,
-        });
-      }
+      const errorMessage: string =
+        error instanceof Error ? error.message : "Unknown error";
+      console.error("❌ Registration failed:", error);
+      setMessage({
+        type: "error",
+        text: `Registration failed: ${errorMessage}`,
+      });
     }
   };
 
-  // --------------------------
+  // ------------------------------------------------------
   // Handle file download
-  // --------------------------
+  // ------------------------------------------------------
   const handleDownload = async (item: DownloadItem): Promise<void> => {
     try {
       await DownloadService.downloadFile(item.url, item.filename);
@@ -167,9 +167,9 @@ export default function RegisterPageContent() {
     }
   };
 
-  // --------------------------
-  // Modal for download links
-  // --------------------------
+  // ------------------------------------------------------
+  // Download Modal
+  // ------------------------------------------------------
   const DownloadsModal = (): JSX.Element => {
     const modalRef = useRef<HTMLDivElement>(null);
     const [isMounted, setIsMounted] = useState<boolean>(false);
@@ -186,21 +186,21 @@ export default function RegisterPageContent() {
       })();
 
     return createPortal(
-      <div className="fixed inset-0 flex justify-center items-center z-[9999]">
+      <div className="fixed inset-0 flex justify-center items-center z-[9999] bg-black bg-opacity-60">
         <div
           ref={modalRef}
           className="w-[90vw] max-w-[1200px] min-h-[33vh] bg-gray-900 rounded-xl p-8 overflow-auto flex flex-col gap-6"
           style={{
             transform: isMounted ? "translateY(0)" : "translateY(-50px)",
-            transition: "transform 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55)",
+            transition: "transform 0.5s ease-in-out",
           }}
         >
-          <h2 className="text-center text-2xl font-bold mb-4">Download Your Files</h2>
+          <h2 className="text-center text-2xl font-bold mb-4 text-white">Download Your Files</h2>
           <div className="flex flex-wrap justify-center gap-6">
             {downloads.map((item) => (
               <div
                 key={item.label}
-                className="flex flex-col items-center border border-gray-600 p-4 rounded-lg bg-gray-600"
+                className="flex flex-col items-center border border-gray-600 p-4 rounded-lg bg-gray-700"
               >
                 <Image
                   src={item.url}
@@ -211,7 +211,7 @@ export default function RegisterPageContent() {
                 />
                 <button
                   onClick={() => handleDownload(item)}
-                  className="register-btn p-3"
+                  className="register-btn p-3 bg-blue-600 hover:bg-blue-700 text-white rounded"
                 >
                   Download {item.label}
                 </button>
@@ -221,7 +221,7 @@ export default function RegisterPageContent() {
           <div className="text-center mt-6">
             <button
               onClick={() => setModalOpen(false)}
-              className="register-btn"
+              className="register-btn bg-gray-500 hover:bg-gray-600 text-white px-6 py-2 rounded"
             >
               Close
             </button>
@@ -232,14 +232,15 @@ export default function RegisterPageContent() {
     );
   };
 
-  // --------------------------
-  // Render Form UI
-  // --------------------------
+  // ------------------------------------------------------
+  // Render Registration Form
+  // ------------------------------------------------------
   return (
     <div id="signIn">
       <div className="w-full max-w-md bg-white p-6 rounded shadow">
         <h2 className="text-2xl font-bold text-center mb-4">Registration</h2>
 
+        {/* Display success or error messages */}
         {message && (
           <div
             className={`p-3 mb-4 rounded ${
@@ -252,8 +253,9 @@ export default function RegisterPageContent() {
           </div>
         )}
 
+        {/* Registration Form */}
         <form onSubmit={handleSubmit} className="space-y-4">
-          {/* Name */}
+          {/* Full Name */}
           <div>
             <label className="block mb-1">Full Name *</label>
             <input
@@ -265,7 +267,7 @@ export default function RegisterPageContent() {
             />
           </div>
 
-          {/* WhatsApp */}
+          {/* WhatsApp Number */}
           <div>
             <label className="block mb-1">WhatsApp Number *</label>
             <input
@@ -277,9 +279,9 @@ export default function RegisterPageContent() {
             />
           </div>
 
-          {/* Organization */}
+          {/* Organization / Parlor */}
           <div>
-            <label className="block mb-1">Organization/Parlor/Company Name *</label>
+            <label className="block mb-1">Organization / Parlor / Company *</label>
             <input
               type="text"
               required
@@ -289,12 +291,13 @@ export default function RegisterPageContent() {
             />
           </div>
 
-          {/* Profession */}
+          {/* Profession (Optional) */}
           <div>
-            <label className="block mb-1">Profession/Job</label>
+            <label className="block mb-1">Profession / Job *</label>
             <input
               type="text"
               value={profession}
+              required
               onChange={(e) => setProfession(e.target.value)}
               className="w-full border p-2 rounded"
             />
@@ -315,23 +318,24 @@ export default function RegisterPageContent() {
           {/* Photo Upload */}
           <div>
             <label className="block mb-1">
-              Upload Photo{" "}
+              Upload Photo *{" "}
               <span className="font-black text-red-600">
-                PORTRAIT with CLEAR FACE
+                (Portrait with clear face)
               </span>
             </label>
             <input
               type="file"
               accept="image/*"
+              required
               onChange={(e) => setPhoto(e.target.files?.[0] || null)}
               className="w-full border p-2 rounded"
             />
           </div>
 
-          {/* Session Dropdown — only shown if sessionId NOT in URL */}
+          {/* Session — optional if URL param exists */}
           {!urlSessionId && (
             <div className="session-select">
-              <label className="block mb-1">Select Session *</label>
+              <label className="block mb-1">Select Session</label>
               <select
                 required
                 value={sessionId}
@@ -359,6 +363,7 @@ export default function RegisterPageContent() {
         </form>
       </div>
 
+      {/* Downloads Modal */}
       {modalOpen && <DownloadsModal />}
     </div>
   );
