@@ -14,8 +14,6 @@ import {
 } from "lucide-react";
 import * as types from "@/lib/certificate_and_id/types";
 import { deleteRegistrations } from "@/lib/supabaseHelpers";
-import { useRouter } from "next/navigation";
-
 
 /* ============================================================
    TYPES
@@ -48,7 +46,6 @@ const RegistrationsTable: React.FC<RegistrationsTableProps> = ({
   onToggleSelect,
   onDeselectAll,
 }) => {
-  const router = useRouter();
   /* ------------------------------------------------------------
      State Management
      ------------------------------------------------------------ */
@@ -116,7 +113,7 @@ const RegistrationsTable: React.FC<RegistrationsTableProps> = ({
 
     if (success) {
       console.log("Deleted")
-      router.refresh();
+      window.location.reload();
     } else {
       alert("Failed to delete registrations. Check console for details.");
     }
