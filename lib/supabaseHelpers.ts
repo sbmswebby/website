@@ -2,11 +2,7 @@
 import { supabase } from "@/lib/supabaseClient"
 import * as types from "@/lib/certificate_and_id/types"
 
-import {
-  deleteTicketFromCloudinary,
-  deleteCertificatesFromCloudinary,
-  deleteTicketAndCertificateFromCloudinary,
-} from "@/lib/cloudinaryUpload";
+
 
 // ==================== USER PROFILE FUNCTIONS ====================
 
@@ -254,119 +250,72 @@ interface RegistrationRecord {
 }
 
 export const deleteRegistrations = async (
-  registrationIds: string[]
+  registrationIds: string[]
 ): Promise<boolean> => {
-  console.log("[deleteRegistrations] Attempting to delete registrations:", registrationIds);
+  console.log("[deleteRegistrations] Attempting to delete registrations:", registrationIds);
 
-  if (!registrationIds || registrationIds.length === 0) {
-    console.warn("[deleteRegistrations] No registration IDs provided.");
-    return false;
-  }
+  // Basic validation
+  if (!Array.isArray(registrationIds) || registrationIds.length === 0) {
+    console.warn("[deleteRegistrations] No registration IDs provided.");
+    return false;
+  }
 
-  try {
-    // Step 1️⃣: Fetch registrations to get user_profile_id + session_id
-    console.log("[deleteRegistrations] Fetching related registration info...");
-    const regResponse = await supabase
-      .from("registrations")
-      .select("id, user_profile_id, session_id, ticket_url")
-      .in("id", registrationIds);
+  // Sanitize + ensure strings
+  const validIds = registrationIds
+    .filter((id) => id !== null && id !== undefined)
+    .map((id) => String(id).trim())
+    .filter((id) => id.length > 0);
 
-    if (regResponse.error) {
-      console.error("[deleteRegistrations] Failed to fetch registration info:", regResponse.error.message);
-      return false;
-    }
+  if (validIds.length === 0) {
+    console.warn("[deleteRegistrations] No valid registration IDs after sanitization.");
+    return false;
+  }
 
-    const registrations: RegistrationRecord[] = regResponse.data ?? [];
-    if (registrations.length === 0) {
-      console.warn("[deleteRegistrations] No registrations found for given IDs.");
-      return false;
-    }
+  try {
+    // Step 1️⃣: Fetch registration info
+    console.log("[deleteRegistrations] Fetching related registration info for IDs:", validIds);
+    const regResponse = await supabase
+      .from("registrations")
+      .select("id, user_profile_id, session_id, ticket_url")
+      .in("id", validIds);
 
-    // Step 2️⃣: Find related certificates (match user_profile_id + session_id)
-    console.log("[deleteRegistrations] Fetching related certificates...");
-    const certificateMatches = registrations.map(r => ({
-      user_profile_id: r.user_profile_id,
-      session_id: r.session_id,
-    }));
+    if (regResponse.error) {
+      console.error("[deleteRegistrations] Failed to fetch registration info:", regResponse.error.message);
+      return false;
+    }
 
-    const uniqueUserIds = [...new Set(certificateMatches.map(c => c.user_profile_id))];
-    const uniqueSessionIds = [...new Set(certificateMatches.map(c => c.session_id))];
+    const registrations: RegistrationRecord[] = regResponse.data ?? [];
+    if (!registrations || registrations.length === 0) {
+      console.warn("[deleteRegistrations] No registrations found for given IDs.");
+      return false;
+    }
+    console.log(`[deleteRegistrations] Found ${registrations.length} registration(s).`);
 
-    const certResponse = await supabase
-      .from("certificates")
-      .select("id, user_profile_id, session_id, download_url")
-      .in("user_profile_id", uniqueUserIds)
-      .in("session_id", uniqueSessionIds);
+ 
 
-    if (certResponse.error) {
-      console.error("[deleteRegistrations] Failed to fetch related certificates:", certResponse.error.message);
-      return false;
-    }
 
-    const certificates: CertificateRecord[] = certResponse.data ?? [];
-    console.log(`[deleteRegistrations] Found ${certificates.length} related certificates.`);
 
-    // Step 3️⃣: Delete Cloudinary images of certificates (auto-parse public_id)
-    for (const cert of certificates) {
-      if (cert.download_url) {
-        const match = cert.download_url.match(/upload\/(?:v\d+\/)?(.+)\.[a-zA-Z]+$/);
-        const publicId = match ? match[1] : null;
 
-        if (publicId) {
-          console.log(`[deleteRegistrations] Deleting certificate image: ${publicId}`);
-          await deleteCertificatesFromCloudinary([publicId]);
-        }
-      }
-    }
+    // Step 6️⃣: Delete registration records themselves
+    console.log("[deleteRegistrations] Deleting registration records:", validIds);
+    const regDeleteResponse = await supabase
+      .from("registrations")
+      .delete()
+      .in("id", validIds);
 
-    // Step 4️⃣: Delete certificate entries from Supabase
-    if (certificates.length > 0) {
-      console.log("[deleteRegistrations] Deleting certificate records...");
-      const certDeleteResponse = await supabase
-        .from("certificates")
-        .delete()
-        .in("id", certificates.map(c => c.id));
+    if (regDeleteResponse.error) {
+      console.error("[deleteRegistrations] Failed to delete registrations:", regDeleteResponse.error.message);
+      return false;
+    }
 
-      if (certDeleteResponse.error) {
-        console.error("[deleteRegistrations] Failed to delete certificates:", certDeleteResponse.error.message);
-      } else {
-        console.log(`[deleteRegistrations] Deleted ${certificates.length} certificate record(s).`);
-      }
-    }
-
-    // Step 5️⃣: Delete registration ticket Cloudinary images
-    for (const reg of registrations) {
-      if (reg.ticket_url) {
-        const match = reg.ticket_url.match(/upload\/(?:v\d+\/)?(.+)\.[a-zA-Z]+$/);
-        const publicId = match ? match[1] : null;
-
-        if (publicId) {
-          console.log(`[deleteRegistrations] Deleting ticket image: ${publicId}`);
-          await deleteCertificatesFromCloudinary([reg.ticket_url]);
-        } else {
-          console.warn(`[deleteRegistrations] Could not extract public_id from ticket URL for registration ${reg.id}`);
-        }
-      }
-    }
-
-    // Step 6️⃣: Delete registration records themselves
-    console.log("[deleteRegistrations] Deleting registration records...");
-    const regDeleteResponse = await supabase
-      .from("registrations")
-      .delete()
-      .in("id", registrationIds);
-
-    if (regDeleteResponse.error) {
-      console.error("[deleteRegistrations] Failed to delete registrations:", regDeleteResponse.error.message);
-      return false;
-    }
-
-    console.log(`[deleteRegistrations] ✅ Successfully deleted ${registrationIds.length} registration(s), certificates, and Cloudinary assets.`);
-    return true;
-  } catch (error) {
-    console.error("[deleteRegistrations] ❌ Unexpected error:", error);
-    return false;
-  }
+    console.log(
+      `[deleteRegistrations] ✅ Successfully deleted ${validIds.length} registration(s), related certificates, and Cloudinary assets.`
+    );
+    return true;
+  } catch (error) {
+    console.error("[deleteRegistrations] ❌ Unexpected error:", error);
+    return false;
+  }
 };
 
 
