@@ -107,7 +107,8 @@ export interface RegistrationWithDetails extends Registration {
   event: Event | null;        // ✅ Nullable
   certificate: Certificate | null;
   transaction: Transaction | null;
-  certificate_url: string;
+   certificate_url?: string | null; // old single URL
+  certificates?: { url: string }[] | null; // ✅ new field for multiple certs
   id_card_url: string;
 }
 

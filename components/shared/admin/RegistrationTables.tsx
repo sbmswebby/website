@@ -9,9 +9,11 @@ import {
   Trash2,
   Edit3,
   SquareMinus,
+  ExternalLink,
+  X,
 } from "lucide-react";
 import * as types from "@/lib/certificate_and_id/types";
-import { deleteRegistrations } from "@/lib/supabaseHelpers"; // ✅ Import delete helper
+import { deleteRegistrations } from "@/lib/supabaseHelpers";
 
 /* ============================================================
    TYPES
@@ -52,8 +54,12 @@ const RegistrationsTable: React.FC<RegistrationsTableProps> = ({
     direction: "asc" | "desc";
   } | null>(null);
 
-  const [showDeleteModal, setShowDeleteModal] = useState(false); // ✅ Modal visibility
-  const [isDeleting, setIsDeleting] = useState(false); // ✅ Loading state
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  // ✅ For Certificates Modal
+  const [showCertificatesModal, setShowCertificatesModal] = useState(false);
+  const [currentCertificates, setCurrentCertificates] = useState<string[]>([]);
 
   /**
    * Toggles sorting for a given column key.
@@ -106,7 +112,6 @@ const RegistrationsTable: React.FC<RegistrationsTableProps> = ({
     setShowDeleteModal(false);
 
     if (success) {
-      // Refresh UI after delete (you can replace this with a better data re-fetch)
       window.location.reload();
     } else {
       alert("Failed to delete registrations. Check console for details.");
@@ -124,17 +129,29 @@ const RegistrationsTable: React.FC<RegistrationsTableProps> = ({
       sortable: true,
       render: (reg) => (
         <div>
-          <div className="font-medium text-gray-900">{reg.user?.name || "N/A"}</div>
+          <div className="font-medium text-gray-900">
+            {reg.user?.name || "N/A"}
+          </div>
           <div className="text-xs text-gray-500">{reg.user?.city || ""}</div>
         </div>
       ),
     },
-    {
-      key: "user.organisation_name",
-      label: "Organisation",
-      sortable: true,
-      render: (reg) => reg.user?.organisation_name || "N/A",
-    },
+{
+  key: "user.organisation_name",
+  label: "Organisation",
+  sortable: true,
+  render: (reg) => (
+    <div>
+      {/* Organisation */}
+      <div>{reg.user?.organisation_name || "N/A"}</div>
+
+      {/* Profession always shown below organisation */}
+      <div className="text-xs text-gray-500 min-h-[1rem]">
+        {reg.user?.profession ? reg.user.profession : "—"}
+      </div>
+    </div>
+  ),
+},
     {
       key: "user.whatsapp_number",
       label: "WhatsApp",
@@ -152,39 +169,57 @@ const RegistrationsTable: React.FC<RegistrationsTableProps> = ({
       render: (reg) => reg.event?.name || "N/A",
     },
     {
-      key: "status",
-      label: "Status",
-      sortable: true,
-      render: (reg) => (
-        <span
-          className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-            reg.status === "registered"
-              ? "bg-green-100 text-green-800"
-              : "bg-red-100 text-red-800"
-          }`}
-        >
-          {reg.status}
-        </span>
-      ),
-    },
-    {
       key: "created_at",
       label: "Date",
       sortable: true,
       render: (reg) => new Date(reg.created_at).toLocaleDateString(),
     },
     {
-      key: "certificate.status",
-      label: "Certificate",
+      key: "id_card.url",
+      label: "ID Card",
       render: (reg) =>
-        reg.certificate ? (
-          <div className="flex items-center gap-1">
-            <Check className="w-4 h-4 text-green-600" />
-            <span className="text-xs text-gray-600">{reg.certificate.status}</span>
-          </div>
+        reg.id_card_url ? (
+          <a
+            href={reg.id_card_url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1 text-blue-600 hover:underline text-xs"
+          >
+            View ID
+          </a>
         ) : (
           <span className="text-xs text-gray-400">N/A</span>
         ),
+    },
+    /* ------------------------------------------------------------
+       ✅ New Certificates Column
+       ------------------------------------------------------------ */
+    {
+      key: "certificates",
+      label: "Certificates",
+      render: (reg) => {
+        const certs: string[] = reg.certificates?.map((c) => c.url) ?? [];
+        if (certs.length === 0) {
+          return <span className="text-xs text-gray-400">N/A</span>;
+        }
+
+        // Display comma-separated values (like a CSV preview)
+        const csvText = certs.join(", ");
+
+        return (
+          <button
+            type="button"
+            onClick={() => {
+              setCurrentCertificates(certs);
+              setShowCertificatesModal(true);
+            }}
+            className="text-blue-600 hover:underline text-xs truncate max-w-[200px] text-left"
+            title="Click to view all links"
+          >
+            {csvText}
+          </button>
+        );
+      },
     },
   ];
 
@@ -217,14 +252,10 @@ const RegistrationsTable: React.FC<RegistrationsTableProps> = ({
                 <SquareMinus className="w-4 h-4" />
               </button>
 
-              <button
-                className="p-1 hover:bg-gray-200 rounded"
-                title="Edit Selected"
-              >
+              <button className="p-1 hover:bg-gray-200 rounded" title="Edit Selected">
                 <Edit3 className="w-4 h-4 text-gray-600" />
               </button>
 
-              {/* ✅ Delete Button opens modal */}
               <button
                 onClick={() => setShowDeleteModal(true)}
                 className="p-1 hover:bg-gray-200 rounded"
@@ -240,67 +271,68 @@ const RegistrationsTable: React.FC<RegistrationsTableProps> = ({
 
         {/* --------------------- TABLE --------------------- */}
         <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead className="bg-gray-50 border-b border-gray-200">
-              <tr>
-                <th className="px-4 py-3 text-left">
-                  <input
-                    type="checkbox"
-                    checked={allSelected}
-                    onChange={onToggleSelectAll}
-                    className="w-4 h-4 text-blue-600 rounded focus:ring-2 focus:ring-blue-500"
-                  />
-                </th>
-                {columns.map((col) => (
-                  <th
-                    key={col.key}
-                    className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer select-none"
-                    onClick={() => col.sortable && handleSort(col.key)}
-                  >
-                    <div className="flex items-center gap-1">
-                      {col.label}
-                      {col.sortable &&
-                        (sortConfig?.key === col.key ? (
-                          sortConfig.direction === "asc" ? (
-                            <ArrowUp className="w-3 h-3" />
-                          ) : (
-                            <ArrowDown className="w-3 h-3" />
-                          )
-                        ) : (
-                          <ArrowUpDown className="w-3 h-3 text-gray-400" />
-                        ))}
-                    </div>
-                  </th>
-                ))}
-              </tr>
-            </thead>
-
-            <tbody className="divide-y divide-gray-200">
-              {sortedRegistrations.map((reg) => (
-                <tr key={reg.id} className="hover:bg-gray-50">
-                  <td className="px-4 py-3">
+          <div className="max-h-[70vh] overflow-y-auto">
+            <table className="w-full border-collapse">
+              <thead className="bg-gray-50 border-b border-gray-200">
+                <tr>
+                  <th className="px-4 py-3 text-left">
                     <input
                       type="checkbox"
-                      checked={selectedIds.has(reg.id)}
-                      onChange={() => onToggleSelect(reg.id)}
+                      checked={allSelected}
+                      onChange={onToggleSelectAll}
                       className="w-4 h-4 text-blue-600 rounded focus:ring-2 focus:ring-blue-500"
                     />
-                  </td>
-
+                  </th>
                   {columns.map((col) => (
-                    <td key={col.key} className="px-4 py-3 text-sm text-gray-700">
-                      {col.render
-                        ? col.render(reg)
-                        : String(getValue(reg, col.key) ?? "N/A")}
-                    </td>
+                    <th
+                      key={col.key}
+                      className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer select-none"
+                      onClick={() => col.sortable && handleSort(col.key)}
+                    >
+                      <div className="flex items-center gap-1">
+                        {col.label}
+                        {col.sortable &&
+                          (sortConfig?.key === col.key ? (
+                            sortConfig.direction === "asc" ? (
+                              <ArrowUp className="w-3 h-3" />
+                            ) : (
+                              <ArrowDown className="w-3 h-3" />
+                            )
+                          ) : (
+                            <ArrowUpDown className="w-3 h-3 text-gray-400" />
+                          ))}
+                      </div>
+                    </th>
                   ))}
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+
+              <tbody className="divide-y divide-gray-200">
+                {sortedRegistrations.map((reg) => (
+                  <tr key={reg.id} className="hover:bg-gray-50">
+                    <td className="px-4 py-3">
+                      <input
+                        type="checkbox"
+                        checked={selectedIds.has(reg.id)}
+                        onChange={() => onToggleSelect(reg.id)}
+                        className="w-4 h-4 text-blue-600 rounded focus:ring-2 focus:ring-blue-500"
+                      />
+                    </td>
+
+                    {columns.map((col) => (
+                      <td key={col.key} className="px-4 py-3 text-sm text-gray-700">
+                        {col.render
+                          ? col.render(reg)
+                          : String(getValue(reg, col.key) ?? "N/A")}
+                      </td>
+                    ))}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
 
-        {/* --------------------- EMPTY STATE --------------------- */}
         {registrations.length === 0 && (
           <div className="text-center py-12">
             <p className="text-gray-500">No registrations found</p>
@@ -317,9 +349,7 @@ const RegistrationsTable: React.FC<RegistrationsTableProps> = ({
             </h2>
             <p className="text-sm text-gray-600 mb-5">
               Are you sure you want to delete{" "}
-              <span className="font-semibold text-gray-800">
-                {selectedIds.size}
-              </span>{" "}
+              <span className="font-semibold text-gray-800">{selectedIds.size}</span>{" "}
               {selectedIds.size === 1 ? "registration" : "registrations"}?
             </p>
 
@@ -342,6 +372,42 @@ const RegistrationsTable: React.FC<RegistrationsTableProps> = ({
                 {isDeleting ? "Deleting..." : "Delete"}
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* ================== CERTIFICATES MODAL ================== */}
+      {showCertificatesModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+          <div className="bg-white rounded-lg shadow-lg p-6 w-96 max-h-[80vh] overflow-y-auto">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-lg font-semibold text-gray-800">Certificates</h2>
+              <button
+                onClick={() => setShowCertificatesModal(false)}
+                className="text-gray-600 hover:text-gray-900"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {currentCertificates.length > 0 ? (
+              <ul className="space-y-2">
+                {currentCertificates.map((link, idx) => (
+                  <li key={idx}>
+                    <a
+                      href={link}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-1 text-blue-600 hover:underline text-sm"
+                    >
+                      <ExternalLink className="w-4 h-4" /> {link}
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="text-sm text-gray-500">No certificates found.</p>
+            )}
           </div>
         </div>
       )}
