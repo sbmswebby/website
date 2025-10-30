@@ -59,7 +59,7 @@ export default function RootLayout({
       <head>
         {/* These will be automatically added by Next.js from metadata, but you can add custom ones here if needed */}
       </head>
-      <body className="min-h-screen bg-base-100 text-base-content">
+      <body className="min-h-screen   overflow-x-hidden">
         <AuthProvider>
           {/* Navbar - full width, no padding constraints */}
           <Navbar />

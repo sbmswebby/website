@@ -8,9 +8,8 @@ import { Phone, Mail, MapPin } from "lucide-react";
 
 export default function Footer() {
   return (
-    <footer className="bg-gray-900 text-gray-300 px-6 md:px-16 py-12">
-      {/* Top Section */}
-      <div className="grid grid-cols-1 md:grid-cols-5 gap-6 ">
+    <footer className="bg-gray-900 text-gray-300 px-6 md:px-16 py-12 overflow-hidden">
+      <div className="grid grid-cols-1 md:grid-cols-5 gap-6 max-w-screen-xl mx-auto w-full">
         {/* Logo & Trademark */}
         <div className="flex flex-col items-center gap-4">
           <Image
@@ -104,7 +103,7 @@ export default function Footer() {
         </div>
 
         {/* Google Map */}
-        <div className="flex flex-col col-span-5 h-48 rounded-lg overflow-hidden border border-white/20">
+        <div className="flex flex-col col-span-5 h-48 rounded-lg w-full overflow-hidden border border-white/20">
             <iframe
             src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3806.921083441193!2d78.54100287516552!3d17.415574483476405!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3bcb998e2623063f%3A0xe3f1464785e4ea45!2sSBMS!5e0!3m2!1sen!2sin!4v1756804469286!5m2!1sen!2sin"
             width="100%"
