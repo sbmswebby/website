@@ -66,6 +66,13 @@ export const downloadExcel = (
   filename = "Registrations"
 ): void => {
   if (!data || data.length === 0) return;
+  const timestamp = new Date()
+    .toISOString()
+    .replace(/[:.]/g, "-") // replace time separators
+    .replace("T", "_")
+    .split("Z")[0];
+  const finalFilename = `${filename}_${timestamp}.xlsx`;
+
 
   // Detect input type automatically
   const excelData: ExcelRow[] =
@@ -87,7 +94,7 @@ export const downloadExcel = (
 
   const link = document.createElement("a");
   link.href = url;
-  link.download = `${filename}.xlsx`;
+  link.download = `${finalFilename}.xlsx`;
   link.click();
   URL.revokeObjectURL(url);
 };
