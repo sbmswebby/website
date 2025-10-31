@@ -777,8 +777,9 @@ nav.scrolled {
   flex-wrap: wrap;
   animation: heroFadeIn 1s ease 1.4s both;
 }
-
+/* 🎨 Main CTA Button */
 .cta-button {
+  display: inline-block; /* ✅ Fix: `position: flex` is invalid; this centers properly */
   padding: 1.2rem 3rem;
   background: linear-gradient(45deg, #ff6b9d, #ffd93d);
   color: #ffffff;
@@ -788,12 +789,12 @@ nav.scrolled {
   font-size: 1.1rem;
   transition: all 0.4s ease;
   box-shadow: 0 8px 30px rgba(255, 107, 157, 0.3);
-  position: flex;
+  position: relative; /* ✅ Needed for ::before overlay effect */
   margin: auto;
   overflow: hidden;
 }
 
-
+/* ✨ Animated Shine Effect */
 .cta-button::before {
   content: "";
   position: absolute;
@@ -810,6 +811,7 @@ nav.scrolled {
   transition: left 0.5s ease;
 }
 
+/* 💫 Hover Animations */
 .cta-button:hover::before {
   left: 200%;
 }
@@ -819,6 +821,7 @@ nav.scrolled {
   box-shadow: 0 15px 40px rgba(255, 107, 157, 0.4);
 }
 
+/* 🌸 Secondary Button Variant */
 .cta-secondary {
   background: transparent;
   border: 2px solid rgba(255, 107, 157, 0.5);
@@ -828,6 +831,29 @@ nav.scrolled {
 .cta-secondary:hover {
   background: rgba(255, 107, 157, 0.1);
   border-color: #ff6b9d;
+}
+
+/* 📱 Responsive Adjustments for Small Screens */
+@media (max-width: 768px) {
+  .cta-button {
+    padding: 0.9rem 2rem; /* Smaller padding for mobile */
+    font-size: 0.95rem; /* Slightly smaller font for better balance */
+    width: 80%; /* Stretch button width on small screens */
+    max-width: 300px;
+  }
+
+  .cta-button + .cta-button {
+    margin-top: 0.8rem; /* Add spacing between stacked buttons */
+  }
+}
+
+/* 📱 Extra small devices (like < 480px width) */
+@media (max-width: 480px) {
+  .cta-button {
+    padding: 0.2rem 1.4rem;
+    font-size: 0.9rem;
+    border-radius: 40px;
+  }
 }
 
 /* Hero Animations */

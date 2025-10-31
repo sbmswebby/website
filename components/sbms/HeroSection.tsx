@@ -1,50 +1,71 @@
 "use client";
+
 import React from "react";
-import Image from "next/image"
 
-const Hero = () => {
+/**
+ * 🎥 Hero Section
+ * -------------------------------------------------
+ * - Background video always takes full screen width.
+ * - Height is responsive (auto-adjusts to aspect ratio).
+ * - CTA buttons are overlaid at the lower side of the video.
+ * - Includes gradient + optional particle overlay.
+ */
+const Hero: React.FC = () => {
   return (
-    <section className="hero " id="home" >
-      <div className="h-11"></div>
-    
-      {/* Background Particles */}
-      <div className="hero-particles">
-        <div className="particle"></div>
-        <div className="particle"></div>
-        <div className="particle"></div>
-        <div className="particle"></div>
-        <div className="particle"></div>
-      </div>
+    <section
+      id="home"
+      className="relative w-full overflow-hidden text-center text-white"
+    >
+      {/* 🎬 Background Video */}
+      <div className="relative w-full">
+        <video
+          className="w-full h-auto object-cover"
+          autoPlay
+          loop
+          muted
+          playsInline
+          preload="none"
+          poster="/images/hero_fallback.webp"
+        >
+          {/* Serve smaller file for mobile devices */}
+          <source
+            src="/videos/hero-mobile.mp4"
+            type="video/mp4"
+            media="(max-width: 768px)"
+          />
+          <source
+            src="/videos/hero-desktop.mp4"
+            type="video/mp4"
+            media="(min-width: 769px)"
+          />
+        </video>
 
-      {/* Hero Content */}
-      
-      <div className="hero-content ">
-        <div className="flex fade-in mb-10 mx-auto justify-center items-center">
-        <Image 
-          src="/images/sbms_logo.svg" 
-          alt="SBMS" 
-          width={300} 
-          height={300}
-          className="block mx-auto" />
-        </div>
-        <div className="subtitle  fade-in">
-          South India Bridal Makeup Studio
-        </div>
-        <p className="hero-description fade-in">
-          At SBMS, we create artistry that narrates your individual journey.
-          With skilful hands and meticulous attention to detail, we craft a look
-          that leaves you exuding confidence, radiance, and feeling your
-          absolute best. The moment you enter our studio or connect with us
-          online youre more than a client, youre a cherished member of our SBMS
-          family.
-        </p>
+        {/* 🖤 Gradient Overlay for Better Visibility */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent pointer-events-none" />
 
-        <div className="hero-buttons  fade-in">
-          <a href="#academy" className="cta-button">
+        {/* 🌌 Optional Particle Overlay */}
+        <div className="absolute inset-0 hero-particles pointer-events-none">
+          <div className="particle"></div>
+          <div className="particle"></div>
+          <div className="particle"></div>
+          <div className="particle"></div>
+          <div className="particle"></div>
+        </div>
+
+        {/* ✨ CTA Buttons Overlaid on Bottom */}
+        <div className="absolute bottom-10 left-1/2 -translate-x-1/2 z-20 flex flex-row sm:flex-row gap-4 justify-center items-center">
+          <a
+            href="#academy"
+            className="cta-button px-6 py-3 rounded-full"
+          >
             Explore Academy
           </a>
-          <a href="#contact" className="cta-button cta-secondary">
-            Book Consultation
+          <p></p>
+          <a
+            href="#contact"
+            className=" cta-button px-6 py-3 rounded-full border"
+          >
+            Get in Touch
           </a>
         </div>
       </div>
