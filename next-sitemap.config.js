@@ -4,11 +4,19 @@ module.exports = {
   generateRobotsTxt: true,
   robotsTxtOptions: {
     policies: [
-      { userAgent: '*', allow: '/' }, // allow main site
-      { userAgent: '*', disallow: ['/api/*', '/admin', '/login', '/signup', '/reset-password', '/profile'] }, // block sensitive pages
+      { userAgent: '*', allow: '/' }, // Allow all main pages
+      {
+        userAgent: '*',
+        disallow: [
+          '/api/*',
+          '/admin',
+          '/login',
+          '/signup',
+          '/reset-password',
+          '/profile',
+        ], // Block sensitive routes
+      },
     ],
-    additionalSitemaps: [
-      'https://sbmsacademy.in/sitemap.xml',
-    ],
+    // ❌ Remove 'additionalSitemaps' if it points to your own main sitemap
   },
 };
