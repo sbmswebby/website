@@ -24,7 +24,7 @@ export default function HomePage() {
       <Hero />
       <AboutUs />
       <Competitions />
-      <Seminars />
+      <Seminars /> 
       <Academy />
       <Events /> 
       <Awards />
