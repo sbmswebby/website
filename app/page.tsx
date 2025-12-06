@@ -14,7 +14,7 @@ import Seminars from "@/components/sbms/Seminars";
 
 
 export default function HomePage() {
-  return (  
+  return ( 
     <>
     <div >
       <FairyCursor/>
@@ -24,7 +24,7 @@ export default function HomePage() {
       <Hero />
       <AboutUs />
       <Competitions />
-      <Seminars /> 
+      <Seminars />
       <Academy />
       <Events /> 
       <Awards />

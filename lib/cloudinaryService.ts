@@ -77,4 +77,6 @@ export class CloudinaryService {
     console.log('[CloudinaryService] ✅ Upload successful, returned URL:', data.url);
     return data.url as string;
   }
+
+  
 }
