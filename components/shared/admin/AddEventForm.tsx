@@ -51,7 +51,7 @@ const EventAndSessionsForm: React.FC = () => {
   const [startTime, setStartTime] = useState<string>("");
   const [endTime, setEndTime] = useState<string>("");
   const [location, setLocation] = useState<string>("");
-  const [venueType, setVenueType] = useState<string>("");
+  const [venue, setvenue] = useState<string>("");
 
   // ------------------------------------------------------------
   // Sessions
@@ -184,7 +184,7 @@ const EventAndSessionsForm: React.FC = () => {
         location,
         startTime,
         endTime,
-        venue: venueType,
+        venue: venue,
         imageFile: eventBannerUrl,
         idcard_template_id: selectedLayout,
         sessions: processedSessions,
@@ -243,10 +243,10 @@ const EventAndSessionsForm: React.FC = () => {
           />
           <input
             type="text"
-            placeholder="Venue Type (Indoor / Outdoor / Hall)"
+            placeholder="Venue"
             className="border border-slate-300 rounded p-3 text-slate-800 placeholder-slate-700 bg-white"
-            value={venueType}
-            onChange={(e) => setVenueType(e.target.value)}
+            value={venue}
+            onChange={(e) => setvenue(e.target.value)}
           />
           <input
             type="datetime-local"
@@ -262,7 +262,7 @@ const EventAndSessionsForm: React.FC = () => {
           />
           <input
             type="text"
-            placeholder="Location"
+            placeholder="Location (City)"
             className="border border-slate-300 rounded p-3 md:col-span-2 text-slate-800 placeholder-slate-700 bg-white"
             value={location}
             onChange={(e) => setLocation(e.target.value)}
