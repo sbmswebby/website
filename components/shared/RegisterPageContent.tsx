@@ -12,9 +12,16 @@ import Image from "next/image";
 // ------------------------------------------------------
 // Type Definitions
 // ------------------------------------------------------
+interface SessionRow {
+  id: string;
+  name: string;
+  image_url: string | null;
+}
+
 interface Session {
   id: string;
   name: string;
+  image_url: string | null;
 }
 
 interface DownloadItem {
@@ -31,7 +38,7 @@ export default function RegisterPageContent(): JSX.Element {
   // ------------------------------------------------------
   // Form State
   // ------------------------------------------------------
-  const [sessionId, setSessionId] = useState<string>("");
+  const [sessionId, setSessionId] = useState<string>(urlSessionId ?? "");
   const { handleManualSubmit, isProcessing } = useEventRegistration(eventId, sessionId);
 
   const [name, setName] = useState<string>("");
@@ -40,35 +47,44 @@ export default function RegisterPageContent(): JSX.Element {
   const [profession, setProfession] = useState<string>("");
   const [city, setCity] = useState<string>("");
   const [photo, setPhoto] = useState<File | null>(null);
-  const [sessions, setSessions] = useState<Session[]>([]);
 
-  const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
+  const [sessions, setSessions] = useState<Session[]>([]);
+  const [sessionImages, setSessionImages] = useState<string[]>([]);
+  const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(
+    null
+  );
+
   const [modalOpen, setModalOpen] = useState<boolean>(false);
+  const [sessionModalOpen, setSessionModalOpen] = useState<boolean>(false);
   const [downloads, setDownloads] = useState<DownloadItem[]>([]);
 
   // ------------------------------------------------------
-  // Preselect session from URL (if provided)
-  // ------------------------------------------------------
-  useEffect(() => {
-    if (urlSessionId) setSessionId(urlSessionId);
-  }, [urlSessionId]);
-
-  // ------------------------------------------------------
-  // Fetch sessions for the given event
+  // Fetch sessions and their images
   // ------------------------------------------------------
   useEffect(() => {
     const fetchSessions = async (): Promise<void> => {
       if (!eventId) return;
+
       const { data, error } = await supabase
         .from("sessions")
-        .select("id, name")
+        .select("id, name, image_url")
         .eq("event_id", eventId);
 
       if (error) {
         console.error("Error fetching sessions:", error.message);
-      } else {
-        setSessions(data || []);
+        return;
       }
+
+      const typedData: SessionRow[] = data ?? [];
+
+      setSessions(typedData);
+
+      // Extract valid images
+      const validImages = typedData
+        .map((s) => s.image_url)
+        .filter((u): u is string => Boolean(u && u.trim() !== ""));
+
+      setSessionImages(validImages.length > 0 ? validImages : []);
     };
 
     fetchSessions();
@@ -81,7 +97,6 @@ export default function RegisterPageContent(): JSX.Element {
     e.preventDefault();
     setMessage(null);
 
-    // Validate required fields (except session)
     if (!name.trim() || !whatsapp.trim() || !parlor.trim() || !city.trim() || !photo) {
       setMessage({
         type: "error",
@@ -95,13 +110,12 @@ export default function RegisterPageContent(): JSX.Element {
         name,
         whatsapp,
         organisation: parlor,
-        user_selected_session_id: sessionId ,
+        user_selected_session_id: sessionId,
         profession: profession || undefined,
         photo,
         city,
       });
 
-      // Generate certificate & ID after successful registration
       if (registration?.registrationId) {
         const result = await GenerationOrchestrator.generateBoth(
           registration.registrationId,
@@ -131,12 +145,8 @@ export default function RegisterPageContent(): JSX.Element {
           setDownloads(newDownloads);
           setModalOpen(true);
 
-          setMessage({
-            type: "success",
-            text: "Registered successfully!",
-          });
+          setMessage({ type: "success", text: "Registered successfully!" });
         } else {
-          console.error("❌ Generation failed:", result.error);
           setMessage({
             type: "error",
             text: `File generation failed: ${result.error || "Unknown error"}`,
@@ -145,14 +155,9 @@ export default function RegisterPageContent(): JSX.Element {
       } else {
         setMessage({ type: "success", text: "Registered successfully!" });
       }
-    } catch (error) {
-      const errorMessage: string =
-        error instanceof Error ? error.message : "Unknown error";
-      console.error("❌ Registration failed:", error);
-      setMessage({
-        type: "error",
-        text: `Registration failed: ${errorMessage}`,
-      });
+    } catch (err) {
+      const errorMessage: string = err instanceof Error ? err.message : "Unknown error";
+      setMessage({ type: "error", text: `Registration failed: ${errorMessage}` });
     }
   };
 
@@ -167,8 +172,74 @@ export default function RegisterPageContent(): JSX.Element {
     }
   };
 
+// ------------------------------------------------------
+// Session Picker Modal (Dark Glassmorphic Style)
+// ------------------------------------------------------
+const SessionPickerModal = (): JSX.Element => {
+  // Ensure modal root exists
+  const modalRoot =
+    document.getElementById("modal-root") ||
+    (() => {
+      const root = document.createElement("div");
+      root.id = "modal-root";
+      document.body.appendChild(root);
+      return root;
+    })();
+
+  const handleSelectSession = (id: string) => {
+    setSessionId(id);
+    setSessionModalOpen(false);
+  };
+
+  return createPortal(
+    <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-[9999] p-4">
+      {/* Modal container */}
+      <div className="bg-[rgba(255,255,255,0.05)] backdrop-blur-[20px] border border-[rgba(255,107,157,0.2)] rounded-2xl shadow-[0_10px_40px_rgba(255,107,157,0.15)] p-8 w-full max-w-xl max-h-[80vh] overflow-auto transition-transform">
+        <h2 className="text-3xl font-playfair text-center font-bold bg-gradient-to-r from-pink-500 to-yellow-400 bg-clip-text text-transparent mb-6">
+          Choose a Session
+        </h2>
+
+        {/* Sessions Grid */}
+        <div className="grid grid-cols-2 gap-4">
+          {sessions.map((session) => (
+            <div
+              key={session.id}
+              className="border border-[rgba(255,107,157,0.2)] rounded-2xl p-2 cursor-pointer hover:bg-[rgba(255,255,255,0.05)] hover:translate-y-[-5px] hover:shadow-[0_15px_50px_rgba(255,107,157,0.3)] transition-all"
+              onClick={() => handleSelectSession(session.id)}
+            >
+              {/* Session Image */}
+              <div className="w-full h-32 rounded mb-2 bg-gray-700 overflow-hidden">
+                <Image
+                  src={session.image_url || "/placeholder.jpg"}
+                  alt={session.name}
+                  width={300}
+                  height={200}
+                  className="w-full h-full object-cover"
+                />
+              </div>
+
+              {/* Session Name */}
+              <p className="text-center font-semibold text-gray-100">{session.name}</p>
+            </div>
+          ))}
+        </div>
+
+        {/* Cancel Button */}
+        <button
+          onClick={() => setSessionModalOpen(false)}
+          className="mt-6 w-full bg-gradient-to-r from-pink-500 to-yellow-400 text-white rounded-full py-3 font-semibold text-lg shadow-[0_5px_20px_rgba(255,107,157,0.2)] hover:scale-[1.02] hover:-translate-y-1 hover:shadow-[0_8px_25px_rgba(255,107,157,0.4)] transition-all"
+        >
+          Cancel
+        </button>
+      </div>
+    </div>,
+    modalRoot
+  );
+};
+
+
   // ------------------------------------------------------
-  // Download Modal
+  // Downloads Modal
   // ------------------------------------------------------
   const DownloadsModal = (): JSX.Element => {
     const modalRef = useRef<HTMLDivElement>(null);
@@ -189,13 +260,16 @@ export default function RegisterPageContent(): JSX.Element {
       <div className="fixed inset-0 flex justify-center items-center z-[9999] bg-black bg-opacity-60">
         <div
           ref={modalRef}
-          className="w-[90vw] max-w-[1200px] min-h-[33vh] bg-gray-900 rounded-xl p-8 overflow-auto flex flex-col gap-6"
+          className="w-[90vw] max-w-[1200px] bg-gray-900 rounded-xl p-8 overflow-auto"
           style={{
             transform: isMounted ? "translateY(0)" : "translateY(-50px)",
             transition: "transform 0.5s ease-in-out",
           }}
         >
-          <h2 className="text-center text-2xl font-bold mb-4 text-white">Download Your Files</h2>
+          <h2 className="text-center text-2xl font-bold mb-4 text-white">
+            Download Your Files
+          </h2>
+
           <div className="flex flex-wrap justify-center gap-6">
             {downloads.map((item) => (
               <div
@@ -209,6 +283,7 @@ export default function RegisterPageContent(): JSX.Element {
                   height={300}
                   className="object-contain w-full h-48 mb-4 rounded"
                 />
+
                 <button
                   onClick={() => handleDownload(item)}
                   className="register-btn p-3 bg-blue-600 hover:bg-blue-700 text-white rounded"
@@ -218,6 +293,7 @@ export default function RegisterPageContent(): JSX.Element {
               </div>
             ))}
           </div>
+
           <div className="text-center mt-6">
             <button
               onClick={() => setModalOpen(false)}
@@ -239,8 +315,26 @@ export default function RegisterPageContent(): JSX.Element {
     <div id="signIn">
       <div className="w-full max-w-md bg-white p-6 rounded shadow">
         <h2 className="text-2xl font-bold text-center mb-4">Registration</h2>
+        {/* Session Selector — ALWAYS visible now */}
+        <label className=" ">Selected Session *</label>
+        <div className="session-selector grid grid-cols-10 items-center ">
+          <div className="col-span-8">
+            <h3 >
+              {sessionId
+                ? sessions.find((s) => s.id === sessionId)?.name
+                : "No session selected"}
+            </h3>
+          </div>
 
-        {/* Display success or error messages */}
+          <a
+            type="button"
+            onClick={() => setSessionModalOpen(true)}
+            className="col-span-2 session-btn text-md"
+          >
+            Change
+          </a>
+        </div>
+
         {message && (
           <div
             className={`p-3 mb-4 rounded ${
@@ -253,7 +347,6 @@ export default function RegisterPageContent(): JSX.Element {
           </div>
         )}
 
-        {/* Registration Form */}
         <form onSubmit={handleSubmit} className="space-y-4">
           {/* Full Name */}
           <div>
@@ -267,7 +360,7 @@ export default function RegisterPageContent(): JSX.Element {
             />
           </div>
 
-          {/* WhatsApp Number */}
+          {/* WhatsApp */}
           <div>
             <label className="block mb-1">WhatsApp Number *</label>
             <input
@@ -279,7 +372,7 @@ export default function RegisterPageContent(): JSX.Element {
             />
           </div>
 
-          {/* Organization / Parlor */}
+          {/* Parlor */}
           <div>
             <label className="block mb-1">Organization / Parlor / Company *</label>
             <input
@@ -291,13 +384,13 @@ export default function RegisterPageContent(): JSX.Element {
             />
           </div>
 
-          {/* Profession (Optional) */}
+          {/* Profession */}
           <div>
             <label className="block mb-1">Profession / Job *</label>
             <input
               type="text"
-              value={profession}
               required
+              value={profession}
               onChange={(e) => setProfession(e.target.value)}
               className="w-full border p-2 rounded"
             />
@@ -315,12 +408,12 @@ export default function RegisterPageContent(): JSX.Element {
             />
           </div>
 
-          {/* Photo Upload */}
+          {/* Photo */}
           <div>
             <label className="block mb-1">
               Upload Photo *{" "}
               <span className="font-black text-red-600">
-                (Portrait with clear face)
+                Portrait photo with clear face (like passport size photo)
               </span>
             </label>
             <input
@@ -332,27 +425,9 @@ export default function RegisterPageContent(): JSX.Element {
             />
           </div>
 
-          {/* Session — optional if URL param exists */}
-          {!urlSessionId && (
-            <div className="session-select">
-              <label className="block mb-1">Select Session</label>
-              <select
-                required
-                value={sessionId}
-                onChange={(e) => setSessionId(e.target.value)}
-                className="w-full border p-2 rounded"
-              >
-                <option value="">-- Select Session --</option>
-                {sessions.map((s) => (
-                  <option key={s.id} value={s.id}>
-                    {s.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-          )}
 
-          {/* Submit Button */}
+
+          {/* Submit */}
           <button
             type="submit"
             disabled={isProcessing}
@@ -363,8 +438,8 @@ export default function RegisterPageContent(): JSX.Element {
         </form>
       </div>
 
-      {/* Downloads Modal */}
       {modalOpen && <DownloadsModal />}
+      {sessionModalOpen && <SessionPickerModal />}
     </div>
   );
 }
