@@ -346,7 +346,7 @@ const SessionPickerModal = (): JSX.Element => {
             {message.text}
           </div>
         )}
-
+        <div className="h-5"></div>
         <form onSubmit={handleSubmit} className="space-y-4">
           {/* Full Name */}
           <div>
@@ -374,7 +374,7 @@ const SessionPickerModal = (): JSX.Element => {
 
           {/* Parlor */}
           <div>
-            <label className="block mb-1">Organization / Parlor / Company *</label>
+            <label className="block mb-1">Organization / Parlor / Company/ Academy Name *</label>
             <input
               type="text"
               required

@@ -1,8 +1,8 @@
-import * as XLSX from "xlsx";
+import ExcelJS from "exceljs";
 import * as types from "@/lib/certificate_and_id/types";
 
 /**
- * ✅ Row type for Excel export (defines clean column structure)
+ * Row type for Excel export (defines clean column structure)
  */
 export interface ExcelRow {
   RegistrationID: string | number;
@@ -17,18 +17,17 @@ export interface ExcelRow {
   CreatedAt: string;
   CertificateURL: string;
   IDCardURL: string;
-  [key: string]: string | number; // allows extra fields safely
+  [key: string]: string | number;
 }
 
 /**
- * ✅ Converts RegistrationWithDetails[] into ExcelRow[]
- * Handles multiple certificates per registration safely
+ * Converts RegistrationWithDetails[] into ExcelRow[]
+ * Ensures multiple certificates are merged into a single cell
  */
 const mapRegistrationsToExcelRows = (
   registrations: types.RegistrationWithDetails[]
 ): ExcelRow[] => {
   return registrations.map((r) => {
-    // Safely handle certificate URLs (array or single)
     const certificateUrls: string[] = Array.isArray(r.certificates)
       ? r.certificates.map((c) => c.url).filter(Boolean)
       : r.certificate_url
@@ -46,8 +45,6 @@ const mapRegistrationsToExcelRows = (
       Event: r.event?.name ?? "",
       Status: r.status ?? "",
       CreatedAt: new Date(r.created_at).toLocaleString(),
-
-      // ✅ Combine all certificate URLs into a single cell
       CertificateURL: certificateUrls.join(", "),
       IDCardURL: r.id_card_url ?? "",
     };
@@ -55,24 +52,22 @@ const mapRegistrationsToExcelRows = (
 };
 
 /**
- * ✅ Generates and downloads an Excel file from registration data
- * Automatically detects whether input is raw or already mapped.
- *
- * @param data Array of RegistrationWithDetails or ExcelRow objects
- * @param filename Optional file name (default = "Registrations")
+ * Generates and downloads an Excel file using exceljs.
+ * Automatically maps raw registrations when needed.
  */
 export const downloadExcel = (
   data: types.RegistrationWithDetails[] | ExcelRow[],
   filename = "Registrations"
 ): void => {
   if (!data || data.length === 0) return;
+
   const timestamp = new Date()
     .toISOString()
-    .replace(/[:.]/g, "-") // replace time separators
+    .replace(/[:.]/g, "-")
     .replace("T", "_")
     .split("Z")[0];
-  const finalFilename = `${filename}_${timestamp}.xlsx`;
 
+  const finalFilename = `${filename}_${timestamp}.xlsx`;
 
   // Detect input type automatically
   const excelData: ExcelRow[] =
@@ -80,21 +75,32 @@ export const downloadExcel = (
       ? mapRegistrationsToExcelRows(data as types.RegistrationWithDetails[])
       : (data as ExcelRow[]);
 
-  // Create worksheet from JSON
-  const worksheet = XLSX.utils.json_to_sheet(excelData);
+  // Create a new workbook
+  const workbook = new ExcelJS.Workbook();
+  const worksheet = workbook.addWorksheet("Sheet1");
 
-  // Create workbook and append worksheet
-  const workbook = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(workbook, worksheet, "Sheet1");
+  // Add header row with correct ordering
+  const headerKeys: string[] = Object.keys(excelData[0]);
 
-  // Generate and trigger download
-  const wbout = XLSX.write(workbook, { bookType: "xlsx", type: "array" });
-  const blob = new Blob([wbout], { type: "application/octet-stream" });
-  const url = URL.createObjectURL(blob);
+  worksheet.addRow(headerKeys);
 
-  const link = document.createElement("a");
-  link.href = url;
-  link.download = `${finalFilename}.xlsx`;
-  link.click();
-  URL.revokeObjectURL(url);
+  // Add data rows
+  excelData.forEach((row) => {
+    const orderedValues = headerKeys.map((key) => row[key]);
+    worksheet.addRow(orderedValues);
+  });
+
+  // Generate file and download in browser
+  workbook.xlsx.writeBuffer().then((buffer: ArrayBuffer) => {
+    const blob = new Blob([buffer], {
+      type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    });
+
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = finalFilename;
+    link.click();
+    URL.revokeObjectURL(url);
+  });
 };
