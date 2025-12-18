@@ -53,6 +53,9 @@ export default function RegisterPageContent(): JSX.Element {
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(
     null
   );
+  const selectedSession: Session | undefined = sessions.find(
+  (session) => session.id === sessionId
+);
 
   const [modalOpen, setModalOpen] = useState<boolean>(false);
   const [sessionModalOpen, setSessionModalOpen] = useState<boolean>(false);
@@ -191,6 +194,7 @@ const SessionPickerModal = (): JSX.Element => {
     setSessionModalOpen(false);
   };
 
+
   return createPortal(
     <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-[9999] p-4">
       {/* Modal container */}
@@ -318,13 +322,34 @@ const SessionPickerModal = (): JSX.Element => {
         {/* Session Selector — ALWAYS visible now */}
         <label className=" ">Selected Session *</label>
         <div className="session-selector grid grid-cols-10 items-center ">
-          <div className="col-span-8">
-            <h3 >
-              {sessionId
-                ? sessions.find((s) => s.id === sessionId)?.name
-                : "No session selected"}
-            </h3>
-          </div>
+
+<div className="col-span-8 flex items-center gap-3">
+  {/* Thumbnail */}
+  <div className="w-20 h-20 rounded-lg overflow-hidden bg-gray-200 shrink-0">
+    {selectedSession?.image_url ? (
+      <Image
+        src={selectedSession.image_url}
+        alt={selectedSession.name}
+        width={56}
+        height={56}
+        className="w-full h-full object-cover"
+      />
+    ) : (
+      <div className="w-full h-full flex items-center justify-center text-xs text-gray-500">
+        No Image
+      </div>
+    )}
+  </div>
+
+  {/* Session details */}
+  <div className="flex flex-col">
+    <h3 className="font-semibold text-gray-900 leading-tight">
+      {selectedSession?.name ?? "No session selected"}
+    </h3>
+  </div>
+</div>
+
+
 
           <a
             type="button"
