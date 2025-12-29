@@ -17,6 +17,8 @@ interface SessionRow {
   name: string;
   image_url: string | null;
 }
+type SubmitState = "idle" | "processing" | "success";
+
 
 interface Session {
   id: string;
@@ -63,6 +65,11 @@ export default function RegisterPageContent(): JSX.Element {
   const [downloads, setDownloads] = useState<DownloadItem[]>([]);
 
   // ------------------------------------------------------
+// Submit Button UI State
+// ------------------------------------------------------
+const [submitState, setSubmitState] = useState<SubmitState>("idle");
+
+  // ------------------------------------------------------
   // Fetch sessions and their images
   // ------------------------------------------------------
   useEffect(() => {
@@ -101,76 +108,168 @@ export default function RegisterPageContent(): JSX.Element {
       setSessionId(urlSessionId);
     }
   }, [urlSessionId, sessions]);
-  // ------------------------------------------------------
-  // Form Submission Handler
-  // ------------------------------------------------------
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>): Promise<void> => {
-    e.preventDefault();
-    setMessage(null);
+// ------------------------------------------------------
+// Form Submission Handler (FULLY INSTRUMENTED)
+// ------------------------------------------------------
+const handleSubmit = async (
+  e: React.FormEvent<HTMLFormElement>
+): Promise<void> => {
+  e.preventDefault();
 
-    if (!name.trim() || !whatsapp.trim() || !parlor.trim() || !city.trim() || !photo) {
-      setMessage({
-        type: "error",
-        text: "Please fill in all required fields and upload a photo.",
-      });
-      return;
+  console.group("🧾 [handleSubmit] START");
+  console.log("Initial submitState:", submitState);
+
+  setMessage(null);
+
+  // Prevent double submit
+  if (submitState !== "idle") {
+    console.warn("⛔ Submit blocked — submitState:", submitState);
+    console.groupEnd();
+    return;
+  }
+
+  // Basic validation
+  console.log("🔍 Validating form fields", {
+    name,
+    whatsapp,
+    parlor,
+    city,
+    hasPhoto: Boolean(photo),
+    sessionId,
+  });
+
+  if (!name.trim() || !whatsapp.trim() || !parlor.trim() || !city.trim() || !photo) {
+    console.error("❌ Validation failed");
+    setMessage({
+      type: "error",
+      text: "Please fill in all required fields and upload a photo.",
+    });
+    console.groupEnd();
+    return;
+  }
+
+  try {
+    // UI → processing
+    console.log("🔄 Setting submitState → processing");
+    setSubmitState("processing");
+
+    console.group("📤 Calling handleManualSubmit");
+    console.log("Payload:", {
+      name,
+      whatsapp,
+      organisation: parlor,
+      user_selected_session_id: sessionId,
+      profession: profession || undefined,
+      city,
+      hasPhoto: Boolean(photo),
+    });
+
+    const registration = await handleManualSubmit({
+      name,
+      whatsapp,
+      organisation: parlor,
+      user_selected_session_id: sessionId,
+      profession: profession || undefined,
+      photo,
+      city,
+    });
+
+    console.groupEnd(); // handleManualSubmit
+
+    console.log("📥 handleManualSubmit returned:", registration);
+
+    if (!registration?.registrationId) {
+      console.error("❌ No registrationId returned");
+      throw new Error("Registration failed");
     }
 
-    try {
-      const registration = await handleManualSubmit({
-        name,
-        whatsapp,
-        organisation: parlor,
-        user_selected_session_id: sessionId,
-        profession: profession || undefined,
-        photo,
-        city,
-      });
+    console.log("✅ Registration created:", registration.registrationId);
 
-      if (registration?.registrationId) {
+    // ✅ Registration SUCCESS — update UI immediately
+    console.log("🎉 Setting submitState → success");
+    setSubmitState("success");
+    setMessage({ type: "success", text: "Registered successfully!" });
+
+    // --------------------------------------------------
+    // 🎟️ OPTIONAL: certificate / ID generation (background)
+    // --------------------------------------------------
+    console.group("🧩 Background generation task started");
+
+    void (async (): Promise<void> => {
+      try {
+        console.log("⚙️ Calling GenerationOrchestrator.generateBoth", {
+          registrationId: registration.registrationId,
+        });
+
         const result = await GenerationOrchestrator.generateBoth(
           registration.registrationId,
           false
         );
 
-        if (result.success && (result.certificateUrl || result.idCardUrl)) {
-          const baseName = name.replace(/\s+/g, "_");
-          const newDownloads: DownloadItem[] = [];
+        console.log("📄 Generation result:", result);
 
-          if (result.certificateUrl) {
-            newDownloads.push({
-              url: result.certificateUrl,
-              label: "Certificate",
-              filename: `${baseName}_Certificate.jpg`,
-            });
-          }
+        // Nothing generated → valid state
+        if (!result.success) {
+          console.warn("⚠️ Generation skipped — no templates found");
+          console.groupEnd();
+          return;
+        }
 
-          if (result.idCardUrl) {
-            newDownloads.push({
-              url: result.idCardUrl,
-              label: "ID Card",
-              filename: `${baseName}_ID_Card.jpg`,
-            });
-          }
+        const baseName: string = name.replace(/\s+/g, "_");
+        const newDownloads: DownloadItem[] = [];
 
-          setDownloads(newDownloads);
-          setModalOpen(true);
-
-          setMessage({ type: "success", text: "Registered successfully!" });
-        } else {
-          setMessage({
-            type: "error",
-            text: `File generation failed: ${result.error || "Unknown error"}`,
+        if (result.certificateUrl) {
+          console.log("📜 Certificate URL found");
+          newDownloads.push({
+            url: result.certificateUrl,
+            label: "Certificate",
+            filename: `${baseName}_Certificate.jpg`,
           });
         }
-      } else {
-        setMessage({ type: "success", text: "Registered successfully!" });
+
+        if (result.idCardUrl) {
+          console.log("🪪 ID Card URL found");
+          newDownloads.push({
+            url: result.idCardUrl,
+            label: "ID Card",
+            filename: `${baseName}_ID_Card.jpg`,
+          });
+        }
+
+        console.log("📦 Downloads prepared:", newDownloads);
+
+        if (newDownloads.length > 0) {
+          console.log("🪟 Opening download modal");
+          setDownloads(newDownloads);
+          setModalOpen(true);
+        } else {
+          console.warn("⚠️ No downloadable files produced");
+        }
+
+        console.groupEnd();
+      } catch (generationError: unknown) {
+        console.error("❌ Background generation error", generationError);
+        console.groupEnd();
       }
-    } catch (err) {
-      const errorMessage: string = err instanceof Error ? err.message : "Unknown error";
-      setMessage({ type: "error", text: `Registration failed: ${errorMessage}` });
-    }
-  };
+    })();
+  } catch (err: unknown) {
+    console.error("❌ handleSubmit caught error:", err);
+
+    const errorMessage: string =
+      err instanceof Error ? err.message : "Unknown error";
+
+    console.log("🔁 Resetting submitState → idle");
+    setSubmitState("idle");
+
+    setMessage({
+      type: "error",
+      text: `Registration failed: ${errorMessage}`,
+    });
+  } finally {
+    console.groupEnd(); // handleSubmit
+  }
+};
+
 
   // ------------------------------------------------------
   // Handle file download
@@ -465,13 +564,25 @@ const handleSelectSession = (id: string): void => {
 
 
           {/* Submit */}
-          <button
-            type="submit"
-            disabled={isProcessing}
-            className="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700 disabled:bg-gray-400"
-          >
-            {isProcessing ? "Processing..." : "Register"}
-          </button>
+<button
+  type="submit"
+  disabled={submitState === "processing" || submitState === "success"}
+  className={`
+    w-full py-2 rounded transition-all
+    ${
+      submitState === "idle"
+        ? "bg-blue-600 hover:bg-blue-700 text-white"
+        : submitState === "processing"
+        ? "bg-gray-400 text-white cursor-not-allowed"
+        : "bg-green-600 text-white"
+    }
+  `}
+>
+  {submitState === "idle" && "Register"}
+  {submitState === "processing" && "Processing... Please wait"}
+  {submitState === "success" && "Registered Successfully ✓"}
+</button>
+
         </form>
       </div>
 

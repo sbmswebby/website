@@ -2,11 +2,8 @@
 
 import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabaseClient";
-import { 
-  GenerationOrchestrator, 
-} from "@/lib/certificate_and_id/generationOrchestrator";
+import { GenerationOrchestrator } from "@/lib/certificate_and_id/generationOrchestrator";
 import { CloudinaryService } from "@/lib/cloudinaryService";
-
 
 /**
  * Represents a row in the `events` table
@@ -26,20 +23,6 @@ export interface EventRow {
 }
 
 /**
- * Represents the structure of a user registration
- */
-export interface EventRegistration {
-  id: string;
-  name: string;
-  whatsapp: string;
-  profession: string | null;
-  organisation: string | null;
-  event_id: string;
-  session_id: string;
-  photo_url: string | null;
-}
-
-/**
  * Represents a session row
  */
 export interface SessionData {
@@ -47,7 +30,7 @@ export interface SessionData {
 }
 
 /**
- * Utility to check UUID validity
+ * Utility to validate UUIDs
  */
 const isValidUuid = (id: string): boolean =>
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
@@ -62,12 +45,12 @@ export default function useEventRegistration(eventId: string, sessionId: string)
   const [eventName, setEventName] = useState<string>("");
 
   /**
-   * Fetch the event name for the given `eventId`
+   * Fetch event name
    */
   useEffect(() => {
     if (!eventId || !isValidUuid(eventId)) return;
 
-    const fetchEventName = async () => {
+    const fetchEventName = async (): Promise<void> => {
       const { data, error } = await supabase
         .from("events")
         .select("name")
@@ -84,14 +67,13 @@ export default function useEventRegistration(eventId: string, sessionId: string)
   }, [eventId]);
 
   /**
-   * Check if a user with given WhatsApp is already registered for a session
+   * Check if WhatsApp number already registered for session
    */
   const checkWhatsAppRegistration = async (
     whatsapp: string
   ): Promise<{ id: string; registration_number: number } | null> => {
     if (!whatsapp || !sessionId) return null;
 
-    // Get user profile by WhatsApp
     const { data: userProfile } = await supabase
       .from("user_profiles")
       .select("id")
@@ -100,7 +82,6 @@ export default function useEventRegistration(eventId: string, sessionId: string)
 
     if (!userProfile) return null;
 
-    // Check if registration exists for this session
     const { data: registration } = await supabase
       .from("registrations")
       .select("id, registration_number")
@@ -108,11 +89,12 @@ export default function useEventRegistration(eventId: string, sessionId: string)
       .eq("session_id", sessionId)
       .maybeSingle();
 
-    return registration || null;
+    return registration ?? null;
   };
 
   /**
-   * Handle manual registration form submission
+   * Handles manual registration submission
+   * Generation is OPTIONAL and NEVER blocks registration
    */
   const handleManualSubmit = async (form: {
     name: string;
@@ -122,26 +104,37 @@ export default function useEventRegistration(eventId: string, sessionId: string)
     user_selected_session_id: string;
     photo?: File | null;
     city: string;
-  }): Promise<{ idUrl: string; certUrl: string; registrationId: string } | null> => {
+  }): Promise<{
+    registrationId: string;
+    idUrl?: string;
+    certUrl?: string;
+  }> => {
     setIsProcessing(true);
 
     try {
       let photoUrl: string | null = null;
 
-      // --- Handle photo upload to Cloudinary ---
+      /**
+       * Upload photo if provided
+       */
       if (form.photo) {
-        photoUrl = await CloudinaryService.uploadFile(form.photo, "user_photos");
+        photoUrl = await CloudinaryService.uploadFile(
+          form.photo,
+          "user_photos"
+        );
       }
 
-      // --- Upsert user profile ---
+      /**
+       * Upsert user profile
+       */
       const { data: userProfiles } = await supabase
         .from("user_profiles")
         .upsert(
           {
             whatsapp_number: form.whatsapp,
             name: form.name,
-            profession: form.profession || null,
-            organisation_name: form.organisation || null,
+            profession: form.profession ?? null,
+            organisation_name: form.organisation ?? null,
             image_url: photoUrl,
           },
           { onConflict: "whatsapp_number" }
@@ -151,109 +144,71 @@ export default function useEventRegistration(eventId: string, sessionId: string)
       const userProfile = userProfiles?.[0];
       if (!userProfile) throw new Error("Failed to upsert user profile");
 
-      // --- Check if already registered ---
+      /**
+       * Registration (idempotent)
+       */
       let finalRegistrationId: string;
       let registrationNumber: number | string;
 
-      const existingRegistration = await checkWhatsAppRegistration(form.whatsapp);
+      const existing = await checkWhatsAppRegistration(form.whatsapp);
 
-      if (existingRegistration) {
-        finalRegistrationId = existingRegistration.id;
-        registrationNumber = existingRegistration.registration_number;
-        setIsRegistered(true);
-        setRegistrationId(finalRegistrationId);
+      if (existing) {
+        finalRegistrationId = existing.id;
+        registrationNumber = existing.registration_number;
       } else {
-        const targetSessionId = form.user_selected_session_id || sessionId;
+        const targetSessionId =
+          form.user_selected_session_id || sessionId;
 
-if (!targetSessionId || !isValidUuid(targetSessionId)) {
-  console.log("Invalid session ID. Cannot create registration sesssion id you passed is " + targetSessionId +  ".");
-}
+        const { data, error } = await supabase
+          .from("registrations")
+          .insert({
+            user_profile_id: userProfile.id,
+            session_id: targetSessionId,
+            status: "registered",
+          })
+          .select()
+          .maybeSingle();
 
-const { data: registrationData, error: registrationError } = await supabase
-  .from("registrations")
-  .insert({
-    user_profile_id: userProfile.id,
-    session_id: targetSessionId,
-    status: "registered",
-  })
-  .select()
-  .maybeSingle();
+        if (!data || error) throw error || new Error("Registration failed");
 
-        if (registrationError?.code === "23505") {
-          throw new Error("Already registered for this session.");
-        }
-        if (!registrationData) throw registrationError || new Error("Registration failed");
-
-        finalRegistrationId = registrationData.id;
-        registrationNumber = registrationData.registration_number;
-        setIsRegistered(true);
-        setRegistrationId(finalRegistrationId);
+        finalRegistrationId = data.id;
+        registrationNumber = data.registration_number;
       }
 
-      // --- Fetch session name for custom text ---
+      setIsRegistered(true);
+      setRegistrationId(finalRegistrationId);
+
+      /**
+       * Fetch session name
+       */
       const { data: sessionRow } = await supabase
         .from("sessions")
         .select("name")
         .eq("id", form.user_selected_session_id)
         .maybeSingle<SessionData>();
 
-      // --- Generate & upload ID card & certificate using new orchestrator ---
-      const result = await GenerationOrchestrator.generateBoth(
+      /**
+       * OPTIONAL generation
+       */
+      const generation = await GenerationOrchestrator.generateBoth(
         finalRegistrationId,
-        false, // Don't auto-download, we'll return URLs
+        false,
         {
-          // Custom text replacements for template placeholders
           event_name: eventName,
-          session_name: sessionRow?.name || '',
+          session_name: sessionRow?.name ?? "",
           city: form.city,
           registration_number: String(registrationNumber),
         }
       );
 
-      // Handle the result - DON'T throw error for "Certificate skipped"
-      if (result.error) {
-        if (result.error.includes('Certificate skipped')) {
-          // This is expected when certificate template doesn't exist
-          console.warn(`ℹ️ [handleManualSubmit] ${result.error}`);
-          
-          // Return partial success with just ID card
-          if (result.idCardUrl) {
-            console.log(
-              `Guest registration successful (ID card only)!\nTicket URL: ${result.idCardUrl}`
-            );
-            
-            return {
-              idUrl: result.idCardUrl,
-              certUrl: '', // Empty string instead of throwing error
-              registrationId: finalRegistrationId,
-            };
-          }
-        } else {
-          // This is an actual error - throw it
-          console.error(`❌ [handleManualSubmit] Generation error: ${result.error}`);
-          throw new Error(result.error || "Failed to generate certificate and ID card");
-        }
-      }
-
-      // Success case - both certificate and ID card generated
-      if (result.success && result.certificateUrl && result.idCardUrl) {
-        console.log(
-          `Guest registration successful!\nTicket URL: ${result.idCardUrl}\nCertificate URL: ${result.certificateUrl}`
-        );
-
-        return {
-          idUrl: result.idCardUrl,
-          certUrl: result.certificateUrl,
-          registrationId: finalRegistrationId,
-        };
-      }
-
-      // Fallback - if we get here, something unexpected happened
-      throw new Error("Unexpected result from generation orchestrator");
-
-    } catch (err) {
-      console.error("❌ [handleManualSubmit] Error:", err);
-      throw err; // Re-throw to be handled by the calling component
+      /**
+       * ALL states are valid
+       */
+      return {
+        registrationId: finalRegistrationId,
+        idUrl: generation.idCardUrl,
+        certUrl: generation.certificateUrl,
+      };
     } finally {
       setIsProcessing(false);
     }

@@ -49,7 +49,15 @@ export class GenerationOrchestrator {
         DatabaseService.getUserProfile(userProfileId),
       ]);
 
-      if (!template) throw new Error('Certificate template not found');
+if (!template) {
+  console.warn(
+    `⚠️ [Certificate] No template found for session ${sessionId}, skipping`
+  );
+  return {
+    success: true,          // important: NOT false
+    certificateUrl: undefined,
+  };
+}
       if (!userProfile) throw new Error('User profile not found');
       console.log('✅ Template and user profile fetched successfully');
 
@@ -88,7 +96,7 @@ export class GenerationOrchestrator {
       console.log(`🎉 [Certificate] Generation complete for user: ${userProfileId}`);
       return { certificateUrl: url, success: true };
     } catch (error) {
-      console.error('❌ Certificate generation failed:', error);
+      console.warn('❌ Certificate generation failed:', error);
       return {
         success: false,
         error: error instanceof Error ? error.message : 'Unknown error',
@@ -139,7 +147,7 @@ static async generateCertificatesForSession(
           failed.push(registration.user_profile_id);
         }
       } catch (err) {
-        console.error(`❌ Exception for ${registration.user_profile_id}:`, err);
+        console.warn(`❌ Exception for ${registration.user_profile_id}:`, err);
         failed.push(registration.user_profile_id);
       }
 
@@ -152,7 +160,7 @@ static async generateCertificatesForSession(
 
     return { successful, failed };
   } catch (error) {
-    console.error(`❌ Session certificate generation failed:`, error);
+    console.warn(`❌ Session certificate generation failed:`, error);
     return { successful: [], failed: [] };
   }
 }
@@ -175,7 +183,18 @@ static async generateCertificatesForSession(
 
       console.log('📦 Fetching ID card template...');
       const idCardDetails = await DatabaseService.getIDCardDetails(registration.session_id);
-      if (!idCardDetails) throw new Error('ID card template not found');
+
+if (!idCardDetails) {
+  console.warn(
+    `⚠️ [ID Card] No template found for session ${registration.session_id}, skipping`
+  );
+  return {
+    success: true,
+    idCardUrl: undefined,
+  };
+}
+
+
       console.log('✅ ID card template fetched successfully');
 
       console.log('🖌️ Generating ID card canvas...');
@@ -209,7 +228,7 @@ static async generateCertificatesForSession(
       console.log(`🎉 [ID Card] Generation complete for registration: ${registrationId}`);
       return { idCardUrl: url, success: true };
     } catch (error) {
-      console.error('❌ ID card generation failed:', error);
+      console.warn('❌ ID card generation failed:', error);
       return {
         success: false,
         error: error instanceof Error ? error.message : 'Unknown error',
@@ -267,23 +286,29 @@ static async generateBoth(
     console.log('🪪 Starting ID card generation...');
     const idResult = await this.generateIDCard(registrationId, customText, downloadAfter);
 
-    if (idResult.success) {
-      idCardUrl = idResult.idCardUrl;
-      console.log('✅ ID card generated successfully.');
-    } else {
-      throw new Error(idResult.error || 'ID card generation failed');
-    }
+if (idResult.success) {
+  idCardUrl = idResult.idCardUrl;
+  console.log('✅ ID card generation finished.');
+} else {
+  console.warn(
+    `⚠️ ID card skipped: ${idResult.error ?? 'no template'}`
+  );
+}
 
     // Step 4: Return results
     console.log(`🎉 [Batch] Completed generation for ${registrationId}`);
-    return {
-      certificateUrl,
-      idCardUrl,
-      success: true,
-      error: certError ? `Certificate skipped: ${certError}` : undefined,
-    };
+const anyGenerated = Boolean(certificateUrl || idCardUrl);
+if (!anyGenerated) console.warn('⚠️ No certificate or ID card templates found, skipping generation.');
+
+
+return {
+  certificateUrl,
+  idCardUrl,
+  success: anyGenerated,  // only true if at least one was generated
+  // only set error if nothing was generated
+};
   } catch (error: unknown) {
-    console.error('❌ Batch generation failed:', error);
+    console.warn('❌ Batch generation failed:', error);
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Unknown error',

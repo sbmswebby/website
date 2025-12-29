@@ -17,10 +17,10 @@ export class DatabaseService {
       .from('session_certificates')
       .select('certificate_templates(*)')
       .eq('session_id', sessionId)
-      .single();
+      .maybeSingle();
 
     if (error || !data) {
-      console.error("❌ [getCertificateTemplate] Failed to fetch certificate template:", error);
+      console.warn("❌ [getCertificateTemplate] Failed to fetch certificate template:", error);
       return null;
     }
 
@@ -44,7 +44,7 @@ static async getRegistrationsBySession(sessionId: string) {
     .eq('session_id', sessionId);
 
   if (error) {
-    console.error("❌ [getRegistrationsBySession] Failed to fetch registrations:", error);
+    console.warn("❌ [getRegistrationsBySession] Failed to fetch registrations:", error);
     return [];
   }
 
@@ -65,7 +65,7 @@ static async getRegistrationsBySession(sessionId: string) {
       .eq('session_id', sessionId);
 
     if (error || !data) {
-      console.error("❌ [getCertificateTemplates] Failed to fetch certificate templates:", error);
+      console.warn("❌ [getCertificateTemplates] Failed to fetch certificate templates:", error);
       return [];
     }
 
@@ -82,10 +82,10 @@ static async getRegistrationsBySession(sessionId: string) {
       .from('session_id_cards')
       .select('id_card_details(*)')
       .eq('session_id', sessionId)
-      .single();
+      .maybeSingle();
 
     if (error || !data) {
-      console.error("❌ [getIDCardDetails] Failed to fetch ID card details:", error);
+      console.warn("❌ [getIDCardDetails] Failed to fetch ID card details:", error);
       return null;
     }
 
@@ -104,7 +104,7 @@ static async getRegistrationsBySession(sessionId: string) {
       .eq('session_id', sessionId);
 
     if (error || !data) {
-      console.error("❌ [getIDCardDetailsMultiple] Failed to fetch ID card details:", error);
+      console.warn("❌ [getIDCardDetailsMultiple] Failed to fetch ID card details:", error);
       return [];
     }
 
@@ -133,7 +133,7 @@ static async getRegistrationsBySession(sessionId: string) {
     );
 
     if (error) {
-      console.error("❌ [saveCertificate] Failed to save certificate:", error);
+      console.warn("❌ [saveCertificate] Failed to save certificate:", error);
       throw error;
     }
 
@@ -154,7 +154,7 @@ static async getRegistrationsBySession(sessionId: string) {
       .eq('id', registrationId);
 
     if (error) {
-      console.error("❌ [saveTicketUrl] Failed to update ticket URL:", error);
+      console.warn("❌ [saveTicketUrl] Failed to update ticket URL:", error);
       throw error;
     }
 
@@ -170,10 +170,10 @@ static async getRegistrationsBySession(sessionId: string) {
       .from('user_profiles')
       .select('*')
       .eq('id', userProfileId)
-      .single();
+      .maybeSingle();
 
     if (error || !data) {
-      console.error("❌ [getUserProfile] Failed to fetch user profile:", error);
+      console.warn("❌ [getUserProfile] Failed to fetch user profile:", error);
       return null;
     }
 
@@ -194,10 +194,10 @@ static async getRegistrationsBySession(sessionId: string) {
         sessions(*)
       `)
       .eq('id', registrationId)
-      .single();
+      .maybeSingle();
 
     if (error || !data) {
-      console.error("❌ [getRegistration] Failed to fetch registration:", error);
+      console.warn("❌ [getRegistration] Failed to fetch registration:", error);
       return null;
     }
 
@@ -241,7 +241,7 @@ static async getRegistrationsBySession(sessionId: string) {
       .maybeSingle();
 
     if (error) {
-      console.error("❌ [getExistingCertificate] Error fetching certificate:", error);
+      console.warn("❌ [getExistingCertificate] Error fetching certificate:", error);
       return null;
     }
 
