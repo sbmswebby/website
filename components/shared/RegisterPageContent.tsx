@@ -1,6 +1,6 @@
 'use client';
 
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 import { useEffect, useState, useRef, JSX } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import useEventRegistration from "@/utils/useEventRegistration";
@@ -31,6 +31,7 @@ interface DownloadItem {
 }
 
 export default function RegisterPageContent(): JSX.Element {
+  const router = useRouter();
   const searchParams = useSearchParams();
   const eventId: string = searchParams.get("eventId") || "";
   const urlSessionId: string | null = searchParams.get("sessionId");
@@ -92,7 +93,14 @@ export default function RegisterPageContent(): JSX.Element {
 
     fetchSessions();
   }, [eventId]);
+  useEffect(() => {
+    if (!urlSessionId || sessions.length === 0) return;
 
+    const exists = sessions.some((s) => s.id === urlSessionId);
+    if (exists) {
+      setSessionId(urlSessionId);
+    }
+  }, [urlSessionId, sessions]);
   // ------------------------------------------------------
   // Form Submission Handler
   // ------------------------------------------------------
@@ -189,10 +197,19 @@ const SessionPickerModal = (): JSX.Element => {
       return root;
     })();
 
-  const handleSelectSession = (id: string) => {
-    setSessionId(id);
-    setSessionModalOpen(false);
-  };
+const handleSelectSession = (id: string): void => {
+  setSessionId(id);
+
+  const params = new URLSearchParams(searchParams.toString());
+  params.set("sessionId", id);
+
+  router.replace(`?${params.toString()}`, {
+    scroll: false,
+  });
+
+  setSessionModalOpen(false);
+};
+
 
 
   return createPortal(
@@ -320,57 +337,52 @@ const SessionPickerModal = (): JSX.Element => {
       <div className="w-full max-w-md bg-white p-6 rounded shadow">
         <h2 className="text-2xl font-bold text-center mb-4">Registration</h2>
         {/* Session Selector — ALWAYS visible now */}
-        <label className=" ">Selected Session *</label>
-        <div className="session-selector grid grid-cols-10 items-center ">
+ <label className="block text-sm sm:text-base">Selected Session *</label>
 
-<div className="col-span-8 flex items-center gap-3">
-  {/* Thumbnail */}
-  <div className="w-20 h-20 rounded-lg overflow-hidden bg-gray-200 shrink-0">
-    {selectedSession?.image_url ? (
-      <Image
-        src={selectedSession.image_url}
-        alt={selectedSession.name}
-        width={56}
-        height={56}
-        className="w-full h-full object-cover"
-      />
-    ) : (
-      <div className="w-full h-full flex items-center justify-center text-xs text-gray-500">
-        No Image
-      </div>
-    )}
+<div className="session-selector grid grid-cols-1 sm:grid-cols-10 gap-3 sm:items-center">
+  {/* Session info */}
+  <div className="sm:col-span-8 flex items-center gap-3">
+    {/* Thumbnail */}
+    <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-lg overflow-hidden bg-gray-200 shrink-0">
+      {selectedSession?.image_url ? (
+        <Image
+          src={selectedSession.image_url}
+          alt={selectedSession.name}
+          width={80}
+          height={80}
+          className="w-full h-full object-cover"
+        />
+      ) : (
+        <div className="w-full h-full flex items-center justify-center text-[10px] sm:text-xs text-gray-500">
+          No Image
+        </div>
+      )}
+    </div>
+
+    {/* Session details */}
+    <div className="flex flex-col">
+<p className="font-medium text-xs sm:text-sm text-white leading-tight">
+  {selectedSession?.name ?? "No session selected"}
+</p>
+    </div>
   </div>
 
-  {/* Session details */}
-  <div className="flex flex-col">
-    <h3 className="font-semibold text-gray-900 leading-tight">
-      {selectedSession?.name ?? "No session selected"}
-    </h3>
-  </div>
+  {/* Change button */}
+  <button
+    type="button"
+    onClick={() => setSessionModalOpen(true)}
+    className="
+      sm:col-span-2
+      session-btn
+      text-sm sm:text-md
+      w-full sm:w-auto
+      mt-2 sm:mt-0
+    "
+  >
+    Change
+  </button>
 </div>
 
-
-
-          <a
-            type="button"
-            onClick={() => setSessionModalOpen(true)}
-            className="col-span-2 session-btn text-md"
-          >
-            Change
-          </a>
-        </div>
-
-        {message && (
-          <div
-            className={`p-3 mb-4 rounded ${
-              message.type === "success"
-                ? "bg-green-100 text-green-800"
-                : "bg-red-100 text-red-800"
-            }`}
-          >
-            {message.text}
-          </div>
-        )}
         <div className="h-5"></div>
         <form onSubmit={handleSubmit} className="space-y-4">
           {/* Full Name */}

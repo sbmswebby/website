@@ -467,6 +467,7 @@ nav.scrolled {
 
 /* Form Inputs and Select */
 
+/* Shared input + select base styles */
 #form input,
 #signIn input,
 #signUp input,
@@ -483,11 +484,17 @@ nav.scrolled {
   -webkit-appearance: none;
   -moz-appearance: none;
   appearance: none;
+}
+
+/* Select-only dropdown arrow */
+#signUp select {
+  padding-right: 2.5rem; /* space for arrow */
   background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path fill="rgba(255,255,255,0.8)" d="M7 10l5 5 5-5z"/></svg>');
   background-repeat: no-repeat;
   background-position: right 12px center;
   background-size: 1em;
 }
+
 
 #signUp select:focus {
   border-color: #ff6b9d;
