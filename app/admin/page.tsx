@@ -69,7 +69,7 @@ const DownloadButtons: React.FC<{
 );
 
 // ==================== ADMIN DASHBOARD ====================
-const AdminDashboard: React.FC = () => {
+const AdminDashboardContent: React.FC = () => {
   const [registrations, setRegistrations] = useState<
     types.RegistrationWithDetails[]
   >([]);
@@ -419,4 +419,66 @@ const AdminDashboard: React.FC = () => {
   );
 };
 
+const AdminDashboard: React.FC = () => {
+  const [password, setPassword] = useState<string>("");
+  const [isAuthorized, setIsAuthorized] = useState<boolean>(false);
+  const [error, setError] = useState<string>("");
+
+  /**
+   * Handles password submission
+   */
+  const handleSubmit = (): void => {
+    const adminPassword: string | undefined =
+      process.env.NEXT_PUBLIC_AdminPassword;
+
+    if (!adminPassword) {
+      setError("Admin password is not configured.");
+      return;
+    }
+
+    if (password === adminPassword) {
+      setIsAuthorized(true);
+      setError("");
+    } else {
+      setError("Incorrect password.");
+    }
+  };
+
+  // If authorized, show the real dashboard
+  if (isAuthorized) {
+    return <AdminDashboardContent />;
+  }
+
+  // Password gate UI
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-gray-900">
+      <div className="bg-gray-800 p-6 rounded-lg w-full max-w-sm">
+        <h2 className="text-white text-xl font-bold mb-4 text-center">
+          Admin Access
+        </h2>
+
+        <input
+          type="password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          placeholder="Enter admin password"
+          className="w-full p-2 rounded mb-3"
+        />
+
+        {error && (
+          <p className="text-red-400 text-sm mb-2">{error}</p>
+        )}
+
+        <button
+          onClick={handleSubmit}
+          className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded"
+        >
+          Enter
+        </button>
+      </div>
+    </div>
+  );
+};
+
 export default AdminDashboard;
+
