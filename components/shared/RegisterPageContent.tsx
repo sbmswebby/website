@@ -8,6 +8,7 @@ import { GenerationOrchestrator } from "@/lib/certificate_and_id/generationOrche
 import { DownloadService } from "@/lib/certificate_and_id/downloadService";
 import { createPortal } from "react-dom";
 import Image from "next/image";
+import { City } from "country-state-city";
 
 // ------------------------------------------------------
 // Type Definitions
@@ -37,6 +38,31 @@ export default function RegisterPageContent(): JSX.Element {
   const searchParams = useSearchParams();
   const eventId: string = searchParams.get("eventId") || "";
   const urlSessionId: string | null = searchParams.get("sessionId");
+
+  const [citySuggestions, setCitySuggestions] = useState<string[]>([]);
+const [showCityDropdown, setShowCityDropdown] = useState(false);
+const indianCities = City.getCitiesOfCountry("IN")?.map((c) => c.name) || [];
+
+useEffect(() => {
+  setCitySuggestions(indianCities);
+}, []);
+const handleCityChange = (value: string) => {
+  setCity(value);
+
+  if (!value.trim()) {
+    setShowCityDropdown(false);
+    return;
+  }
+
+  const filtered = indianCities
+    .filter((c) =>
+      c.toLowerCase().startsWith(value.toLowerCase())
+    )
+    .slice(0, 10); // limit results
+
+  setCitySuggestions(filtered);
+  setShowCityDropdown(true);
+};
 
   // ------------------------------------------------------
   // Form State
@@ -533,16 +559,45 @@ const handleSelectSession = (id: string): void => {
           </div>
 
           {/* City */}
-          <div>
-            <label className="block mb-1">City *</label>
-            <input
-              type="text"
-              required
-              value={city}
-              onChange={(e) => setCity(e.target.value)}
-              className="w-full border p-2 rounded"
-            />
-          </div>
+<div className="relative">
+  <label className="block mb-1">City *</label>
+
+  <input
+    type="text"
+    required
+    value={city}
+    onChange={(e) => handleCityChange(e.target.value)}
+    onFocus={() => city && setShowCityDropdown(true)}
+    onBlur={() => setTimeout(() => setShowCityDropdown(false), 150)}
+    placeholder="Start typing your city..."
+    className="w-full border p-2 rounded"
+  />
+
+  {showCityDropdown && citySuggestions.length > 0 && (
+<ul className="
+  absolute z-50 w-full mt-1 max-h-48 overflow-y-auto rounded-lg
+  bg-gray-900 border border-gray-700 shadow-xl
+">
+  {citySuggestions.map((c) => (
+    <li
+      key={c}
+      onMouseDown={() => {
+        setCity(c);
+        setShowCityDropdown(false);
+      }}
+      className="
+        px-3 py-2 cursor-pointer text-white
+        hover:bg-gray-700 transition-colors
+      "
+    >
+      {c}
+    </li>
+  ))}
+</ul>
+
+  )}
+</div>
+
 
           {/* Photo */}
           <div>
