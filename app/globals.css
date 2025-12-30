@@ -681,16 +681,16 @@ nav.scrolled {
   display: none;
 }
 
-/* Horizontal layout */
 .photo-upload-row {
   display: flex;
   align-items: center;
-  gap: 16px;
-  flex-wrap: wrap; /* mobile-friendly */
+  gap: 12px; /* spacing between button and text */
+  flex-wrap: wrap; /* for mobile responsiveness */
 }
 
-/* Photo upload button – muted warm tone */
+/* Make button take up all free horizontal space */
 .photo-upload-btn {
+  flex: 1; /* expands to fill available space */
   display: inline-block;
   cursor: pointer;
   background: #c98a2c; /* muted amber */
@@ -702,6 +702,19 @@ nav.scrolled {
   transition: all 0.3s ease;
   box-shadow: 0 4px 16px rgba(201, 138, 44, 0.25);
   white-space: nowrap;
+  text-align: center; /* center text inside button */
+}
+
+/* Right-side text shrinks naturally */
+.photo-upload-text {
+  flex-shrink: 0; /* do not shrink text */
+  font-size: 0.875rem;
+}
+
+/* Right-side text shrinks naturally */
+.photo-upload-text {
+  flex-shrink: 0; /* do not shrink text */
+  font-size: 0.875rem;
 }
 
 /* Subtle hover — no glow spike */
@@ -712,12 +725,6 @@ nav.scrolled {
 }
 
 
-/* Right-side text container */
-.photo-upload-text {
-  font-size: 0.9rem;
-  max-width: 100%;
-  word-break: break-word;
-}
 
 /* Helper text (before upload) */
 .photo-helper {

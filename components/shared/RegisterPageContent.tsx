@@ -464,21 +464,21 @@ const handleSelectSession = (id: string): void => {
         {/* Session Selector — ALWAYS visible now */}
  <label className="block text-sm sm:text-base">Selected Session *</label>
 
-<div className="session-selector grid grid-cols-1 sm:grid-cols-10 gap-3 sm:items-center">
+<div className="session-selector flex flex-col sm:flex-row items-center gap-3">
   {/* Session info */}
-  <div className="sm:col-span-8 flex items-center gap-3">
+  <div className="flex items-center gap-2 sm:gap-3 flex-1">
     {/* Thumbnail */}
-    <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-lg overflow-hidden bg-gray-200 shrink-0">
+    <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-lg overflow-hidden bg-gray-700 shrink-0">
       {selectedSession?.image_url ? (
         <Image
           src={selectedSession.image_url}
           alt={selectedSession.name}
-          width={80}
-          height={80}
+          width={64}
+          height={64}
           className="w-full h-full object-cover"
         />
       ) : (
-        <div className="w-full h-full flex items-center justify-center text-[10px] sm:text-xs text-gray-500">
+        <div className="w-full h-full flex items-center justify-center text-[9px] sm:text-xs text-gray-400">
           No Image
         </div>
       )}
@@ -486,9 +486,9 @@ const handleSelectSession = (id: string): void => {
 
     {/* Session details */}
     <div className="flex flex-col">
-<p className="font-medium text-xs sm:text-sm text-white leading-tight">
-  {selectedSession?.name ?? "No session selected"}
-</p>
+      <p className="font-medium text-xs sm:text-sm text-white leading-tight truncate">
+        {selectedSession?.name ?? "No session selected"}
+      </p>
     </div>
   </div>
 
@@ -496,99 +496,98 @@ const handleSelectSession = (id: string): void => {
   <button
     type="button"
     onClick={() => setSessionModalOpen(true)}
-    className="
-      sm:col-span-2
-      session-btn
-      text-sm sm:text-md
-      w-full sm:w-auto
-      mt-2 sm:mt-0
-    "
+    className="session-btn text-xs sm:text-sm w-full sm:w-auto mt-2 sm:mt-0"
   >
     Change
   </button>
 </div>
 
+
         <div className="h-5"></div>
         <form onSubmit={handleSubmit} className="space-y-4">
-          {/* Full Name */}
-          <div>
-            <label className="block mb-1">Full Name *</label>
-            <input
-              type="text"
-              required
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              className="w-full border p-2 rounded"
-            />
+          {/*Full name and whatsapp number */}
+          <div className="grid lg:grid-cols-2 sm:grid-cols-1 gap-4">
+            {/* Full Name */}
+            <div>
+              <label className="block mb-1">Full Name <span className="text-red-600">*</span></label>
+              <input
+                type="text"
+                required
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                className="w-full border p-2 rounded"
+              />
+            </div>
+
+            {/* WhatsApp */}
+            <div className="form-group">
+              <label>WhatsApp Number <span className="text-red-600">*</span></label>
+
+              <input
+                type="tel"
+                required
+                inputMode="tel"
+                placeholder="Ex: 9892948576"
+                value={whatsapp}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                  const rawValue: string = e.target.value
+
+                  /* Step 1: Remove everything except digits and + */
+                  let cleanedValue: string = rawValue.replace(/[^0-9+]/g, "")
+
+
+
+                  /* Step 3: Enforce max E.164 length (15 digits + +) */
+                  if (cleanedValue.length > 16) {
+                    cleanedValue = cleanedValue.slice(0, 16)
+                  }
+
+                  setWhatsapp(cleanedValue)
+
+                  /* Step 4: Live E.164 validation */
+                  const e164Regex: RegExp = /^\+[1-9]\d{7,14}$/
+
+                  if (cleanedValue.length > 0 && !e164Regex.test(cleanedValue)) {
+                    console.log("Enter a valid E.164 number (e.g. +14155552671)")
+                  } else {
+                    console.log("valid number enterd")
+                  }
+                }}
+              />
+
+            </div>
           </div>
 
-          {/* WhatsApp */}
-<div className="form-group">
-  <label>WhatsApp Number *</label>
+          {/*Organisation and Profession*/}
+          <div className="grid lg:grid-cols-2 md:grid-cols-2 sm:grid-cols-1 gap-4">
+            {/* Organisation */}
+            <div className=" col-span-1">
+              <label className="block mb-1">Organization/Company/Academy Name <span className="text-red-600">*</span></label>
+              <input
+                type="text"
+                required
+                value={parlor}
+                onChange={(e) => setParlor(e.target.value)}
+                className="w-full border p-2 rounded"
+              />
+            </div>
 
-  <input
-    type="tel"
-    required
-    inputMode="tel"
-    placeholder="Example: +9192948576"
-    value={whatsapp}
-    onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-      const rawValue: string = e.target.value
-
-      /* Step 1: Remove everything except digits and + */
-      let cleanedValue: string = rawValue.replace(/[^0-9+]/g, "")
-
-
-
-      /* Step 3: Enforce max E.164 length (15 digits + +) */
-      if (cleanedValue.length > 16) {
-        cleanedValue = cleanedValue.slice(0, 16)
-      }
-
-      setWhatsapp(cleanedValue)
-
-      /* Step 4: Live E.164 validation */
-      const e164Regex: RegExp = /^\+[1-9]\d{7,14}$/
-
-      if (cleanedValue.length > 0 && !e164Regex.test(cleanedValue)) {
-        console.log("Enter a valid E.164 number (e.g. +14155552671)")
-      } else {
-        console.log("valid number enterd")
-      }
-    }}
-  />
-
-</div>
-
-
-
-          {/* Parlor */}
-          <div>
-            <label className="block mb-1">Organization / Parlor / Company/ Academy Name *</label>
-            <input
-              type="text"
-              required
-              value={parlor}
-              onChange={(e) => setParlor(e.target.value)}
-              className="w-full border p-2 rounded"
-            />
-          </div>
-
-          {/* Profession */}
-          <div>
-            <label className="block mb-1">Profession / Job *</label>
-            <input
-              type="text"
-              required
-              value={profession}
-              onChange={(e) => setProfession(e.target.value)}
-              className="w-full border p-2 rounded"
-            />
+            {/* Profession */}
+            <div className="col-span-1">
+              <label className="block mb-1">Profession / Job <span className="text-red-600">*</span></label>
+              <input
+                type="text"
+                required
+                value={profession}
+                onChange={(e) => setProfession(e.target.value)}
+                className="w-full border p-2 rounded"
+              />
+            </div>
           </div>
 
           {/* City */}
 <div className="relative">
-  <label className="block mb-1">City *</label>
+  <label className="block mb-1">City <span className="text-red-600">*</span></label>
 
   <input
     type="text"
@@ -645,7 +644,6 @@ const handleSelectSession = (id: string): void => {
 </div>
 
 
-{/* Photo Upload */}
 <div className="form-group photo-upload">
   {/* Hidden native file input */}
   <input
@@ -675,12 +673,13 @@ const handleSelectSession = (id: string): void => {
         </span>
       ) : (
         <span className="photo-helper">
-          Note: Portrait photo with clear face (passport-style)
+          Note: Potrait photo with clear face 
         </span>
       )}
     </div>
   </div>
 </div>
+
 
 
 
