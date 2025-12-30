@@ -672,6 +672,63 @@ nav.scrolled {
   color: #ededed;
 }
 
+/* ============================= */
+/* Photo Upload Styling */
+/* ============================= */
+
+/* Hide native file input */
+.photo-input {
+  display: none;
+}
+
+/* Horizontal layout */
+.photo-upload-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap; /* mobile-friendly */
+}
+
+/* Photo upload button – muted warm tone */
+.photo-upload-btn {
+  display: inline-block;
+  cursor: pointer;
+  background: #c98a2c; /* muted amber */
+  color: #0a0a0a;
+  border-radius: 50px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  padding: 10px 22px;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 16px rgba(201, 138, 44, 0.25);
+  white-space: nowrap;
+}
+
+/* Subtle hover — no glow spike */
+.photo-upload-btn:hover {
+  background: #b67a22; /* slightly darker */
+  transform: translateY(-1px);
+  box-shadow: 0 6px 18px rgba(201, 138, 44, 0.35);
+}
+
+
+/* Right-side text container */
+.photo-upload-text {
+  font-size: 0.9rem;
+  max-width: 100%;
+  word-break: break-word;
+}
+
+/* Helper text (before upload) */
+.photo-helper {
+  color: rgba(255, 255, 255, 0.7);
+}
+
+/* File chosen text (after upload) */
+.photo-file {
+  color: #4ade80; /* matches success green */
+  font-weight: 500;
+}
 
 
 /*HeroSection*/

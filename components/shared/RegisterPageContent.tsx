@@ -617,22 +617,44 @@ const handleSelectSession = (id: string): void => {
 </div>
 
 
-          {/* Photo */}
-          <div>
-            <label className="block mb-1">
-              Upload Photo *{" "}
-              <span className="font-black text-red-600">
-                Portrait photo with clear face (like passport size photo)
-              </span>
-            </label>
-            <input
-              type="file"
-              accept="image/*"
-              required
-              onChange={(e) => setPhoto(e.target.files?.[0] || null)}
-              className="w-full border p-2 rounded"
-            />
-          </div>
+{/* Photo Upload */}
+<div className="form-group photo-upload">
+  {/* Hidden native file input */}
+  <input
+    id="photo-upload"
+    type="file"
+    accept="image/*"
+    required
+    className="photo-input"
+    onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+      const file: File | null = e.target.files ? e.target.files[0] : null
+      setPhoto(file)
+    }}
+  />
+
+  {/* Button + text row */}
+  <div className="photo-upload-row">
+    {/* Styled label acting as button */}
+    <label htmlFor="photo-upload" className="photo-upload-btn">
+      {photo ? "Change Photo" : "Upload Photo"}
+    </label>
+
+    {/* Right-side text */}
+    <div className="photo-upload-text">
+      {photo ? (
+        <span className="photo-file">
+          File Chosen: {photo.name}
+        </span>
+      ) : (
+        <span className="photo-helper">
+          Note: Portrait photo with clear face (passport-style)
+        </span>
+      )}
+    </div>
+  </div>
+</div>
+
+
 
 
 
