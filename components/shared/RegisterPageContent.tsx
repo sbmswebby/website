@@ -523,16 +523,44 @@ const handleSelectSession = (id: string): void => {
           </div>
 
           {/* WhatsApp */}
-          <div>
-            <label className="block mb-1">WhatsApp Number *</label>
-            <input
-              type="tel"
-              required
-              value={whatsapp}
-              onChange={(e) => setWhatsapp(e.target.value)}
-              className="w-full border p-2 rounded"
-            />
-          </div>
+<div className="form-group">
+  <label>WhatsApp Number *</label>
+
+  <input
+    type="tel"
+    required
+    inputMode="tel"
+    placeholder="Example: +9192948576"
+    value={whatsapp}
+    onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+      const rawValue: string = e.target.value
+
+      /* Step 1: Remove everything except digits and + */
+      let cleanedValue: string = rawValue.replace(/[^0-9+]/g, "")
+
+
+
+      /* Step 3: Enforce max E.164 length (15 digits + +) */
+      if (cleanedValue.length > 16) {
+        cleanedValue = cleanedValue.slice(0, 16)
+      }
+
+      setWhatsapp(cleanedValue)
+
+      /* Step 4: Live E.164 validation */
+      const e164Regex: RegExp = /^\+[1-9]\d{7,14}$/
+
+      if (cleanedValue.length > 0 && !e164Regex.test(cleanedValue)) {
+        console.log("Enter a valid E.164 number (e.g. +14155552671)")
+      } else {
+        console.log("valid number enterd")
+      }
+    }}
+  />
+
+</div>
+
+
 
           {/* Parlor */}
           <div>
