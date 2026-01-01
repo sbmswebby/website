@@ -427,22 +427,32 @@ const AdminDashboard: React.FC = () => {
   /**
    * Handles password submission
    */
-  const handleSubmit = (): void => {
-    const adminPassword: string | undefined =
-      process.env.NEXT_PUBLIC_AdminPassword;
+const handleSubmit = async (): Promise<void> => {
+  setError("");
 
-    if (!adminPassword) {
-      setError("Admin password is not configured.");
+  try {
+    const response: Response = await fetch("/auth", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ password }),
+    });
+
+    const data: { success: boolean; error?: string } =
+      await response.json();
+
+    if (!data.success) {
+      setError(data.error ?? "Authentication failed.");
       return;
     }
 
-    if (password === adminPassword) {
-      setIsAuthorized(true);
-      setError("");
-    } else {
-      setError("Incorrect password.");
-    }
-  };
+    setIsAuthorized(true);
+  } catch (err) {
+    console.error("Auth error:", err);
+    setError("Unable to authenticate.");
+  }
+};
 
   // If authorized, show the real dashboard
   if (isAuthorized) {
