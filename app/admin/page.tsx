@@ -424,14 +424,14 @@ const AdminDashboard: React.FC = () => {
   const [isAuthorized, setIsAuthorized] = useState<boolean>(false);
   const [error, setError] = useState<string>("");
 
-  /**
-   * Handles password submission
-   */
+/**
+ * Handles password submission
+ */
 const handleSubmit = async (): Promise<void> => {
   setError("");
 
   try {
-    const response: Response = await fetch("/auth", {
+    const response: Response = await fetch("/api/admin/auth", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -439,11 +439,16 @@ const handleSubmit = async (): Promise<void> => {
       body: JSON.stringify({ password }),
     });
 
-    const data: { success: boolean; error?: string } =
-      await response.json();
+    if (!response.ok) {
+      const errorData: { error?: string } = await response.json();
+      setError(errorData.error ?? "Authentication failed.");
+      return;
+    }
+
+    const data: { success: boolean } = await response.json();
 
     if (!data.success) {
-      setError(data.error ?? "Authentication failed.");
+      setError("Authentication failed.");
       return;
     }
 
@@ -453,6 +458,7 @@ const handleSubmit = async (): Promise<void> => {
     setError("Unable to authenticate.");
   }
 };
+
 
   // If authorized, show the real dashboard
   if (isAuthorized) {

@@ -1,8 +1,9 @@
+// app/api/admin/auth/route.ts
+
 import { NextResponse } from "next/server";
 
 /**
- * Validates admin password securely on the server.
- * Never exposed to the client.
+ * Server-only admin authentication endpoint.
  */
 export async function POST(request: Request): Promise<NextResponse> {
   const body: { password?: string } = await request.json();
@@ -11,7 +12,7 @@ export async function POST(request: Request): Promise<NextResponse> {
 
   if (!adminPassword) {
     return NextResponse.json(
-      { success: false, error: "Server misconfiguration" },
+      { success: false, error: "Admin password not configured" },
       { status: 500 }
     );
   }
