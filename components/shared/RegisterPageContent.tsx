@@ -464,9 +464,10 @@ const handleSelectSession = (id: string): void => {
         {/* Session Selector — ALWAYS visible now */}
  <label className="block text-sm sm:text-base">Selected Session *</label>
 
-<div className="session-selector flex flex-col sm:flex-row items-center gap-3">
-  {/* Session info */}
-  <div className="flex items-center gap-2 sm:gap-3 w-full sm:flex-1 min-w-0 overflow-hidden">
+
+<div className="session-selector flex flex-col gap-3 w-full">
+  {/* Top row: image + text */}
+  <div className="flex items-center gap-3 min-w-0">
     {/* Thumbnail */}
     <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-lg overflow-hidden bg-gray-700 shrink-0">
       {selectedSession?.image_url ? (
@@ -484,23 +485,25 @@ const handleSelectSession = (id: string): void => {
       )}
     </div>
 
-    {/* Session details */}
-    <div className="flex flex-col flex-1 min-w-0 overflow-hidden">
-      <p className="font-medium text-xs sm:text-sm text-white leading-tight truncate">
+    {/* Text */}
+    <div className="min-w-0">
+      <p className="truncate">
         {selectedSession?.name ?? "No session selected"}
       </p>
     </div>
   </div>
 
-  {/* Change button */}
+  {/* Button below */}
   <button
     type="button"
     onClick={() => setSessionModalOpen(true)}
-    className="session-btn text-xs sm:text-sm w-full sm:w-auto mt-2 sm:mt-0"
+    className="session-btn text-xs sm:text-sm w-full"
   >
     Change
   </button>
 </div>
+
+
 
 
 
