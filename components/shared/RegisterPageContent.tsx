@@ -466,7 +466,7 @@ const handleSelectSession = (id: string): void => {
 
 <div className="session-selector flex flex-col sm:flex-row items-center gap-3">
   {/* Session info */}
-  <div className="flex items-center gap-2 sm:gap-3 flex-1">
+  <div className="flex items-center gap-2 sm:gap-3 w-full sm:flex-1 min-w-0 overflow-hidden">
     {/* Thumbnail */}
     <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-lg overflow-hidden bg-gray-700 shrink-0">
       {selectedSession?.image_url ? (
@@ -485,7 +485,7 @@ const handleSelectSession = (id: string): void => {
     </div>
 
     {/* Session details */}
-    <div className="flex flex-col">
+    <div className="flex flex-col flex-1 min-w-0 overflow-hidden">
       <p className="font-medium text-xs sm:text-sm text-white leading-tight truncate">
         {selectedSession?.name ?? "No session selected"}
       </p>
@@ -501,6 +501,8 @@ const handleSelectSession = (id: string): void => {
     Change
   </button>
 </div>
+
+
 
 
         <div className="h-5"></div>
