@@ -2,163 +2,260 @@
 
 import { supabase } from "@/lib/supabaseClient";
 
-// ================================
+// ============================================================
 // TYPES
-// ================================
+// ============================================================
 
-interface SessionPayload {
-  id?: string; // optional: if exists, update; otherwise insert
-  name: string;
+/**
+ * Session data coming from the form layer
+ * - id is present only in edit mode
+ */
+export interface SessionPayload {
+  id?: string;
+  name?: string;
   description?: string;
-  start_time: string; // ISO string
-  end_time: string;   // ISO string
+  start_time?: string;
+  end_time?: string;
   image_url?: string;
   cost?: number;
   registration_link?: string;
   is_default?: boolean;
+  id_card_template_id: string;
 }
 
-interface CreateOrUpdateEventInput {
-  id?: string; // optional: if exists, update; otherwise create new
-  name: string;
+/**
+ * Event fields are PARTIAL on purpose:
+ * empty fields must NOT overwrite existing DB values
+ */
+export interface EventPayload {
+  name?: string;
   description?: string;
-  venue: string;
+  venue?: string;
   location?: string;
-  startTime: string;
-  endTime: string;
-  imageFile?: string; // already uploaded Cloudinary URL
-  idcard_template_id: string; // ID Card Details ID
+  startTime?: string;
+  endTime?: string;
+  image_url?: string;
+}
+
+/**
+ * CREATE MODE
+ */
+interface CreateEventInput {
+  mode: "create";
+  event: EventPayload;
   sessions: SessionPayload[];
 }
 
-interface CreateOrUpdateEventResult {
+/**
+ * UPDATE MODE
+ */
+interface UpdateEventInput {
+  mode: "update";
   eventId: string;
-  sessionIds: string[];
-  idCardTemplateId: string;
+  event: EventPayload;
+  sessions: SessionPayload[];
 }
 
-// ================================
-// FUNCTION
-// ================================
+export type CreateOrUpdateEventInput =
+  | CreateEventInput
+  | UpdateEventInput;
+
+/**
+ * Result returned to the UI
+ */
+export interface CreateOrUpdateEventResult {
+  eventId: string;
+  sessionIds: string[];
+}
+
+// ============================================================
+// HELPERS
+// ============================================================
+
+/**
+ * Removes undefined values so we never overwrite DB fields accidentally
+ */
+const cleanPayload = <T extends Record<string, unknown>>(
+  payload: T
+): Partial<T> => {
+  const cleaned: Partial<T> = {};
+
+  for (const key in payload) {
+    if (payload[key] !== undefined) {
+      cleaned[key] = payload[key];
+    }
+  }
+
+  return cleaned;
+};
+
+// ============================================================
+// MAIN FUNCTION
+// ============================================================
 
 export async function createOrUpdateEventWithSessions(
   input: CreateOrUpdateEventInput
 ): Promise<CreateOrUpdateEventResult> {
-  // Ensure eventId exists after this block
   let eventId: string;
 
-  // -----------------------------
-  // Create or Update Event
-  // -----------------------------
-  if (input.id) {
-    eventId = input.id;
+  // ============================================================
+  // EVENT: CREATE OR UPDATE
+  // ============================================================
 
-    const { error: updateError } = await supabase
+  if (input.mode === "create") {
+    const { data, error } = await supabase
       .from("events")
-      .update({
-        name: input.name,
-        description: input.description || "",
-        venue: input.venue,
-        location: input.location || "hyderabad",
-        start_time: input.startTime,
-        end_time: input.endTime,
-        image_url: input.imageFile || null,
-      })
-      .eq("id", eventId);
-
-    if (updateError) throw new Error("Failed to update event");
-  } else {
-    const { data: eventData, error: insertError } = await supabase
-      .from("events")
-      .insert({
-        name: input.name,
-        description: input.description || "",
-        venue: input.venue,
-        location: input.location || "hyderabad",
-        start_time: input.startTime,
-        end_time: input.endTime,
-        image_url: input.imageFile || null,
-      })
+      .insert(
+        cleanPayload({
+          name: input.event.name,
+          description: input.event.description,
+          venue: input.event.venue,
+          location: input.event.location ?? "hyderabad",
+          start_time: input.event.startTime,
+          end_time: input.event.endTime,
+          image_url: input.event.image_url,
+        })
+      )
       .select("id")
       .single();
 
-    if (insertError || !eventData?.id) throw new Error("Failed to create event");
-    eventId = eventData.id;
+    if (error || !data?.id) {
+      throw new Error("Failed to create event");
+    }
+
+    eventId = data.id;
+  } else {
+    eventId = input.eventId;
+
+    const { error } = await supabase
+      .from("events")
+      .update(
+        cleanPayload({
+          name: input.event.name,
+          description: input.event.description,
+          venue: input.event.venue,
+          location: input.event.location,
+          start_time: input.event.startTime,
+          end_time: input.event.endTime,
+          image_url: input.event.image_url,
+          updated_at: new Date().toISOString(),
+        })
+      )
+      .eq("id", eventId);
+
+    if (error) {
+      throw new Error("Failed to update event");
+    }
   }
+
+  // ============================================================
+  // SESSIONS: UPSERT
+  // ============================================================
 
   const sessionIds: string[] = [];
 
-  // -----------------------------
-  // Create or Update Sessions
-  // -----------------------------
-  for (const s of input.sessions) {
+  for (const session of input.sessions) {
     let sessionId: string;
 
-    if (s.id) {
-      sessionId = s.id;
+    // ----------------------------
+    // UPDATE SESSION
+    // ----------------------------
+    if (session.id) {
+      sessionId = session.id;
 
-      const { error: sessionUpdateError } = await supabase
+      const { error } = await supabase
         .from("sessions")
-        .update({
-          name: s.name,
-          description: s.description || null,
-          start_time: s.start_time,
-          end_time: s.end_time,
-          image_url: s.image_url || "/images/placeholder.png",
-          cost: s.cost ?? null,
-          registration_link: s.registration_link ?? null,
-        })
+        .update(
+          cleanPayload({
+            name: session.name,
+            description: session.description,
+            start_time: session.start_time,
+            end_time: session.end_time,
+            image_url: session.image_url,
+            cost: session.cost,
+            registration_link: session.registration_link,
+            updated_at: new Date().toISOString(),
+          })
+        )
         .eq("id", sessionId);
 
-      if (sessionUpdateError) throw new Error("Failed to update session");
-    } else {
-      const { data: sessionData, error: sessionInsertError } = await supabase
+      if (error) {
+        throw new Error("Failed to update session");
+      }
+    }
+    // ----------------------------
+    // CREATE SESSION
+    // ----------------------------
+    else {
+      const { data, error } = await supabase
         .from("sessions")
-        .insert({
-          event_id: eventId,
-          name: s.name,
-          description: s.description || null,
-          start_time: s.start_time,
-          end_time: s.end_time,
-          image_url: s.image_url || "/images/placeholder.png",
-          cost: s.cost ?? null,
-          registration_link: s.registration_link ?? null,
-        })
+        .insert(
+          cleanPayload({
+            event_id: eventId,
+            name: session.name,
+            description: session.description,
+            start_time: session.start_time,
+            end_time: session.end_time,
+            image_url:
+              session.image_url ?? "/images/placeholder.png",
+            cost: session.cost,
+            registration_link: session.registration_link,
+          })
+        )
         .select("id")
         .single();
 
-      if (sessionInsertError || !sessionData?.id) throw new Error("Failed to create session");
-      sessionId = sessionData.id;
+      if (error || !data?.id) {
+        throw new Error("Failed to create session");
+      }
+
+      sessionId = data.id;
     }
 
     sessionIds.push(sessionId);
 
-    // -----------------------------
-    // Link Session → ID Card
-    // -----------------------------
-    const { data: existingLink, error: linkCheckError } = await supabase
-      .from("session_id_cards")
-      .select("id")
-      .eq("session_id", sessionId)
-      .maybeSingle();
+    // ============================================================
+    // SESSION → ID CARD LINK (idempotent)
+    // ============================================================
 
-    if (linkCheckError) throw new Error("Failed to link session with ID card");
+    const { data: existingLink, error: linkCheckError } =
+      await supabase
+        .from("session_id_cards")
+        .select("id")
+        .eq("session_id", sessionId)
+        .eq(
+          "id_card_details_id",
+          session.id_card_template_id
+        )
+        .maybeSingle();
+
+    if (linkCheckError) {
+      throw new Error("Failed to check ID card link");
+    }
 
     if (!existingLink) {
       const { error: linkInsertError } = await supabase
         .from("session_id_cards")
         .insert({
           session_id: sessionId,
-          id_card_details_id: input.idcard_template_id,
+          id_card_details_id:
+            session.id_card_template_id,
         });
 
-      if (linkInsertError) throw new Error("Failed to link session with ID card");
+      if (linkInsertError) {
+        throw new Error(
+          "Failed to link session with ID card template"
+        );
+      }
     }
   }
+
+  // ============================================================
+  // RESULT
+  // ============================================================
 
   return {
     eventId,
     sessionIds,
-    idCardTemplateId: input.idcard_template_id,
   };
 }
