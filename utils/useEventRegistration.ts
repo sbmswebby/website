@@ -127,19 +127,27 @@ export default function useEventRegistration(eventId: string, sessionId: string)
       /**
        * Upsert user profile
        */
-      const { data: userProfiles } = await supabase
-        .from("user_profiles")
-        .upsert(
-          {
-            whatsapp_number: form.whatsapp,
-            name: form.name,
-            profession: form.profession ?? null,
-            organisation_name: form.organisation ?? null,
-            image_url: photoUrl,
-          },
-          { onConflict: "whatsapp_number" }
-        )
-        .select();
+console.log("data log one line before upsert: ", form.whatsapp, form.name, form.profession, form.organisation, photoUrl)
+const { data: userProfiles, error: upsertError } = await supabase
+  .from("user_profiles")
+  .upsert(
+    {
+      whatsapp_number: form.whatsapp,
+      name: form.name,
+      profession: form.profession ?? null,
+      organisation_name: form.organisation ?? null,
+      image_url: photoUrl,
+      city: form.city,
+    },
+    { onConflict: "whatsapp_number", ignoreDuplicates: false } // Force update
+  )
+  .select();
+
+if (upsertError) {
+  console.error("SUPABASE UPSERT ERROR:", upsertError.message, upsertError.details);
+} else {
+  console.log("SUPABASE UPSERT SUCCESS. Returned Data:", userProfiles?.[0]);
+}
 
       const userProfile = userProfiles?.[0];
       if (!userProfile) throw new Error("Failed to upsert user profile");
