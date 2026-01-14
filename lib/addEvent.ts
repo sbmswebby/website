@@ -20,7 +20,7 @@ export interface SessionPayload {
   cost?: number;
   registration_link?: string;
   is_default?: boolean;
-  id_card_template_id: string;
+  id_card_template_id?: string;
 }
 
 /**
@@ -218,36 +218,22 @@ export async function createOrUpdateEventWithSessions(
     // SESSION → ID CARD LINK (idempotent)
     // ============================================================
 
-    const { data: existingLink, error: linkCheckError } =
-      await supabase
-        .from("session_id_cards")
-        .select("id")
-        .eq("session_id", sessionId)
-        .eq(
-          "id_card_details_id",
-          session.id_card_template_id
-        )
-        .maybeSingle();
+    if (session.id_card_template_id) {
+  const { data: existingLink } = await supabase
+    .from("session_id_cards")
+    .select("id")
+    .eq("session_id", sessionId)
+    .maybeSingle();
 
-    if (linkCheckError) {
-      throw new Error("Failed to check ID card link");
-    }
-
-    if (!existingLink) {
-      const { error: linkInsertError } = await supabase
-        .from("session_id_cards")
-        .insert({
-          session_id: sessionId,
-          id_card_details_id:
-            session.id_card_template_id,
-        });
-
-      if (linkInsertError) {
-        throw new Error(
-          "Failed to link session with ID card template"
-        );
-      }
-    }
+  if (!existingLink) {
+    await supabase
+      .from("session_id_cards")
+      .insert({
+        session_id: sessionId,
+        id_card_template_id: session.id_card_template_id,
+      });
+  }
+}
   }
 
   // ============================================================

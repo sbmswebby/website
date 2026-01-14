@@ -4,8 +4,8 @@ import React from "react";
 import { Upload, Image as ImageIcon } from "lucide-react";
 
 export interface ImageValue {
-  url: string;
   file: File | null;
+  url: string;
 }
 
 interface ImageInputProps {

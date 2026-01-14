@@ -5,13 +5,13 @@ import { Plus } from "lucide-react";
 
 import { EventForm, EventFormValue } from "./EventForm";
 import { SessionForm, SessionFormValue } from "./SessionForm";
-import { IdCardTemplateSelector } from "./IdCardTemplateSelector";
 
 import { supabase } from "@/lib/supabaseClient";
 import { CloudinaryService } from "@/lib/cloudinaryService";
 import {
   createOrUpdateEventWithSessions,
 } from "@/lib/addEvent";
+import { hydrateEventWithSessions } from "./hydrateEventWithSessions";
 
 // ============================================================
 // TYPES
@@ -53,11 +53,32 @@ const EventAndSessionsForm: React.FC<Props> = ({ eventId }) => {
   // ------------------------------------------------------------
   const [sessions, setSessions] = useState<SessionFormValue[]>([]);
 
+  useEffect(() => {
+  if (!isEditMode || !eventId) return;
+
+  let isMounted = true;
+
+  const hydrate = async (): Promise<void> => {
+    const hydrated = await hydrateEventWithSessions(eventId);
+
+    if (!isMounted) return;
+
+    setEvent(hydrated.event);
+    setSessions(hydrated.sessions);
+  };
+
+  hydrate();
+
+  return () => {
+    isMounted = false;
+  };
+}, [isEditMode, eventId]);
+
+
   // ------------------------------------------------------------
   // ID card templates (shared across sessions)
   // ------------------------------------------------------------
   const [layouts, setLayouts] = useState<IdCardLayout[]>([]);
-  const [selectedTemplateId, setSelectedTemplateId] =
     useState<string>("");
 
   // ============================================================
@@ -88,20 +109,26 @@ const EventAndSessionsForm: React.FC<Props> = ({ eventId }) => {
   // SESSION HELPERS
   // ============================================================
 
-  const addSession = (): void => {
-    setSessions((prev) => [
-      ...prev,
-      {
-        id: crypto.randomUUID(),
-        name: "",
-        description: "",
-        startTime: "",
-        endTime: "",
-        isDefault: false,
-        banner: null,
-      },
-    ]);
-  };
+const addSession = (): void => {
+  setSessions((prev) => [
+    ...prev,
+    {
+      id: crypto.randomUUID(),
+      name: "",
+      description: "",
+      startTime: "",
+      endTime: "",
+      isDefault: false,
+      banner: null,
+
+      issuesIdCard: false,
+      idCardTemplateId: undefined,
+    },
+  ]);
+};
+
+
+
 
   const updateSession = (
     id: string,
@@ -136,29 +163,34 @@ const EventAndSessionsForm: React.FC<Props> = ({ eventId }) => {
     // -----------------------------------------
     // Process sessions
     // -----------------------------------------
-    const processedSessions = await Promise.all(
-      sessions.map(async (s) => {
-        let bannerUrl: string | undefined;
+const processedSessions = await Promise.all(
+  sessions.map(async (s) => {
+    let bannerUrl: string | undefined;
 
-        if (s.banner?.file) {
-          bannerUrl = await CloudinaryService.uploadFile(
-            s.banner.file,
-            "sessions"
-          );
-        }
+    if (s.banner?.file) {
+      bannerUrl = await CloudinaryService.uploadFile(
+        s.banner.file,
+        "sessions"
+      );
+    }
 
-        return {
-          id: s.id, // present only in edit mode
-          name: s.name || undefined,
-          description: s.description || undefined,
-          start_time: s.startTime || undefined,
-          end_time: s.endTime || undefined,
-          image_url: bannerUrl,
-          is_default: s.isDefault,
-          id_card_template_id: selectedTemplateId,
-        };
-      })
-    );
+    return {
+      id: s.id, // present in edit mode
+      name: s.name || undefined,
+      description: s.description || undefined,
+      start_time: s.startTime || undefined,
+      end_time: s.endTime || undefined,
+      image_url: bannerUrl,
+      is_default: s.isDefault,
+
+      /** THIS IS THE FIX */
+      id_card_template_id: s.issuesIdCard
+        ? s.idCardTemplateId
+        : undefined,
+    };
+  })
+);
+
 
     // -----------------------------------------
     // CREATE vs UPDATE (discriminated union)
@@ -209,12 +241,13 @@ const EventAndSessionsForm: React.FC<Props> = ({ eventId }) => {
         <h2 className="text-xl font-semibold">Sessions</h2>
 
         {sessions.map((s) => (
-          <SessionForm
-            key={s.id}
-            value={s}
-            onChange={(v) => updateSession(s.id, v)}
-            onDelete={() => deleteSession(s.id)}
-          />
+<SessionForm
+  key={s.id}
+  value={s}
+  layouts={layouts}
+  onChange={(v) => updateSession(s.id, v)}
+  onDelete={() => deleteSession(s.id)}
+/>
         ))}
 
         <button
@@ -232,11 +265,7 @@ const EventAndSessionsForm: React.FC<Props> = ({ eventId }) => {
           ID Card Template
         </h2>
 
-        <IdCardTemplateSelector
-          layouts={layouts}
-          selectedId={selectedTemplateId}
-          onSelect={setSelectedTemplateId}
-        />
+
       </section>
 
       <button

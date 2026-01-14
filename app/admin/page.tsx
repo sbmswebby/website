@@ -21,7 +21,7 @@ import {
   downloadFilesAsZip,
   FileInfo,
 } from "@/components/shared/admin/utils/downloadcertandid";
-import EventAndSessionsForm from "@/components/shared/admin/form/EventAndSessionsForm";
+import AdminEventsPage from "@/components/shared/admin/AdminEventsPage";
 
 
 // ==================== DOWNLOAD BUTTONS COMPONENT ====================
@@ -322,7 +322,7 @@ const AdminDashboardContent: React.FC = () => {
       <div className="max-w-7xl mx-auto">
         <h1 className="text-3xl font-bold mb-2">Admin Dashboard</h1>
         <h2>Add Event</h2>
-        <EventAndSessionsForm/>
+        <AdminEventsPage/>
         
         <p className="text-gray-400 mb-6">
           Manage registrations, certificates, and ID cards
