@@ -177,7 +177,7 @@ const EventAndSessionsForm: React.FC = () => {
           };
         })
       );
-
+/** 
       await createOrUpdateEventWithSessions({
         name: eventName,
         description: eventDescription,
@@ -189,7 +189,7 @@ const EventAndSessionsForm: React.FC = () => {
         idcard_template_id: selectedLayout,
         sessions: processedSessions,
       });
-
+*/
       console.log("🟩 [Submit] Success — Event + Sessions created");
       alert("Event created successfully!");
     } catch (err) {
