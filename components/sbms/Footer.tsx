@@ -56,7 +56,7 @@ export default function Footer() {
             <a href="mailto:sbmswebby@gmail.com" className="hover:text-white transition flex items-center gap-2">
               <Mail size={18} /> sbmswebby@gmail.com
             </a>
-            <a href="https://wa.me/918897955253" target="_blank" rel="noopener noreferrer" className="hover:text-white transition flex items-center gap-2">
+            <a href="https://wa.me/917995514547" target="_blank" rel="noopener noreferrer" className="hover:text-white transition flex items-center gap-2">
               <FaWhatsapp size={18} /> WhatsApp
             </a>
             <div className="flex items-center gap-2">
@@ -68,7 +68,7 @@ export default function Footer() {
         <div>
           <h4 className="font-semibold mb-4">Phone</h4>
           <div className="flex flex-col gap-2">
-            <a href="tel:+9179955145473" className="hover:text-white transition flex items-center gap-2">
+            <a href="tel:+7995514547" className="hover:text-white transition flex items-center gap-2">
                 <Phone size={18} /> +91 79955 14547
             </a>
             <a href="tel:+916203262832" className="hover:text-white transition flex items-center gap-2">
