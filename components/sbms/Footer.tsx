@@ -68,20 +68,11 @@ export default function Footer() {
         <div>
           <h4 className="font-semibold mb-4">Phone</h4>
           <div className="flex flex-col gap-2">
-            <a href="tel:+918897955253" className="hover:text-white transition flex items-center gap-2">
-                <Phone size={18} /> +91 8897955253
+            <a href="tel:+9179955145473" className="hover:text-white transition flex items-center gap-2">
+                <Phone size={18} /> +91 79955 14547
             </a>
-            <a href="tel:+918897955253" className="hover:text-white transition flex items-center gap-2">
-                <Phone size={18} /> +91 7204531214
-            </a>
-            <a href="tel:+918897955253" className="hover:text-white transition flex items-center gap-2">
-                <Phone size={18} /> +91 7337214128
-            </a>
-            <a href="tel:+918897955253" className="hover:text-white transition flex items-center gap-2">
-                <Phone size={18} /> +91 6361030769
-            </a>
-            <a href="tel:+918897955253" className="hover:text-white transition flex items-center gap-2">
-                <Phone size={18} /> +91 7995514547
+            <a href="tel:+916203262832" className="hover:text-white transition flex items-center gap-2">
+                <Phone size={18} /> +91 62032 6283
             </a>
           </div>
         </div>
@@ -93,11 +84,14 @@ export default function Footer() {
             <a href="https://instagram.com/sbms999" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 hover:text-white transition">
               <FaInstagram size={18} className="text-pink-500" /> Instagram
             </a>
+            <a href="https://www.instagram.com/sbms_academy/" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 hover:text-white transition">
+              <FaInstagram size={18} className="text-pink-500" /> Instagram
+            </a>
+            <a href="https://www.instagram.com/sbms.academy/" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 hover:text-white transition">
+              <FaInstagram size={18} className="text-pink-500" /> Instagram
+            </a>
             <a href="https://www.facebook.com/profile.php?id=61579087620200" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 hover:text-white transition">
               <FaFacebook size={18} className="text-blue-500" /> Facebook
-            </a>
-            <a href="https://sbms.com" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 hover:text-white transition">
-              <FiGlobe size={18} className="text-sky-400" /> Website
             </a>
           </div>
         </div>
