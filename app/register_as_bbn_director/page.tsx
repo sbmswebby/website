@@ -12,7 +12,7 @@ export default function AboutPage() {
   return (
     <div className="p-10 space-y-10">
     <BBNForm/>
-    <BBNTable/>
+    {/*<BBNTable/>*/}
     </div>
   )
 }
