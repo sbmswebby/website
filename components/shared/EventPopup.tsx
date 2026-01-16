@@ -107,9 +107,17 @@ useEffect(() => {
       return root;
     })();
 
-  if (pathname === '/register') {
-    return null;
-  }
+const HIDDEN_ROUTES = [
+  '/admin',
+  '/bbn_directors',
+  '/register_as_bbn_director',
+  '/register',
+];
+
+if (HIDDEN_ROUTES.some((route) => pathname.startsWith(route))) {
+  return null;
+}
+
 
 
   return createPortal(
