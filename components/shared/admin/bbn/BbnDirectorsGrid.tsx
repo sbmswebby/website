@@ -5,12 +5,17 @@ import { supabase } from "@/lib/supabaseClient";
 import { DirectorCard } from "./DirectorCard";
 import BBNFilterBar from "./BBNFilterBar";
 import type { BBNDirector } from "./bbnTypes";
+import { usePathname } from "next/navigation";
 
 interface RegionGroups {
   [region: string]: BBNDirector[];
 }
 
 export default function DirectorGridWithFilters() {
+
+  const pathname = usePathname();
+  const isAdminPage = pathname?.includes("/admin/bbn_directors");
+
   const [allDirectors, setAllDirectors] = useState<BBNDirector[]>([]);
   const [filteredDirectors, setFilteredDirectors] = useState<BBNDirector[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
@@ -24,24 +29,27 @@ export default function DirectorGridWithFilters() {
   /**
    * Fetch all directors once
    */
-  useEffect(() => {
-    const fetchAll = async (): Promise<void> => {
+useEffect(() => {
+    const fetchAll = async () => {
       setLoading(true);
-
       const { data } = await supabase
         .from("bbn_directors")
         .select("*")
         .order("name");
 
       const directors: BBNDirector[] = data ?? [];
+      
+      // On public page, ONLY show approved. On admin, show ALL.
+      const visibleDirectors = isAdminPage 
+        ? directors 
+        : directors.filter(d => d.is_approved === true);
 
-      setAllDirectors(directors);
-      setFilteredDirectors(directors);
+      setAllDirectors(visibleDirectors);
+      setFilteredDirectors(visibleDirectors);
       setLoading(false);
     };
-
     fetchAll();
-  }, []);
+  }, [isAdminPage]);
 
   /**
    * Derive state options
@@ -158,9 +166,9 @@ export default function DirectorGridWithFilters() {
           sortedRegions.map((region) => (
             <section key={region} className="space-y-6">
               {/* Region Header */}
-              <h2 className="text-2xl font-semibold tracking-tight border-b border-gray-800 pb-2">
-                {region}
-              </h2>
+<h2 className="text-2xl font-semibold tracking-tight border-b border-gray-800 pb-2 uppercase text-center">
+  {region}
+</h2>
 
               {/* Region Grid */}
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6 animate-in fade-in duration-300">
@@ -168,6 +176,7 @@ export default function DirectorGridWithFilters() {
                   <DirectorCard
                     key={director.id}
                     director={director}
+                    isAdminMode={pathname.includes('/admin')}
                   />
                 ))}
               </div>

@@ -14,4 +14,5 @@ export interface BBNDirector {
   photo_url: string;
   region: BBNRegion;
   created_at: string;
+  is_approved: boolean;
 }
